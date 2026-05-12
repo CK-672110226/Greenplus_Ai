@@ -64,6 +64,17 @@ HistorySystem/
 
 Any feature addition, bug fix, UI/styling change, data structure change, file reorganization, or meaningful refactor requires a new history version file. Do not skip this step.
 
+### AI-Native Engineering additions (System1.03)
+
+The following rule sections were added to `PROJECT_AI_WORKING_RULES.md`:
+
+- **AI-Native Engineering Principles** — Machine-Understandability, architecture docs in Mermaid (`docs/architecture.mermaid`), rule-category table, strict workflow order.
+- **Git History Standards** — Conventional Commits format, commit message rules (AI drafts *what*, developer adds *why*), PR summary standards, AI code-review checklist.
+- **Automated Testing Standards** — Self-healing/agentic testing principles, required test levels (unit/integration/smoke), visual regression notes.
+- **Technology Maintenance Monitoring** — Signal ingestion, relevance filtering, breaking-change detection signals, impact analysis output format.
+- **Risk Assessment Heuristics** — Risk-score formula, observable signals table, conditions that require a risk note in history.
+- **MCP Integration** — Allowed MCP use cases, MCP rules (log all actions, no auto-push without approval).
+
 ### System history
 
 Changes to AI workflow rules, tooling policy, or process (not tied to a feature/fix) go in `HistorySystem/` as `System1.YY.md` increments.

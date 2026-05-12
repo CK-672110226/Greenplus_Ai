@@ -194,6 +194,187 @@ When touching legacy logic, create or continue the most appropriate `Feature` or
 
 System-level updates (rule changes, tool/process updates, AI workflow changes) must be versioned in `HistorySystem/` using the same `SystemX.YY.md` style or another clearly incremental naming format.
 
+---
+
+## AI-Native Engineering Principles
+
+This project adopts an **AI-Native Engineering** paradigm where AI agents are first-class collaborators, not just autocomplete helpers. Every structural and process decision must weigh **Machine-Understandability** as a primary concern alongside human readability.
+
+### Machine-Understandable Architecture
+
+- System architecture must be documented in Mermaid diagram format (`docs/architecture.mermaid`) so AI agents can parse module boundaries, data-flow patterns, and component relationships before proposing changes.
+- Maintain a `docs/` directory for technical documentation and a `tasks/` directory for tracking work-in-progress items.
+- AI must read `docs/architecture.mermaid` before planning any structural change and must update task status after completing a unit of work.
+
+### Rule Categories for AI Behavior
+
+| Category | Guideline | Primary Goal |
+|---|---|---|
+| Architecture Behavior | AI reads architecture file before starting; updates status after completion | System Integrity |
+| Coding Standards | Follow existing code style; no unnecessary var, enforce consistent patterns | Code Consistency |
+| Security Protocols | Check for OWASP Top-10 basics; validate inputs at system boundaries | Security Risk Mitigation |
+| Complexity Management | Avoid duplicated logic; reuse shared helpers; no over-abstraction | Maintainability |
+
+### Workflow Steps (Strict Order)
+
+1. Read `tasks/` to understand requirements and acceptance criteria.
+2. Check alignment with `docs/architecture.mermaid`.
+3. Implement the focused change.
+4. Update task status and history version after completion.
+5. Verify against existing technical documentation.
+
+---
+
+## Git History Standards
+
+Git history is a **record of judgment**, not just a record of events. Every commit must capture both *what changed* and *why it changed*.
+
+### Conventional Commits Format
+
+All commit messages must follow [Conventional Commits](https://www.conventionalcommits.org/):
+
+```
+<type>(<scope>): <short description>
+
+[optional body: WHY this change was needed — business context, architectural decision, trade-off]
+
+[optional footer: breaking changes, linked issues]
+```
+
+**Allowed types:** `feat`, `fix`, `chore`, `docs`, `style`, `refactor`, `test`, `perf`, `ci`
+
+### Commit Message Rules
+
+- AI may draft the commit message from the diff (the *what*).
+- The developer (or AI with explicit instruction) must add the *why* — business context or strategic reason that the code alone cannot convey.
+- Never use vague messages like `fix`, `update`, or `wip` without a descriptive suffix.
+- Breaking changes must be flagged with `BREAKING CHANGE:` in the footer and a `!` after the type (e.g., `feat!:`).
+
+### Pull Request Summary Standards
+
+When creating or reviewing a PR, AI must:
+
+1. Synthesize all commits into a plain-language overview of what the PR accomplishes.
+2. Identify any **Breaking Changes**: changed public APIs, removed methods, altered return types, DB schema changes.
+3. Flag files with high coupling risk that reviewers should inspect carefully.
+4. Note whether documentation or tests were updated to match the code changes.
+
+### Code Review AI Checklist
+
+AI-assisted code review must cover:
+
+- [ ] Logic correctness relative to the stated acceptance criteria
+- [ ] Security: input validation, auth checks, data exposure
+- [ ] Breaking changes in public interfaces or shared modules
+- [ ] Consistency with existing coding patterns in the repository
+- [ ] Test coverage adequate for the changed paths
+
+---
+
+## Automated Testing Standards
+
+### Self-Healing and Agentic Testing Principles
+
+- Tests must be written to tolerate minor UI restructuring without manual locator updates where the testing framework supports it.
+- Prefer semantic selectors (role, label, text) over brittle CSS selectors.
+- When a test fails, AI must perform **root-cause analysis** by examining logs and code before proposing a fix — not just update the locator or skip the assertion.
+
+### Test Types Required
+
+| Level | Requirement |
+|---|---|
+| Unit | Pure functions and utilities must have unit tests |
+| Integration | Critical data flows (auth, store, API calls) must have integration tests |
+| Smoke | A basic smoke test (`src/test/smoke.test.jsx`) must pass on every build |
+
+### Visual Regression
+
+- For any UI/styling changes, record expected layout behavior in the history file.
+- AI should note when a change could affect layout in ways that automated checks will not catch.
+
+---
+
+## Technology Maintenance Monitoring
+
+### Signal Ingestion
+
+AI and maintainers should track updates to core dependencies through:
+
+- GitHub release pages for all direct dependencies listed in `package.json`
+- Framework changelogs: React, Vite, Supabase, Redux Toolkit
+
+### Relevance Filtering
+
+When a dependency publishes a new major or minor version, AI must:
+
+1. Check if it is a direct dependency of this project.
+2. Scan the release notes or migration guide for **Breaking Changes**.
+3. Compare changed public APIs against the codebase (search by symbol name or import path).
+4. Report a risk assessment before proposing an upgrade.
+
+### Breaking Change Detection Signals
+
+Watch for these patterns in release notes and migration guides:
+
+- Labels: `breaking-change`, `migration required`, `deprecated`
+- Phrases: "renamed to", "removed in", "no longer supported", "must now use"
+- API changes: function signature changes, removed exports, altered return shapes
+
+### Impact Analysis Output
+
+When a breaking change is detected, produce a brief report:
+
+```
+Dependency: <name> vX.Y → vX.Z
+Breaking change: <summary>
+Affected files: <list of files that import/use the changed symbol>
+Migration steps: <concise action items>
+Risk level: Low / Medium / High
+```
+
+---
+
+## Risk Assessment Heuristics
+
+Project health risk is calculated from these observable signals:
+
+| Factor | Signal | Weight |
+|---|---|---|
+| Task overdue rate | Ratio of overdue vs. completed tasks | High |
+| Structural complexity | Number of cross-module dependencies | Medium |
+| Resource bottleneck | Single-owner files critical to multiple features | Medium |
+| Behavioral anomaly | Patterns that diverge significantly from project baseline | Low |
+
+$$Risk_{Total} = \alpha (T_{overdue}) + \beta (C_{structural}) + \gamma (R_{bottleneck}) - \delta (V_{historical})$$
+
+Where $\alpha, \beta, \gamma, \delta$ are weights tuned to the project's historical delivery patterns.
+
+AI must surface a brief risk note in the history file whenever:
+- More than 20% of planned tasks in a session are overdue or blocked.
+- A change touches more than 3 cross-module boundaries.
+- A single file is modified in more than 50% of recent commits (hotspot signal).
+
+---
+
+## MCP (Model Context Protocol) Integration
+
+When MCP-compatible tools are available in the AI environment, AI should use them as follows:
+
+| MCP Capability | Use Case |
+|---|---|
+| Codebase Navigation (GitHub/GitLab MCP) | Search for symbols affected by an external API update |
+| Security Scanning (OSV MCP) | Check project dependencies against published CVEs |
+| Error Monitoring (Sentry MCP) | Read production error context before diagnosing a bug |
+| Task Management MCP | Update task status and create maintenance tickets automatically |
+
+**MCP Rules:**
+
+- MCP tools are extensions of the AI's capability, not replacements for manual review.
+- Any automated action taken via MCP (e.g., creating an issue, pushing a fix) must be logged in the session history.
+- AI must not use MCP to push code or merge PRs without explicit developer approval in the current session.
+
+---
+
 ## References & Further Reading
 
 ### Official React & Redux Docs
