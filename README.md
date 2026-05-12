@@ -22,8 +22,10 @@ GreenPlus Ai is a **bilingual (Thai / English) waste-to-value platform** built f
 - **2-Stage AI Scanner** — Stage 1 detects object type (PET bottle, aluminium can, cardboard…); Stage 2 scores cleanliness and assigns Grade A / B / C for fair pricing
 - **Edge AI Processing** — All image analysis runs in the browser; no user photos are uploaded to any server (Privacy First)
 - **Real-time Valuation** — Formula-based pricing engine using Chiang Mai market reference rates (May 2026)
+- **Smart Basket** — Accumulate scan results, adjust weights, then find the nearest shop that accepts everything — or get a multi-stop route plan sorted by distance
 - **Smart Map** — Pulsing map pins show shops that accept the material currently in hand
 - **Marketplace** — High-density list view for buying / selling recyclables with grade filtering
+- **Role Profiles** — Per-role profile pages: User (scan history + Eco-Points), Buyer (shop info + accepted materials), Admin (pending actions + platform stats)
 - **Eco-Points (Impact Points)** — Gamification layer rewarding verified recycling activity
 - **Anti-Troll System** — Detects humans / living things in the scanner and responds with a playful message
 - **Dark Mode** — Full token-based dark-mode support
@@ -207,12 +209,13 @@ src/
     LandingPage.jsx
     LoginPage.jsx
     ScanPage.jsx
-    BasketPage.jsx
+    BasketPage.jsx       — basket items + shop matching + route planner
     MapPage.jsx
     MarketplacePage.jsx
     DashboardPage.jsx
     AdminPage.jsx
     SettingsPage.jsx
+    ProfilePage.jsx      — role-specific profile (User / Buyer / Admin)
   hooks/
     useAuth.js      — Supabase auth listener → Redux
     useT.js         — Translation hook (returns key map, syncs i18next)

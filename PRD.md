@@ -50,6 +50,12 @@ The pilot zone (CMU rear / Tambon Suthep) has dense student housing, established
 | U-06 | As a user, I earn Eco-Points (Impact Points) after a verified drop-off | Should Have |
 | U-07 | As a user, I can switch the UI language between Thai and English | Must Have |
 | U-08 | As a user, if I point the camera at a person, I see a playful anti-troll message | Must Have |
+| U-09 | As a user, I can view all basket items with grade tag, weight input, and estimated value per item | Must Have |
+| U-10 | As a user, I can manually adjust the weight of each basket item | Must Have |
+| U-11 | As a user, I can see shops that accept every item in my basket (Single Shop mode), sorted nearest-first | Must Have |
+| U-12 | As a user, I can switch to Multi-Stop Route mode to get a stop-by-stop route when no single shop accepts all items | Must Have |
+| U-13 | As a user, if no shop accepts a specific item, I can skip that item and continue planning the rest | Must Have |
+| U-14 | As a user, I can view my profile showing Eco-Points, scan history summary, and account settings | Should Have |
 
 ### 3.2 Buyer (Shop Operator)
 
@@ -59,6 +65,8 @@ The pilot zone (CMU rear / Tambon Suthep) has dense student housing, established
 | B-02 | As a buyer, I can create, read, update, and delete my shop's pricing table (CRUD) | Must Have |
 | B-03 | As a buyer, I can accept or reject a booking request from a seller | Must Have |
 | B-04 | As a buyer, I can see the material grade and weight estimate before confirming | Should Have |
+| B-05 | As a buyer, I have a shop profile showing name, address, hours, accepted materials, and contact info | Must Have |
+| B-06 | As a buyer, I can update my shop's accepted material types so only matching sellers appear in route plans | Must Have |
 
 ### 3.3 Admin
 
@@ -67,40 +75,229 @@ The pilot zone (CMU rear / Tambon Suthep) has dense student housing, established
 | A-01 | As an admin, I see a heatmap of waste drop points across Tambon Suthep | Must Have |
 | A-02 | As an admin, I can approve or reject new shop registrations | Must Have |
 | A-03 | As an admin, I can delete troll / abuse posts from the Marketplace | Must Have |
+| A-04 | As an admin, I have a profile showing my name, admin badge, and a summary of pending actions (shops to approve, flagged posts) | Should Have |
 
 ---
 
-## 4. AI Core — Dual-Stage Scanner
+## 4. AI Core — Dual-Stage Scanner & Multi-Factor Grading
 
-### Stage 1: Object Detection
-- Model: YOLO (browser-side ONNX)
-- Output: bounding box + material class label (PET bottle, aluminium can, cardboard, HDPE, glass, paper, copper)
+### 4.1 Design Direction
+
+Grade A/B/C is **not** a single "cleanliness score." Buyers evaluate recyclables across multiple dimensions depending on the material. A buyer's actual concern for copper is purity and oxidation; for cardboard it is moisture (wet paper is a weight fraud); for PET it is color and whether the cap was removed.
+
+The system uses a **weighted multi-factor score per material type** that produces a single grade while giving the user actionable feedback on exactly which factors dragged the grade down.
+
+---
+
+### 4.2 Stage 1: Object Detection
+- Model: YOLO (browser-side ONNX, Stage 1 model)
+- Output: bounding box + `material_type` label
 - Confidence threshold: ≥ 0.60 to proceed to Stage 2
+- Anti-troll: if living being detected → block Stage 2, show message
 
-### Stage 2: Contamination Analysis
-- Input: cropped region from bounding box
-- Output: cleanliness score → Grade A / B / C
-- Grade rules:
+### 4.3 Stage 2: Multi-Factor Scoring
 
-| Grade | Cleanliness | Price Multiplier |
-|-------|-------------|-----------------|
-| A | Clean, dry, no residue | ×1.00 |
-| B | Light residue / minor contamination | ×0.75 |
-| C | Dirty, wet, heavily contaminated | ×0.40 |
+**Input:** cropped region from Stage 1 bounding box  
+**Output per factor:** score 0–10 (AI regression head, one per factor)  
+**Final weighted score:** 0–100  
+**Grade mapping:**
 
-### Valuation Formula
+| Grade | Weighted Score | Price Multiplier |
+|-------|---------------|-----------------|
+| A | ≥ 80 | ×1.00 |
+| B | 50 – 79 | ×0.75 |
+| C | 20 – 49 | ×0.40 |
+| REJECTED | < 20 or hard-reject triggered | ×0.00 |
+
 ```
-Estimated Price = (Standard Weight per Unit × Base Price Grade A) × Grade Multiplier
+weighted_score = Σ (factor_weight[i] × factor_score[i] × 10)
+               — where weights sum to 1.00 per material type
 ```
 
-Optional modifiers: +Distance Bonus (if shop is > 2 km away).
+---
 
-### Anti-Troll System
+### 4.4 Grading Factors by Material Type
+
+#### PET Bottle (Clear / Colored)
+
+| Factor | Weight | What the model looks for |
+|--------|--------|-------------------------|
+| Cleanliness | 30% | Food residue, grease, visible dirt inside/outside |
+| Color | 25% | Clear > lightly tinted > colored > black (clear most valuable) |
+| Preparation | 25% | Cap removed, label peeled, body crushed flat |
+| Moisture | 20% | Water pooled inside, condensation, wet exterior |
+
+> Hard reject: color = black plastic (virtually no buyers for black PET)
+
+#### Aluminium Can
+
+| Factor | Weight | What the model looks for |
+|--------|--------|-------------------------|
+| Cleanliness | 35% | Liquid residue, paint damage, rust spots |
+| Condition | 30% | Shape integrity — severely distorted cans are harder to process |
+| Purity | 20% | Steel cans mixed in (visual — steel has duller sheen vs aluminium) |
+| Preparation | 15% | Crushed (shop preference varies — flag, don't penalise) |
+
+> Hard reject: heavy rust + pitting (indicates steel, not aluminium)  
+> Grade C often not accepted — matches market reality (see Section 8)
+
+#### Cardboard / Corrugated Box
+
+| Factor | Weight | What the model looks for |
+|--------|--------|-------------------------|
+| Moisture | 40% | Wet/damp appearance, warping, water stains, dark patches |
+| Preparation | 25% | Flattened vs bulky, tape/staples removed, no foam padding |
+| Purity | 20% | Wax-coated surfaces, non-paper inserts still attached |
+| Cleanliness | 15% | Grease (pizza boxes), heavy ink/dye coverage |
+
+> **Moisture is the dominant factor.** Wet cardboard is the most common fraud (adds weight, dramatically lowers processing value). Moisture < 3/10 → hard reject.
+
+#### Copper
+
+| Factor | Weight | What the model looks for |
+|--------|--------|-------------------------|
+| Purity grade | 45% | Bare bright (shiny, uniform orange) > #1 (uncoated, clean) > #2 (soldered, mixed) |
+| Coating / Insulation | 30% | Bare wire > stripped insulation > intact insulation (full sleeve = lowest) |
+| Oxidation | 15% | Bright surface > dull > green/blue patina (heavy oxidation) |
+| Contamination | 10% | Solder blobs, non-copper metals, brass fittings mixed in |
+
+> This is the widest price spread — bare bright copper ≈ 5× value of insulated scrap per kg
+
+#### Glass Bottle / Jar
+
+| Factor | Weight | What the model looks for |
+|--------|--------|-------------------------|
+| Color | 35% | Clear > amber > green > mixed (clear fetches highest price) |
+| Integrity | 30% | Whole bottle vs broken (cullet). Broken = reduced price, handled differently |
+| Cleanliness | 20% | Labels still on, residue inside, etched/frosted |
+| Purity | 15% | Ceramics, stones, or non-glass items mixed in the batch |
+
+#### Used Cooking Oil
+
+| Factor | Weight | What the model looks for |
+|--------|--------|-------------------------|
+| Color / Clarity | 40% | Light golden = lightly used; dark brown = heavily used; black = degraded |
+| Water content | 35% | Visible water layer separation at bottom, cloudy/milky appearance |
+| Contamination | 15% | Food debris, floating particles, foreign objects |
+| Container | 10% | Sealed proper container > open bucket > mixed-material leaking container |
+
+> Water dilution is a fraud vector — water content > 30% visible → hard reject
+
+#### Mixed Plastic (HDPE, PP, other)
+
+| Factor | Weight | What the model looks for |
+|--------|--------|-------------------------|
+| Sorting purity | 40% | Single resin type vs truly mixed (visual texture/sheen differences) |
+| Cleanliness | 30% | Food residue, chemical contamination |
+| Condition | 20% | Shredded/film vs rigid containers (different processing streams) |
+| Color | 10% | Single color > multi-color mix (easier to reprocess) |
+
+#### Newspaper / Office Paper
+
+| Factor | Weight | What the model looks for |
+|--------|--------|-------------------------|
+| Moisture | 35% | Damp, wet, water-damaged, warped pages |
+| Purity | 30% | Pure newsprint vs mixed with glossy magazines, coated paper |
+| Condition | 20% | Neat bundled stacks vs loose scattered scraps |
+| Cleanliness | 15% | Mold spots, heavy food staining, chemical contamination |
+
+---
+
+### 4.5 Hard Rejection Rules
+
+Some factor scores below a minimum threshold reject the item regardless of overall score. The buyer simply will not accept these.
+
+| Material | Factor | Threshold | Reason |
+|----------|--------|-----------|--------|
+| Cardboard | Moisture | < 3/10 | Fraud weight + processing loss |
+| Cooking oil | Water content | < 4/10 | Oil/water separation ruins refining |
+| Copper | Purity | < 2/10 | Non-copper metals cost more to process than value |
+| PET | Color | black | No downstream recycler accepts black plastics |
+| Aluminium | Purity | < 2/10 | Steel contamination ruins aluminium melt |
+
+---
+
+### 4.6 Valuation Formula
+
+```
+Estimated Price = weight_kg × base_price_grade_a × grade_multiplier
+
+grade_multiplier:
+  A → 1.00
+  B → 0.75
+  C → 0.40
+  REJECTED → 0.00
+
+weight_kg:
+  - Stage 1 outputs standard weight estimate per unit type
+  - User can override in Basket (manual input)
+```
+
+---
+
+### 4.7 Scan Result UI — Factor Breakdown
+
+After Stage 2, the result screen shows the composite grade AND a per-factor breakdown with improvement hints:
+
+```
+┌──────────────────────────────────────┐
+│  [Grade B]  ขวด PET ใส               │
+│  ≈ ฿7.20/kg  (น้ำหนักมาตรฐาน 0.03kg)│
+├──────────────────────────────────────┤
+│  คะแนนรวม  77 / 100                  │
+│                                      │
+│  ความสะอาด   ████████░░  8/10       │
+│  สี (ใส)     ██████████  10/10      │
+│  การเตรียม   █████░░░░░  5/10  ⚠   │ ← pulled grade down
+│  ความชื้น    ████████░░  8/10       │
+│                                      │
+│  ⚠ เพิ่มคะแนนได้: ดึงฝาออก         │
+│    + ลอกฉลาก → คะแนน ≈ 85/100       │
+│    → จะได้ Grade A (฿9/kg)           │
+├──────────────────────────────────────┤
+│  [+ เพิ่มในตะกร้า]  [สแกนใหม่]      │
+└──────────────────────────────────────┘
+```
+
+The "improvement hint" is generated from whichever factor is lowest — actionable, not just informational.
+
+---
+
+### 4.8 Database: Grading Criteria Table
+
+Weights are stored in the database so admin can tune them without a code deployment.
+
+```sql
+grading_criteria (
+  id               uuid PK DEFAULT gen_random_uuid(),
+  material_type    text REFERENCES waste_items(material_type),
+  factor_key       text NOT NULL,       -- 'cleanliness', 'moisture', 'color', etc.
+  factor_name_th   text NOT NULL,
+  factor_name_en   text NOT NULL,
+  weight           numeric(4,3) NOT NULL, -- 0.000–1.000 (must sum to 1.000 per material)
+  hard_reject_min  numeric(4,1),          -- score below this = REJECT (null = no hard reject)
+  sort_order       smallint DEFAULT 0,
+  UNIQUE (material_type, factor_key),
+  CONSTRAINT weight_range CHECK (weight > 0 AND weight <= 1)
+)
+```
+
+And update `scan_history` to store the factor breakdown:
+
+```sql
+-- Additional columns on scan_history
+factor_scores   jsonb,      -- {"cleanliness": 8.0, "moisture": 8.0, "preparation": 5.0, "color": 10.0}
+weighted_score  numeric(5,1) -- 0.0–100.0
+```
+
+---
+
+### 4.9 Anti-Troll System
 If a living being (human, animal) is detected in frame:
 - Thai: "ตรวจพบสิ่งมีชีวิตที่มีมูลค่าสูงเกินกว่าจะเรียกว่าขยะ!"
 - English: "We found a living being far too valuable to be called waste!"
 
-### Privacy Constraint
+### 4.10 Privacy Constraint
 All inference runs client-side (Edge AI). **No user images are transmitted to any server.** This is a hard requirement, not an optimization.
 
 ---
@@ -153,12 +350,13 @@ All inference runs client-side (Edge AI). **No user images are transmitted to an
 |-------|------|-------------|
 | `/` | All | Landing / role selector |
 | `/scan` | User | Full-screen 2-stage AI scanner |
-| `/basket` | User | Accumulated scan results + total estimate |
+| `/basket` | User | Basket — items list, shop matching, route planner |
 | `/map` | User | Smart map — nearby accepting shops |
 | `/marketplace` | User / Buyer | Buy/sell listings with grade filter |
 | `/dashboard` | Buyer | Industrial dashboard — queue, stats, pricing CRUD |
 | `/admin` | Admin | Heatmap + approval + moderation panel |
-| `/settings` | All | Language toggle, profile, preferences |
+| `/settings` | All | Language toggle, preferences |
+| `/profile` | All | Role-specific profile page (see Section 13) |
 
 ### Redux Slices
 | Slice | Manages |
@@ -277,11 +475,739 @@ All inference runs client-side (Edge AI). **No user images are transmitted to an
 |-----------|-------------|
 | M1 — Design System | CSS tokens, component library, Storybook baseline |
 | M2 — Auth + Roles | Supabase auth, role routing, language toggle |
-| M3 — AI Scanner MVP | Stage 1 detection live; Grade + valuation displayed |
+| M3 — AI Scanner MVP | Stage 1 detection + single-factor grade live; Basket page with shop matching + route planning |
 | M4 — Marketplace | Listing CRUD, grade filter, booking queue |
 | M5 — Smart Map | Shop pins, pulsing animation, material-match filter |
 | M6 — Buyer Dashboard | Pricing CRUD, queue management, stats |
 | M7 — Admin Panel | Heatmap, shop approval, post moderation |
-| M8 — Stage 2 AI | Contamination analysis; Grade B / C differentiation |
+| M8 — Multi-Factor Grading | Full per-factor scoring, improvement hints, grading_criteria admin tuning |
 | M9 — Eco-Points | Points ledger, gamification, leaderboard |
 | M10 — Pilot Launch | Tambon Suthep go-live, user onboarding |
+| M3b — Profile Pages | Role-specific profile for User / Buyer / Admin |
+
+---
+
+## 13. Basket Page Specification
+
+### Purpose
+The Basket is a **trip-planning tool**. Users accumulate scan results here, then use the shop-matching engine to find the best way to sell everything before leaving home.
+
+### Basket Item Shape (Redux)
+```js
+{
+  id:          string,   // uuid — unique per scan result
+  name:        string,   // display label e.g. "ขวด PET ใส"
+  materialType: string,  // key for shop matching (see Material Keys below)
+  grade:       'A'|'B'|'C',
+  weight:      number,   // kg — user-editable
+  pricePerKg:  number,   // ฿/kg based on grade
+}
+```
+
+### Material Type Keys
+| Key | Thai Label | English Label |
+|-----|-----------|---------------|
+| `pet_bottle_clear` | ขวด PET ใส | PET Bottle (Clear) |
+| `aluminum_can` | กระป๋องอะลูมิเนียม | Aluminium Can |
+| `cardboard` | กระดาษลัง | Cardboard |
+| `copper` | ทองแดง | Copper |
+| `glass` | แก้ว | Glass |
+| `newspaper` | หนังสือพิมพ์ | Newspaper |
+| `mixed_plastic` | พลาสติกรวม | Mixed Plastic |
+| `cooking_oil` | น้ำมันทอด | Used Cooking Oil |
+
+### Page Layout
+
+```
+┌─────────────────────────────────┐
+│ ตะกร้าของฉัน          ฿ XXX.XX │  ← header + total
+├─────────────────────────────────┤
+│ [A] ขวด PET ใส  [1.2 kg] ฿9.60│  ← basket item card
+│ [B] กระป๋อง     [0.5 kg] ฿23.25│     grade | name | weight input | value | ×
+│ ...                             │
+├─────────────────────────────────┤
+│ ⚠ ไม่พบร้านรับซื้อ              │  ← orange warning (if any item unmatched)
+│   ทองแดง  [ข้ามชิ้นนี้]        │
+├─────────────────────────────────┤
+│ เลือกวิธีขาย                    │
+│ [ร้านเดียว] [วางแผนเส้นทาง]    │  ← mode toggle
+├─────────────────────────────────┤
+│  SINGLE SHOP MODE               │
+│  ┌──────────────────────────┐   │
+│  │ ร้านขยะหลัง มช.  0.4 km │   │  ← shop card (nearest first)
+│  │ รับทุกชิ้น (2 รายการ)   │   │     name | distance | items accepted | total ฿
+│  │                   ฿32.85│   │
+│  └──────────────────────────┘   │
+│  OR                             │
+│  MULTI-STOP MODE                │
+│  จุดที่ 1  ร้านหลัง มช. 0.4km  │  ← stop card
+│    → ขวด PET, กระป๋อง          │
+│  จุดที่ 2  บางจาก 1.5km         │
+│    → น้ำมันทอด                  │
+└─────────────────────────────────┘
+```
+
+### Shop Matching Algorithm
+
+**Single Shop mode**
+```
+shopsForAll = SHOPS
+  .filter(shop => basket.every(item => shop.accepts.includes(item.materialType)))
+  .sort((a, b) => a.distance - b.distance)
+```
+
+**Multi-Stop Route mode** (greedy nearest-first)
+```
+for each item in basket:
+  nearestShop = SHOPS
+    .filter(s => s.accepts.includes(item.materialType))
+    .sort by distance
+    .first()
+  assign item to nearestShop
+
+route = grouped stops sorted by distance ascending
+```
+
+**Unmatched items**
+- Items where no shop accepts `materialType` → shown in orange warning section
+- User options: **ข้ามชิ้นนี้** (skip from route planning, item remains in basket) or **ลบออก** (remove from basket)
+
+---
+
+## 14. Profile Page Specification
+
+Route: `/profile` — accessible to all authenticated roles.
+
+---
+
+### 14.1 User (Seller) Profile
+
+```
+┌─────────────────────────────────┐
+│  [  K  ]  Kla                   │  ← avatar initials + display name
+│           User  🌿 Eco-Points   │     role badge | eco-points chip
+├─────────────────────────────────┤
+│  IMPACT SUMMARY                 │
+│  สแกนแล้ว   มูลค่ารวม   CO₂    │  ← 3-column stat row
+│     42       ฿320        12kg   │     (total scans / total ฿ earned / CO₂ offset)
+├─────────────────────────────────┤
+│  ประวัติการสแกนล่าสุด           │
+│  [A] ขวด PET — ฿9.60 — 12 May  │  ← last 5 scan_history rows
+│  [B] กระป๋อง — ฿23.25 — 11 May │
+│  ...                            │
+├─────────────────────────────────┤
+│  การตั้งค่า                     │
+│  ภาษา: [TH] [EN]               │
+│  ชื่อที่แสดง: [edit]           │
+│  [ออกจากระบบ]                   │
+└─────────────────────────────────┘
+```
+
+**Data sources:** `user_profiles` (name, eco_points), `scan_history` (last 5 rows, total count, sum value)
+
+---
+
+### 14.2 Buyer (Shop Operator) Profile
+
+```
+┌─────────────────────────────────┐
+│  [  W  ]  วงษ์พาณิชย์          │  ← shop logo initials + shop name
+│           Buyer  ✓ Verified     │     role badge | verification status
+├─────────────────────────────────┤
+│  ข้อมูลร้าน                     │
+│  ที่อยู่: ถ.นิมมานเหมินท์ ซ.17 │
+│  เวลาทำการ: 08:00–17:00 จ–ส    │
+│  โทร: 053-XXX-XXX              │
+├─────────────────────────────────┤
+│  วัสดุที่รับซื้อ                │
+│  [PET] [กระป๋อง] [กระดาษ]     │  ← material type chips (editable)
+│  [ทองแดง] [หนังสือพิมพ์]       │     links to buyer dashboard pricing CRUD
+├─────────────────────────────────┤
+│  สถิติ                          │
+│  คิวรอวันนี้: 3   ยืนยันแล้ว: 12│
+├─────────────────────────────────┤
+│  การตั้งค่า                     │
+│  ภาษา: [TH] [EN]               │
+│  [แก้ไขข้อมูลร้าน]             │
+│  [ออกจากระบบ]                   │
+└─────────────────────────────────┘
+```
+
+**Data sources:** `user_profiles` (shop name, role), `shops` table (address, hours, accepts), `marketplace_posts` (booking counts)
+
+> **Note:** A `shops` table is required — see Section 15 for updated database schema.
+
+---
+
+### 14.3 Admin Profile
+
+```
+┌─────────────────────────────────┐
+│  [  A  ]  Admin                 │  ← initials + name
+│           Admin  ⬡ CMU Zone    │     role badge | area badge
+├─────────────────────────────────┤
+│  ACTION QUEUE                   │
+│  ร้านรอการอนุมัติ:  2          │  ← pending shops count (link → /admin)
+│  โพสต์ที่ถูก report: 1        │     flagged posts count (link → /admin)
+├─────────────────────────────────┤
+│  PLATFORM STATS                 │
+│  ผู้ใช้งาน: 128                │
+│  การสแกนวันนี้: 47             │
+│  ร้านที่ active: 5             │
+├─────────────────────────────────┤
+│  การตั้งค่า                     │
+│  ภาษา: [TH] [EN]               │
+│  [ออกจากระบบ]                   │
+└─────────────────────────────────┘
+```
+
+**Data sources:** `user_profiles` (admin name), `shops` (pending count), `marketplace_posts` (flagged count), aggregate counts from all tables
+
+---
+
+## 15. Updated Database Schema — `shops` Table
+
+The Basket shop-matching and Buyer Profile features require a dedicated `shops` table (not present in the original schema).
+
+| Column | Type | Description |
+|--------|------|-------------|
+| id | uuid PK | |
+| owner_id | uuid FK → user_profiles | the buyer who owns this shop |
+| name | text | shop display name |
+| name_th | text | Thai name |
+| address | text | street address |
+| lat | numeric | GPS latitude |
+| lng | numeric | GPS longitude |
+| phone | text | contact number |
+| hours | text | e.g. "08:00–17:00 Mon–Sat" |
+| accepts | text[] | array of materialType keys |
+| verified | boolean | admin-approved flag |
+| status | text | active / pending / suspended |
+| created_at | timestamptz | |
+
+---
+
+## 16. Supabase Backend Architecture — Free Tier Optimization
+
+### 16.1 Free Tier Constraints (reference)
+
+| Resource | Free Limit | Strategy |
+|----------|-----------|---------|
+| Database storage | 500 MB | Compress text, avoid storing binary in DB |
+| Bandwidth | 5 GB/month | Cache aggressively client-side; paginate all lists |
+| File storage | 1 GB | Resize images before upload; delete stale training images |
+| Edge Functions | 500K invocations/month | Use only for atomic writes (booking, model deploy) |
+| Realtime channels | 2 concurrent | Use only for buyer booking notifications |
+| Connections | 60 direct / 200 pooled | Always use PgBouncer (connection string ends in `?pgbouncer=true`) |
+
+### 16.2 Complete Database Schema
+
+#### Core tables
+
+```sql
+-- Pricing reference (read-heavy, rarely written)
+waste_items (
+  id            uuid PK DEFAULT gen_random_uuid(),
+  name          text NOT NULL,
+  name_th       text NOT NULL,
+  material_type text UNIQUE NOT NULL,  -- matches materialType keys
+  unit          text NOT NULL,         -- 'kg' | 'piece'
+  base_weight   numeric(8,3),
+  price_grade_a numeric(10,2) NOT NULL,
+  price_grade_b numeric(10,2) GENERATED ALWAYS AS (price_grade_a * 0.75) STORED,
+  price_grade_c numeric(10,2) GENERATED ALWAYS AS (price_grade_a * 0.40) STORED,
+  updated_at    timestamptz DEFAULT now()
+)
+
+-- Shops (read by all, written by buyer)
+shops (
+  id          uuid PK DEFAULT gen_random_uuid(),
+  owner_id    uuid REFERENCES user_profiles(id) ON DELETE CASCADE,
+  name        text NOT NULL,
+  name_th     text,
+  address     text,
+  lat         numeric(10,7),
+  lng         numeric(10,7),
+  phone       text,
+  accepts     text[] DEFAULT '{}',
+  verified    boolean DEFAULT false,
+  status      text DEFAULT 'pending',  -- pending | active | suspended
+  created_at  timestamptz DEFAULT now()
+)
+
+-- User profiles (1:1 with auth.users)
+user_profiles (
+  id            uuid PK REFERENCES auth.users(id) ON DELETE CASCADE,
+  role          text DEFAULT 'user',   -- user | buyer | admin
+  display_name  text,
+  language_pref text DEFAULT 'th',
+  eco_points    integer DEFAULT 0,
+  location_lat  numeric(10,7),
+  location_lng  numeric(10,7),
+  created_at    timestamptz DEFAULT now()
+)
+
+-- Scan history
+scan_history (
+  id               uuid PK DEFAULT gen_random_uuid(),
+  user_id          uuid REFERENCES user_profiles(id) ON DELETE CASCADE,
+  item_type        text REFERENCES waste_items(material_type),
+  grade            char(1) CHECK (grade IN ('A','B','C')),
+  confidence       numeric(4,3),
+  weight_estimate  numeric(8,3),
+  calculated_value numeric(10,2),
+  scanned_at       timestamptz DEFAULT now()
+)
+
+-- Marketplace listings
+marketplace_posts (
+  id           uuid PK DEFAULT gen_random_uuid(),
+  user_id      uuid REFERENCES user_profiles(id) ON DELETE CASCADE,
+  title        text,
+  material_type text REFERENCES waste_items(material_type),
+  grade        char(1) CHECK (grade IN ('A','B','C')),
+  quantity_kg  numeric(8,3),
+  asking_price numeric(10,2),
+  status       text DEFAULT 'open',   -- open | reserved | closed
+  flagged      boolean DEFAULT false,
+  created_at   timestamptz DEFAULT now()
+)
+```
+
+#### Calendar & Booking tables (see Section 18)
+
+#### AI Model tables (see Section 17)
+
+### 16.3 Indexes (Big O Analysis)
+
+Every query the app makes must hit an index. No sequential scans on tables that grow.
+
+| Table | Index | Query pattern | Complexity |
+|-------|-------|--------------|-----------|
+| `shops` | `(status, verified)` | Admin approval queue | O(log n) |
+| `shops` | `(owner_id)` | Buyer's own shop | O(log n) |
+| `shops` | `(lat, lng)` using `btree` | Distance sort (approximate) | O(n) → acceptable, table is small |
+| `scan_history` | `(user_id, scanned_at DESC)` | User history feed | O(log n) |
+| `scan_history` | `(item_type, grade)` | Admin aggregate | O(log n) |
+| `marketplace_posts` | `(status, grade)` | Marketplace filter | O(log n) |
+| `marketplace_posts` | `(user_id, status)` | My listings | O(log n) |
+| `bookings` | `(user_id, status)` | User booking list | O(log n) |
+| `bookings` | `(shop_id, slot_id, status)` | Shop queue | O(log n) |
+| `time_slots` | `(shop_id, date)` | Availability lookup | O(log n) |
+| `shop_closures` | `(shop_id, start_date, end_date)` | Closure check | O(log n) |
+| `training_images` | `(status, material_type)` | Training queue | O(log n) |
+
+> All PK columns are indexed automatically. Foreign keys should always have matching indexes.
+
+### 16.4 Row-Level Security (RLS) Policies
+
+RLS enforced on every table — no bypass.
+
+| Table | Read | Write |
+|-------|------|-------|
+| `waste_items` | everyone | admin only |
+| `shops` | everyone (status=active) | owner (own shop), admin (any) |
+| `user_profiles` | own row only | own row only |
+| `scan_history` | own rows only | own rows only |
+| `marketplace_posts` | everyone (unflagged) | author (own), admin (flag/delete) |
+| `bookings` | user (own) + shop owner (their shop) | user (create), shop owner (accept/reject) |
+| `time_slots` | everyone (own shop's) | shop owner (own shop) |
+| `shop_closures` | everyone (own shop's) | shop owner (own shop) |
+| `training_images` | admin only | admin only |
+| `model_versions` | everyone (active) | admin only |
+
+### 16.5 Materialized Views (avoid expensive aggregates at read time)
+
+```sql
+-- Pre-aggregated user eco stats — refresh on scan_history INSERT
+CREATE MATERIALIZED VIEW user_eco_stats AS
+SELECT
+  user_id,
+  COUNT(*) AS total_scans,
+  SUM(calculated_value) AS total_value,
+  SUM(weight_estimate) AS total_weight_kg
+FROM scan_history
+GROUP BY user_id;
+
+-- Pre-aggregated shop booking stats — refresh on bookings INSERT/UPDATE
+CREATE MATERIALIZED VIEW shop_booking_stats AS
+SELECT
+  shop_id,
+  date_trunc('day', created_at) AS day,
+  COUNT(*) FILTER (WHERE status = 'pending')   AS pending,
+  COUNT(*) FILTER (WHERE status = 'confirmed') AS confirmed
+FROM bookings
+GROUP BY shop_id, day;
+```
+
+Refreshed via Supabase Edge Function triggered by DB webhook (not polling).
+
+### 16.6 Client-side Caching Strategy
+
+| Data | Cache location | TTL | Invalidation |
+|------|---------------|-----|-------------|
+| `waste_items` pricing | `localStorage` | 24 h | On app load if `updated_at` changed |
+| Active `shops` list | `localStorage` | 1 h | On basket open |
+| User's own `scan_history` | Redux in-memory | session | On new scan |
+| `model_version` active | `localStorage` | — | On app load (see Section 17) |
+
+---
+
+## 17. AI Model Management & Auto-Update System
+
+### 17.1 Overview
+
+Admin uploads labeled images via the Admin Panel → images stored in Supabase Storage → Admin triggers training (external, e.g. Google Colab) → trained ONNX file uploaded back → new `model_versions` row created → clients detect new version on next load and download silently.
+
+```
+Admin Panel
+    │
+    ├─ Upload images (labeled) ──→ Supabase Storage: /training/{material_type}/{uuid}.jpg
+    │                               DB: training_images row
+    │
+    ├─ Trigger training ──────────→ Edge Function: create training_jobs row
+    │                               (External: Colab / script downloads images, trains, uploads ONNX)
+    │
+    └─ Deploy model ──────────────→ ONNX uploaded to Storage: /models/yolo_v{n}.onnx
+                                    DB: model_versions row (status = 'active')
+                                    Previous version → 'deprecated'
+
+Client App
+    │
+    ├─ On load: check model_versions latest active
+    │   compare with localStorage model_version
+    │
+    ├─ If newer: download ONNX → cache in IndexedDB → update localStorage
+    │   show Sonner toast: "โมเดล AI อัปเดทแล้ว"
+    │
+    └─ Scanner uses IndexedDB-cached ONNX (offline capable)
+```
+
+### 17.2 Database Tables
+
+```sql
+-- Admin uploads labeled training images
+training_images (
+  id            uuid PK DEFAULT gen_random_uuid(),
+  storage_path  text NOT NULL,        -- Supabase Storage path
+  material_type text REFERENCES waste_items(material_type),
+  grade_label   char(1),             -- A | B | C | null (Stage 1 images need no grade)
+  stage         integer DEFAULT 1,   -- 1 = detection, 2 = cleanliness
+  status        text DEFAULT 'pending',  -- pending | used | rejected
+  uploaded_by   uuid REFERENCES user_profiles(id),
+  uploaded_at   timestamptz DEFAULT now()
+)
+
+-- One row per trained model version
+model_versions (
+  id           uuid PK DEFAULT gen_random_uuid(),
+  version      text UNIQUE NOT NULL,  -- e.g. "1.0.0", "1.1.0"
+  stage        integer NOT NULL,      -- 1 | 2
+  storage_path text NOT NULL,         -- path to .onnx file in Supabase Storage
+  public_url   text NOT NULL,         -- signed/public URL cached here
+  accuracy     numeric(5,4),          -- e.g. 0.9240 = 92.40%
+  image_count  integer,               -- how many training images used
+  status       text DEFAULT 'draft',  -- draft | active | deprecated
+  release_note text,
+  created_by   uuid REFERENCES user_profiles(id),
+  created_at   timestamptz DEFAULT now()
+)
+
+-- Training job tracking
+training_jobs (
+  id             uuid PK DEFAULT gen_random_uuid(),
+  stage          integer NOT NULL,
+  image_count    integer,
+  status         text DEFAULT 'queued', -- queued | running | done | failed
+  result_version text REFERENCES model_versions(version),
+  log_text       text,
+  started_at     timestamptz,
+  finished_at    timestamptz,
+  triggered_by   uuid REFERENCES user_profiles(id)
+)
+```
+
+### 17.3 Admin Panel — Model Management UI
+
+```
+┌─────────────────────────────────────────┐
+│  AI Model Management                    │
+├─────────────────────────────────────────┤
+│  ACTIVE MODEL                           │
+│  Stage 1  v1.2.0  Acc: 94.2%  312 imgs │  ← current active
+│  Stage 2  v1.1.0  Acc: 88.7%  198 imgs │
+├─────────────────────────────────────────┤
+│  UPLOAD TRAINING IMAGES                 │
+│  Stage: [1 Detection] [2 Cleanliness]  │
+│  Material: [PET ▾]  Grade: [A] [B] [C] │
+│  [+ Drop files or click to upload]     │
+│  Queue: 47 images pending              │
+├─────────────────────────────────────────┤
+│  TRAINING JOBS                          │
+│  #8  Stage 1  Running…  47 imgs  [log] │
+│  #7  Stage 1  Done  312 imgs  94.2%    │
+├─────────────────────────────────────────┤
+│  MODEL VERSIONS                         │
+│  v1.2.0  Stage1  94.2%  [Active]       │
+│  v1.1.0  Stage1  91.5%  [Deprecated]   │
+│  v1.1.0  Stage2  88.7%  [Active]       │
+│  [Upload ONNX manually]  [Rollback]    │
+└─────────────────────────────────────────┘
+```
+
+### 17.4 Client Auto-Update Flow
+
+```js
+// On every app load (src/lib/modelUpdater.js)
+
+async function checkModelUpdate(stage) {
+  const cached = localStorage.getItem(`model_v${stage}`)   // e.g. "1.1.0"
+
+  const { data } = await supabase
+    .from('model_versions')
+    .select('version, public_url')
+    .eq('stage', stage)
+    .eq('status', 'active')
+    .single()                                               // O(1) — unique active per stage
+
+  if (data.version === cached) return   // no update needed
+
+  // Download ONNX → store in IndexedDB
+  const blob = await fetch(data.public_url).then(r => r.blob())
+  await saveModelToIndexedDB(`model_stage${stage}`, blob)
+  localStorage.setItem(`model_v${stage}`, data.version)
+
+  toast.success(`AI อัปเดทเป็น v${data.version} แล้ว`)
+}
+```
+
+**Rollback:** Admin sets previous version `status = 'active'` and new version `status = 'deprecated'` — clients pick up on next load.
+
+**Storage cost:** ONNX model ~5–15 MB per version. Keep max 3 versions → ~45 MB of 1 GB free storage.
+
+---
+
+## 18. Calendar & Booking System
+
+### 18.1 Overview
+
+Sellers book drop-off slots at shops. Shops define their available time windows and mark closures. The system prevents double-booking at the database level using optimistic concurrency.
+
+### 18.2 Closure Types
+
+| Type | `recurrence_type` | Example |
+|------|------------------|---------|
+| One-time (single day) | `none` | Thai New Year 13 Apr |
+| Multi-day consecutive | `none` | Songkran 13–15 Apr |
+| Weekly recurring | `weekly` | Closed every Sunday |
+| Monthly recurring | `monthly_date` | Closed 1st of every month |
+| Annual recurring | `annual` | Same holiday every year |
+
+### 18.3 Database Tables
+
+```sql
+-- Shop's weekly regular schedule
+shop_hours (
+  id          uuid PK DEFAULT gen_random_uuid(),
+  shop_id     uuid REFERENCES shops(id) ON DELETE CASCADE,
+  day_of_week smallint NOT NULL,  -- 0=Sun … 6=Sat
+  open_time   time NOT NULL,
+  close_time  time NOT NULL,
+  is_open     boolean DEFAULT true,
+  UNIQUE (shop_id, day_of_week)
+)
+
+-- Shop closures: one-time, multi-day, or recurring
+shop_closures (
+  id               uuid PK DEFAULT gen_random_uuid(),
+  shop_id          uuid REFERENCES shops(id) ON DELETE CASCADE,
+  start_date       date NOT NULL,
+  end_date         date NOT NULL,           -- = start_date for single day
+  recurrence_type  text DEFAULT 'none',     -- none | weekly | monthly_date | annual
+  recurrence_end   date,                    -- when recurring rule expires (null = forever)
+  reason           text,                    -- "Songkran", "ปิดปรับปรุง"
+  created_at       timestamptz DEFAULT now(),
+  CHECK (end_date >= start_date)
+)
+
+-- Pre-generated bookable time slots (generated by Edge Function nightly)
+time_slots (
+  id           uuid PK DEFAULT gen_random_uuid(),
+  shop_id      uuid REFERENCES shops(id) ON DELETE CASCADE,
+  date         date NOT NULL,
+  start_time   time NOT NULL,
+  end_time     time NOT NULL,
+  capacity     smallint DEFAULT 3,    -- max bookings per slot
+  booked_count smallint DEFAULT 0,
+  UNIQUE (shop_id, date, start_time)
+)
+
+-- Bookings
+bookings (
+  id             uuid PK DEFAULT gen_random_uuid(),
+  user_id        uuid REFERENCES user_profiles(id) ON DELETE CASCADE,
+  shop_id        uuid REFERENCES shops(id),
+  slot_id        uuid REFERENCES time_slots(id),
+  materials      jsonb NOT NULL,  -- [{ materialType, grade, weight_kg }]
+  total_estimate numeric(10,2),
+  status         text DEFAULT 'pending',  -- pending | confirmed | rejected | cancelled | completed
+  note           text,
+  created_at     timestamptz DEFAULT now(),
+  updated_at     timestamptz DEFAULT now()
+)
+```
+
+### 18.4 Indexes for Calendar Queries
+
+```sql
+CREATE INDEX idx_shop_closures_lookup  ON shop_closures (shop_id, start_date, end_date);
+CREATE INDEX idx_time_slots_avail      ON time_slots    (shop_id, date, booked_count);
+CREATE INDEX idx_bookings_user         ON bookings      (user_id, status);
+CREATE INDEX idx_bookings_shop         ON bookings      (shop_id, slot_id, status);
+CREATE INDEX idx_shop_hours_shop       ON shop_hours    (shop_id, day_of_week);
+```
+
+All availability checks are O(log n).
+
+### 18.5 Availability Check Algorithm
+
+Before showing a calendar day as bookable, the system must pass 3 checks:
+
+```
+isAvailable(shopId, date):
+
+  1. REGULAR HOURS CHECK — O(log n)
+     shop_hours WHERE shop_id = ? AND day_of_week = extract(dow FROM date)
+     → if is_open = false → CLOSED
+
+  2. CLOSURE CHECK — O(log n)
+     shop_closures WHERE shop_id = ?
+       AND start_date <= date AND end_date >= date  ← covers single + range
+       OR (recurrence_type = 'weekly'
+           AND extract(dow FROM start_date) = extract(dow FROM date)
+           AND (recurrence_end IS NULL OR date <= recurrence_end))
+       OR (recurrence_type = 'monthly_date'
+           AND extract(day FROM start_date) = extract(day FROM date)
+           AND (recurrence_end IS NULL OR date <= recurrence_end))
+       OR (recurrence_type = 'annual'
+           AND extract(month FROM start_date) = extract(month FROM date)
+           AND extract(day FROM start_date) = extract(day FROM date))
+     → if any row found → CLOSED
+
+  3. SLOT CAPACITY CHECK — O(log n)
+     time_slots WHERE shop_id = ? AND date = ?
+     → return slots WHERE booked_count < capacity
+     → if no slots → FULL
+```
+
+### 18.6 Conflict-Safe Booking (Atomic via Edge Function)
+
+Double-booking is prevented at DB level with `FOR UPDATE` lock — not just application logic:
+
+```sql
+-- Supabase Edge Function: POST /book-slot
+BEGIN;
+
+  -- Lock the slot row (pessimistic lock)
+  SELECT booked_count, capacity
+  FROM time_slots
+  WHERE id = $slot_id
+  FOR UPDATE;
+
+  -- Reject if full
+  IF booked_count >= capacity THEN
+    ROLLBACK;
+    RETURN error('slot_full');
+  END IF;
+
+  -- Create booking
+  INSERT INTO bookings (user_id, shop_id, slot_id, materials, total_estimate)
+  VALUES ($user_id, $shop_id, $slot_id, $materials, $total);
+
+  -- Increment counter atomically
+  UPDATE time_slots SET booked_count = booked_count + 1
+  WHERE id = $slot_id;
+
+COMMIT;
+```
+
+### 18.7 Calendar UI Layout
+
+```
+BasketPage / MapPage → [จองร้านนี้] button
+
+BookingModal
+┌────────────────────────────────────────┐
+│  จอง วงษ์พาณิชย์                       │
+│  0.8 km — ถ.นิมมานเหมินท์ ซ.17         │
+├────────────────────────────────────────┤
+│  เลือกวัน                              │
+│  ◀  พฤษภาคม 2569  ▶                   │
+│  จ  อ  พ  พฤ  ศ  ส  อา               │
+│  —  —   1   2   3  4   5 (closed)    │
+│   6   7  8   9  10 11  12            │  ← closed days grayed
+│  13  14 [15] 16  17 18  19           │  ← today highlighted
+│  ...                                   │
+├────────────────────────────────────────┤
+│  เลือกช่วงเวลา (15 พ.ค.)               │
+│  [08:00–10:00  2/3]  [10:00–12:00 ✓] │  ← slot/capacity badges
+│  [13:00–15:00  3/3 เต็ม]              │  ← full = disabled
+├────────────────────────────────────────┤
+│  สรุปการจอง                            │
+│  ขวด PET 1.2 kg  กระป๋อง 0.5 kg      │
+│  ประมาณ ฿32.85                         │
+│  [ยืนยันการจอง]                        │
+└────────────────────────────────────────┘
+
+DashboardPage (Buyer) — Calendar view
+┌────────────────────────────────────────┐
+│  ตารางจอง — พ.ค. 2569                  │
+│  [วัน] [สัปดาห์] [เดือน]               │  ← view toggle
+├────────────────────────────────────────┤
+│  วันนี้ 15 พ.ค.                        │
+│  08:00  Kla — PET 1.2kg, กระป๋อง 0.5  │  ← booking row
+│         [ยืนยัน] [ปฏิเสธ]             │
+│  10:00  Noon — ทองแดง 2.0kg            │
+│         [ยืนยัน] [ปฏิเสธ]             │
+├────────────────────────────────────────┤
+│  [+ เพิ่มวันหยุด]  [ตั้งค่าเวลา]     │
+└────────────────────────────────────────┘
+
+ShopClosureModal (Buyer)
+┌────────────────────────────────────────┐
+│  เพิ่มวันหยุด / ปิดร้าน                │
+│  ประเภท: [ครั้งเดียว ▾]               │
+│    ○ ครั้งเดียว (single / range)       │
+│    ○ ทุกสัปดาห์ (weekly)               │
+│    ○ ทุกเดือน (monthly)                │
+│    ○ ทุกปี (annual / public holiday)  │
+│                                        │
+│  วันที่เริ่ม: [15/05/2569]             │
+│  วันที่สิ้นสุด: [17/05/2569]           │
+│  เหตุผล: [Songkran ▾ / กรอกเอง]       │
+│  [บันทึก]                              │
+└────────────────────────────────────────┘
+```
+
+### 18.8 Slot Generation Strategy
+
+Time slots are **pre-generated nightly** by an Edge Function (not on-demand) to keep read queries simple:
+
+```
+Supabase Cron (pg_cron) — runs daily at 02:00 ICT
+  for each active shop:
+    for each day in next 14 days:
+      1. skip if shop_closures covers this day
+      2. get shop_hours for day_of_week
+      3. generate slots at 2-hour intervals
+      4. INSERT INTO time_slots (upsert, ignore if exists)
+```
+
+This means the calendar read is always a simple `SELECT WHERE shop_id AND date` — O(log n) with index.
+
+### 18.9 New Branches
+
+| Branch | Feature |
+|--------|---------|
+| `feature/calendar` | Calendar UI, booking modal, closure management |
+| `feature/ai-model-admin` | Training image upload, model versioning, auto-update |
