@@ -22,3 +22,4 @@ This folder stores canonical implementation history for the repository.
 ## Current Canonical Scopes
 
 - `Feature/GitIgnoreHygiene/` (baseline: `Feature-GitIgnoreHygiene.00.md`)
+- `Feature/SupabaseConnect/` (baseline: `Feature-SupabaseConnect.00.md`)
