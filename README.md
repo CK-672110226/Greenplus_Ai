@@ -53,10 +53,17 @@ GreenPlus Ai is a **bilingual (Thai / English) waste-to-value platform** built f
 | Layer | Technology |
 |-------|-----------|
 | Frontend | React 19 (Functional Components) + Vite 8 |
+| Routing | React Router DOM v7 |
 | State | Redux Toolkit (`wasteSlice`, `marketplaceSlice`, `userSlice`) |
-| Styling | Tailwind CSS + CSS custom properties (design tokens) |
-| Backend / DB | Supabase (Postgres) |
+| Styling | Tailwind CSS v4 + CSS custom properties (design tokens) |
+| Forms | React Hook Form + Zod (schema validation) |
+| i18n | i18next + react-i18next (TH / EN, synced with Redux) |
+| Map | react-leaflet + Leaflet (open-source, no API key) |
+| Notifications | Sonner (toast system, mounted at app root) |
+| Testing | Vitest + Testing Library + jsdom |
+| Backend / DB | Supabase (Postgres + Auth + Storage) |
 | AI | Edge AI — browser-side inference (YOLO-based detection) |
+| Deploy | Vercel |
 | Environment | `.env.local` — API keys never committed |
 
 ---
@@ -88,24 +95,80 @@ GreenPlus Ai is a **bilingual (Thai / English) waste-to-value platform** built f
 
 ## Getting Started
 
+### Prerequisites
+
+| Tool | Minimum version |
+|------|----------------|
+| Node.js | 18.x or higher |
+| npm | 9.x or higher |
+| Git | any recent version |
+
+### 1 — Clone & install
+
 ```bash
-# Install dependencies
+git clone https://github.com/<your-org>/Greenplus_Ai.git
+cd Greenplus_Ai
 npm install
+```
 
-# Start dev server (http://localhost:5173)
+### 2 — Environment variables
+
+Copy the example file and fill in your Supabase credentials:
+
+```bash
+cp .env.local.example .env.local
+```
+
+Open `.env.local` and set:
+
+```env
+VITE_SUPABASE_URL=https://<your-project>.supabase.co
+VITE_SUPABASE_ANON_KEY=<your-anon-key>
+```
+
+> Keys are available in the Supabase dashboard → **Project Settings → API**.  
+> Never commit `.env.local` — it is in `.gitignore`.
+
+### 3 — Start development
+
+```bash
 npm run dev
+# → http://localhost:5173
+```
 
-# Production build
-npm run build
+Hot Module Replacement (HMR) is enabled. Changes to any file in `src/` reload instantly.
 
-# Preview production build locally
-npm run preview
+### 4 — Run tests
 
-# Lint
+```bash
+npm run test         # watch mode (re-runs on file save)
+npm run test:run     # single run (CI)
+npm run test:ui      # browser-based Vitest UI
+npm run coverage     # single run + coverage report
+```
+
+Test files live alongside source in `src/test/` and follow the `*.test.jsx` / `*.test.js` pattern.
+
+### 5 — Lint
+
+```bash
 npm run lint
 ```
 
-Copy `.env.local.example` → `.env.local` and fill in your Supabase credentials before running.
+ESLint is configured with `react-hooks` and `react-refresh` rules. Fix all lint errors before opening a PR.
+
+### 6 — Build & preview
+
+```bash
+npm run build        # outputs to dist/
+npm run preview      # serve dist/ locally at http://localhost:4173
+```
+
+### Deploying to Vercel
+
+1. Push to `main` — Vercel auto-deploys on every push.
+2. Add the same environment variables in **Vercel → Project → Settings → Environment Variables**.
+3. Framework preset: **Vite** (auto-detected).
 
 ---
 
@@ -123,14 +186,43 @@ Target users: CMU students in dormitories, Digital Nomads / Expats (English UI),
 ```
 src/
   main.jsx          — React 19 createRoot entry
-  App.jsx           — Root component / router
+  App.jsx           — Root component / router + <Toaster />
   index.css         — Global CSS tokens (design system)
   App.css           — App-level styles
   assets/           — Static images
-  lib/              — Supabase client + utilities
-  store/            — Redux Toolkit slices (wasteSlice, marketplaceSlice, userSlice)
-  components/       — Shared UI components
-  pages/            — Route-level page components
+  lib/
+    supabase.js     — Supabase client singleton
+  store/
+    index.js        — Redux store
+    userSlice.js    — session, profile, language
+    wasteSlice.js   — scan results, basket
+    marketplaceSlice.js
+  components/
+    Button.jsx      — Primary UI button (variant: primary / secondary / ghost)
+    Card.jsx        — Bordered flat-shadow card wrapper
+    GradeTag.jsx    — Grade A / B / C badge
+    NavBar.jsx      — Top navigation bar
+    ProtectedRoute.jsx — Role-based route guard
+  pages/
+    LandingPage.jsx
+    LoginPage.jsx
+    ScanPage.jsx
+    BasketPage.jsx
+    MapPage.jsx
+    MarketplacePage.jsx
+    DashboardPage.jsx
+    AdminPage.jsx
+    SettingsPage.jsx
+  hooks/
+    useAuth.js      — Supabase auth listener → Redux
+    useT.js         — Translation hook (returns key map, syncs i18next)
+  i18n/
+    index.js        — i18next initialisation
+    en.js           — English strings
+    th.js           — Thai strings
+  test/
+    setup.js        — @testing-library/jest-dom global matchers
+    smoke.test.jsx  — Baseline component smoke test
 HistoryVersions/    — Canonical AI-assisted implementation history
 PRD.md              — Product Requirements Document
 ```
