@@ -27,3 +27,4 @@ This folder stores canonical implementation history for the repository.
 - `Feature/DesignSystem/` (baseline: `Feature-DesignSystem.00.md`)
 - `Feature/AuthRoles/` (baseline: `Feature-AuthRoles.00.md`)
 - `Feature/TechStack/` (baseline: `Feature-TechStack.00.md`)
+- `Feature/Basket/` (baseline: `Feature-Basket.00.md`)
