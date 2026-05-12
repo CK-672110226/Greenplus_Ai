@@ -56,6 +56,7 @@ The pilot zone (CMU rear / Tambon Suthep) has dense student housing, established
 | U-12 | As a user, I can switch to Multi-Stop Route mode to get a stop-by-stop route when no single shop accepts all items | Must Have |
 | U-13 | As a user, if no shop accepts a specific item, I can skip that item and continue planning the rest | Must Have |
 | U-14 | As a user, I can view my profile showing Eco-Points, scan history summary, and account settings | Should Have |
+| U-15 | As a user, I can sign in with my Google account so that I don't need to create a separate password | Must Have |
 
 ### 3.2 Buyer (Shop Operator)
 
@@ -474,7 +475,7 @@ All inference runs client-side (Edge AI). **No user images are transmitted to an
 | Milestone | Deliverable |
 |-----------|-------------|
 | M1 — Design System | CSS tokens, component library, Storybook baseline |
-| M2 — Auth + Roles | Supabase auth, role routing, language toggle |
+| M2 — Auth + Roles | Supabase auth + Google OAuth, role routing, language toggle |
 | M3 — AI Scanner MVP | Stage 1 detection + single-factor grade live; Basket page with shop matching + route planning |
 | M4 — Marketplace | Listing CRUD, grade filter, booking queue |
 | M5 — Smart Map | Shop pins, pulsing animation, material-match filter |
@@ -487,7 +488,44 @@ All inference runs client-side (Edge AI). **No user images are transmitted to an
 
 ---
 
-## 13. Basket Page Specification
+## 13. Google OAuth Setup Guide
+
+### Overview
+Authentication uses Supabase Auth with Google as an OAuth provider. New Google users get a `user_profiles` row created automatically on first sign-in, using the role stored in `localStorage` before the OAuth redirect.
+
+### Step 1 — Google Cloud Console
+1. Go to [console.cloud.google.com](https://console.cloud.google.com) → **APIs & Services → Credentials**
+2. Create a new **OAuth 2.0 Client ID** (Application type: **Web application**)
+3. Under **Authorised redirect URIs**, add:
+   ```
+   https://<your-supabase-project-ref>.supabase.co/auth/v1/callback
+   ```
+4. Copy the **Client ID** and **Client Secret**
+
+### Step 2 — Supabase Dashboard
+1. Go to **Authentication → Providers → Google**
+2. Toggle **Enable**
+3. Paste the **Client ID** and **Client Secret** from Step 1
+4. Save
+
+### Step 3 — Redirect URL Allow-list
+In **Authentication → URL Configuration**, add the following to **Redirect URLs**:
+```
+http://localhost:5173
+https://<your-production-domain>
+```
+
+### Step 4 — Environment (no changes needed)
+The app uses `window.location.origin` as `redirectTo` — no extra env variable required.
+
+### How the app handles new Google users
+- Before the OAuth redirect, the app stores the selected role (`user` / `buyer` / `admin`) in `localStorage` under key `gp_pending_role`
+- After redirect, `useAuth.js` checks if a `user_profiles` row exists; if not, it creates one using `gp_pending_role` (defaults to `user` if key is missing)
+- `display_name` is pre-filled from Google's `user_metadata.full_name`
+
+---
+
+## 14. Basket Page Specification
 
 ### Purpose
 The Basket is a **trip-planning tool**. Users accumulate scan results here, then use the shop-matching engine to find the best way to sell everything before leaving home.
