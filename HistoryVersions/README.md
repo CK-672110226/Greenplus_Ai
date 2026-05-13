@@ -33,7 +33,7 @@ This folder stores canonical implementation history for the repository.
 - `Feature/Marketplace/` (baseline: `Feature-Marketplace.00.md`) — M4 Marketplace listings page
 - `Feature/SmartMap/` (baseline: `Feature-SmartMap.00.md`) — M5 Leaflet map with shop markers
 - `Feature/BuyerDashboard/` (baseline: `Feature-BuyerDashboard.00.md`) — M6 Buyer dashboard with stats and bookings
-- `Feature/AdminPanel/` (baseline: `Feature-AdminPanel.00.md`) — M7 Admin panel with Shops, Heatmap, AI Model Config tabs
+- `Feature/AdminPanel/` (baseline: `Feature-AdminPanel.00.md`) — M7 Admin panel with Shops, Heatmap, AI Model Config tabs; `.01` AI Suite (C-06/07/10/12)
 - `Feature/SecondBrain/` (baseline: `Feature-SecondBrain.00.md`) — M8 Second Brain AI service + aiConfigSlice
 - `Feature/EcoPoints/` (baseline: `Feature-EcoPoints.00.md`) — M9 EcoPoints page with tiers and rewards
 - `Feature/CICD/` (baseline: `Feature-CICD.00.md`) — GitHub Actions CI/CD workflows

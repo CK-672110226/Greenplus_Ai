@@ -5,25 +5,12 @@ import { useT } from '../hooks/useT'
 import { Card } from '../components/Card'
 import { Button } from '../components/Button'
 import { GradeTag } from '../components/GradeTag'
-import { WASTE_ITEMS, pricePerKg, localName } from '../data/wasteItems'
+import { pricePerKg, localName } from '../data/wasteItems'
 import { getRulesFor, SEVERITY_COLOR } from '../data/wasteRules'
 import { addToBasket, setLastScan } from '../store/wasteSlice'
 import { useSelector } from 'react-redux'
-
-const MATERIALS = Object.keys(WASTE_ITEMS)
-
-function mockInfer() {
-  const isTroll = Math.random() < 0.08
-  if (isTroll) return { troll: true }
-
-  const materialType = MATERIALS[Math.floor(Math.random() * MATERIALS.length)]
-  const score = 20 + Math.floor(Math.random() * 81)
-  const grade = score >= 80 ? 'A' : score >= 50 ? 'B' : 'C'
-  const weight = +(0.1 + Math.random() * 1.9).toFixed(2)
-  const confidence = +(0.55 + Math.random() * 0.45).toFixed(2)
-
-  return { materialType, score, grade, weight, confidence, troll: false }
-}
+import { twoStageInfer } from '../services/twoStageAI'
+import { useScanInsert } from '../hooks/useScanInsert'
 
 function ScoreBar({ score }) {
   const color = score >= 80 ? 'var(--green)' : score >= 50 ? 'var(--orange)' : '#E53E3E'
@@ -47,11 +34,13 @@ export function ScanPage() {
   const t        = useT()
   const dispatch = useDispatch()
   const language = useSelector(s => s.user.language)
+  const aiConfig = useSelector(s => s.aiConfig)
   const videoRef = useRef(null)
   const streamRef = useRef(null)
 
   const [phase, setPhase]   = useState('idle')
   const [result, setResult] = useState(null)
+  const insertScan = useScanInsert()
 
   const startCamera = useCallback(async () => {
     try {
@@ -69,12 +58,13 @@ export function ScanPage() {
 
   async function handleScan() {
     setPhase('analyzing')
-    await new Promise(r => setTimeout(r, 1200 + Math.random() * 800))
-    const infer = mockInfer()
-    if (infer.troll) {
-      setPhase('troll')
-      return
-    }
+    const infer = await twoStageInfer(videoRef.current, {
+      confidenceThreshold: aiConfig.confidenceThreshold,
+      onnxStage1Url:       aiConfig.onnxStage1Url || null,
+      onnxStage2Url:       aiConfig.onnxStage2Url || null,
+    })
+    if (infer.troll) { setPhase('troll'); return }
+    if (infer.lowConfidence) { setPhase('troll'); return }
     setResult(infer)
     dispatch(setLastScan(infer))
     setPhase('result')
@@ -86,10 +76,11 @@ export function ScanPage() {
     dispatch(addToBasket({
       id,
       materialType: result.materialType,
-      grade: result.grade,
-      weight: result.weight,
-      pricePerKg: pricePerKg(result.materialType, result.grade),
+      grade:        result.grade,
+      weight:       result.weight,
+      pricePerKg:   pricePerKg(result.materialType, result.grade),
     }))
+    insertScan(result)
     toast.success(`${localName(result.materialType, language)} added to basket`)
     handleReset()
   }

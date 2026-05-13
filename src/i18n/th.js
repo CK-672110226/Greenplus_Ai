@@ -164,6 +164,19 @@ export const th = {
   unflagPost:      'ยกเลิกรายงาน',
   removePostLabel: 'ลบ',
 
+  // Admin AI Studio (C-07)
+  aiStudio:          'AI Studio',
+  trainingClasses:   'คลาสฝึกโมเดล',
+  studioHint:        'อัปโหลดอย่างน้อย 3 รูปต่อคลาส แล้วเทรนและ deploy',
+  addImages:         'เพิ่มรูป',
+  noImagesYet:       'ยังไม่มีรูป',
+  trainModel:        'เทรนโมเดล',
+  training:          'กำลังเทรน...',
+  deployModel:       'Deploy',
+  modelDeployed:     'Deploy โมเดลสำเร็จ!',
+  trainFirst:        'เทรนโมเดลก่อนเพื่อ Deploy',
+  studioActiveVer:   'เวอร์ชันที่ใช้งาน',
+
   // Login
   emailNotVerified:     'กรุณายืนยันอีเมลก่อนเข้าสู่ระบบ — เช็กกล่องจดหมายของคุณ',
   resendVerification:   'ส่งอีเมลยืนยันอีกครั้ง',

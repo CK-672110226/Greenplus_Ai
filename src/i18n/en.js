@@ -164,6 +164,19 @@ export const en = {
   unflagPost:      'Unflag',
   removePostLabel: 'Remove',
 
+  // Admin AI Studio (C-07)
+  aiStudio:          'AI Studio',
+  trainingClasses:   'Training Classes',
+  studioHint:        'Upload ≥3 images per class, then train and deploy.',
+  addImages:         'Add Images',
+  noImagesYet:       'No images',
+  trainModel:        'Train Model',
+  training:          'Training...',
+  deployModel:       'Deploy',
+  modelDeployed:     'Model deployed!',
+  trainFirst:        'Train a model first to enable Deploy.',
+  studioActiveVer:   'Active Version',
+
   // Login
   emailNotVerified:     'Please verify your email before signing in — check your inbox.',
   resendVerification:   'Resend verification email',
