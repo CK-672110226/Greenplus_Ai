@@ -3,6 +3,7 @@ import { Navigate, useNavigate } from 'react-router-dom'
 import { Card } from '../components/Card'
 import { Button } from '../components/Button'
 import { useT } from '../hooks/useT'
+import { Logo } from '../components/Logo'
 
 const ROLE_DEST = { user: '/home', buyer: '/dashboard', admin: '/admin' }
 
@@ -22,7 +23,8 @@ export function LandingPage() {
 
   return (
     <main className="flex flex-col items-center gap-10 px-6 py-16">
-      <div className="text-center max-w-xl flex flex-col gap-4">
+      <div className="text-center max-w-xl flex flex-col items-center gap-4">
+        <Logo height={72} />
         <h1 className="font-brand text-[34px] text-[var(--ink)] leading-tight m-0">
           GreenPlus<span className="text-[var(--green)]">.</span>Ai
         </h1>

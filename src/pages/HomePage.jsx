@@ -4,23 +4,102 @@ import { useT } from '../hooks/useT'
 import { Card } from '../components/Card'
 import { Button } from '../components/Button'
 import { GradeTag } from '../components/GradeTag'
+import { KpiCard } from '../components/KpiCard'
+import { SectionDivider } from '../components/SectionDivider'
 import { localName } from '../data/wasteItems'
+
+const MOCK_WEEKLY = [
+  { label: 'M', val: 1.2 },
+  { label: 'T', val: 0.8 },
+  { label: 'W', val: 2.1 },
+  { label: 'T', val: 0.5 },
+  { label: 'F', val: 1.8 },
+  { label: 'S', val: 3.2 },
+  { label: 'S', val: 0.9 },
+]
+
+function HatchBarChart({ data }) {
+  const max = Math.max(...data.map(d => d.val), 1)
+  const W = 280
+  const barW = 28
+  const gap = (W - data.length * barW) / (data.length + 1)
+  return (
+    <svg width="100%" height="80" viewBox={`0 0 ${W} 80`} preserveAspectRatio="xMidYMid meet">
+      <defs>
+        <pattern id="hatch-home" patternUnits="userSpaceOnUse" width="6" height="6" patternTransform="rotate(45)">
+          <line x1="0" y1="0" x2="0" y2="6" stroke="var(--green)" strokeWidth="1.5" />
+        </pattern>
+      </defs>
+      {data.map((d, i) => {
+        const barH = Math.max(4, (d.val / max) * 56)
+        const x = gap + i * (barW + gap)
+        const y = 64 - barH
+        return (
+          <g key={i}>
+            <rect x={x} y={y} width={barW} height={barH} fill="url(#hatch-home)" stroke="var(--ink)" strokeWidth="1" />
+            <text x={x + barW / 2} y={76} textAnchor="middle" fontSize="9" fill="var(--ink-3)" fontFamily="var(--mono)">{d.label}</text>
+          </g>
+        )
+      })}
+    </svg>
+  )
+}
+
+function greetingMsg(name) {
+  const h = new Date().getHours()
+  const part = h < 12 ? 'MORNING' : h < 17 ? 'AFTERNOON' : 'EVENING'
+  return `GOOD ${part}, ${(name ?? 'YOU').toUpperCase()}`
+}
 
 export function HomePage() {
   const navigate  = useNavigate()
   const t         = useT()
-  const { language } = useSelector(s => s.user)
+  const { language, profile } = useSelector(s => s.user)
   const basket    = useSelector(s => s.waste?.basket ?? [])
   const lastScan  = useSelector(s => s.waste?.lastScan)
 
   const activeItems = basket.filter(i => !i.skipped)
   const totalValue  = activeItems.reduce((sum, i) => sum + (i.estValue ?? 0), 0)
+  const weeklyKg    = MOCK_WEEKLY.reduce((s, d) => s + d.val, 0).toFixed(1)
+  const ecoPoints   = profile?.eco_points ?? 0
 
   return (
-    <div className="flex flex-col gap-6 px-4 py-6">
+    <div className="flex flex-col gap-5 px-4 py-6">
+      {/* Greeting */}
+      <div className="flex flex-col gap-0.5">
+        <h1 className="font-brand text-[26px] text-[var(--ink)] m-0 leading-tight">
+          {greetingMsg(profile?.display_name)}
+        </h1>
+        <span className="font-data text-[11px] text-[var(--ink-3)] uppercase tracking-widest">
+          {weeklyKg} kg this week
+        </span>
+      </div>
+
+      {/* KPI row */}
+      <div className="grid grid-cols-2 gap-3">
+        <KpiCard
+          label="Weekly earnings"
+          value={`฿${totalValue.toFixed(0)}`}
+          trend={totalValue > 0 ? { dir: 'up', value: `฿${totalValue.toFixed(0)}`, note: 'this week' } : undefined}
+        />
+        <KpiCard
+          label="Eco points"
+          value={ecoPoints}
+          unit="pts"
+        />
+      </div>
+
+      {/* Weekly hatch chart */}
+      <div className="flex flex-col gap-1.5">
+        <span className="font-data text-[10px] text-[var(--ink-3)] uppercase tracking-widest">Weekly scan volume (kg)</span>
+        <div className="border-[1.5px] border-[var(--ink)] px-3 pt-3 pb-1 bg-[var(--paper)]">
+          <HatchBarChart data={MOCK_WEEKLY} />
+        </div>
+      </div>
+
       {/* Scan CTA */}
       <Card
-        className="flex flex-col items-center gap-4 py-10 cursor-pointer hover:-translate-y-px hover:shadow-[3px_3px_0_var(--ink)] transition-all text-center"
+        className="flex flex-col items-center gap-4 py-8 cursor-pointer hover:-translate-y-px hover:shadow-[3px_3px_0_var(--ink)] transition-all text-center"
         onClick={() => navigate('/scan')}
       >
         <span className="font-data text-[11px] text-[var(--ink-3)] uppercase tracking-widest">
@@ -40,21 +119,10 @@ export function HomePage() {
         </Button>
       </Card>
 
-      {/* Basket summary */}
+      {/* Active basket */}
       {activeItems.length > 0 && (
         <div className="flex flex-col gap-3">
-          <div className="flex items-center justify-between">
-            <span className="font-data text-[11px] text-[var(--ink-3)] uppercase tracking-widest">
-              {t.basket}
-            </span>
-            <button
-              onClick={() => navigate('/basket')}
-              className="font-data text-[11px] text-[var(--green)] uppercase tracking-widest bg-transparent border-none cursor-pointer"
-            >
-              {t.basketTotal} ฿{totalValue.toFixed(0)}
-            </button>
-          </div>
-
+          <SectionDivider label={t.basket} />
           <div className="flex flex-col gap-2">
             {activeItems.slice(0, 3).map(item => (
               <div
@@ -77,16 +145,11 @@ export function HomePage() {
                 onClick={() => navigate('/basket')}
                 className="font-data text-[11px] text-[var(--ink-3)] uppercase tracking-widest bg-transparent border-none cursor-pointer py-1 self-start"
               >
-                +{activeItems.length - 3} {t.basket}
+                +{activeItems.length - 3} more
               </button>
             )}
           </div>
-
-          <Button
-            variant="primary"
-            fullWidth
-            onClick={() => navigate('/basket')}
-          >
+          <Button variant="primary" fullWidth onClick={() => navigate('/basket')}>
             {t.findRoute}
           </Button>
         </div>
@@ -94,46 +157,46 @@ export function HomePage() {
 
       {/* Last scan result */}
       {lastScan && (
-        <Card className="flex flex-col gap-2">
-          <span className="font-data text-[11px] text-[var(--ink-3)] uppercase tracking-widest">
-            {t.scanResult}
-          </span>
-          <div className="flex items-center justify-between">
-            <span className="font-body text-[15px] text-[var(--ink)]">
-              {localName(lastScan.material, language)}
-            </span>
+        <div className="flex flex-col gap-2">
+          <SectionDivider label={t.scanResult} />
+          <Card className="flex items-center justify-between">
+            <div className="flex flex-col gap-0.5">
+              <span className="font-body text-[15px] text-[var(--ink)]">
+                {localName(lastScan.material, language)}
+              </span>
+              <span className="font-data text-[11px] text-[var(--ink-3)]">
+                {t.confidence} {lastScan.confidence}%
+              </span>
+            </div>
             <GradeTag grade={lastScan.grade} />
-          </div>
-          <p className="font-data text-[12px] text-[var(--ink-3)] m-0">
-            {t.confidence} {lastScan.confidence}%
-          </p>
-        </Card>
+          </Card>
+        </div>
       )}
 
       {/* Quick links */}
-      <div className="grid grid-cols-2 gap-3">
-        <button
-          onClick={() => navigate('/map')}
-          className="flex flex-col gap-1 border-[1.5px] border-[var(--ink)] px-4 py-4 text-left bg-transparent cursor-pointer hover:bg-[var(--ink)] hover:text-[var(--paper)] transition-colors group"
-        >
-          <span className="font-data text-[10px] text-[var(--ink-3)] uppercase tracking-widest group-hover:text-[var(--paper)]">
-            {t.nearbyShops}
-          </span>
-          <span className="font-brand text-[16px] text-[var(--ink)] group-hover:text-[var(--paper)]">
-            {t.map}
-          </span>
-        </button>
-        <button
-          onClick={() => navigate('/eco-points')}
-          className="flex flex-col gap-1 border-[1.5px] border-[var(--ink)] px-4 py-4 text-left bg-transparent cursor-pointer hover:bg-[var(--ink)] hover:text-[var(--paper)] transition-colors group"
-        >
-          <span className="font-data text-[10px] text-[var(--ink-3)] uppercase tracking-widest group-hover:text-[var(--paper)]">
-            {t.yourPoints}
-          </span>
-          <span className="font-brand text-[16px] text-[var(--ink)] group-hover:text-[var(--paper)]">
-            {t.ecoPoints}
-          </span>
-        </button>
+      <div className="flex flex-col gap-2">
+        <SectionDivider label="quick access" />
+        <div className="grid grid-cols-2 gap-3">
+          {[
+            { path: '/map',        sub: t.nearbyShops, title: t.map },
+            { path: '/eco-points', sub: t.yourPoints,  title: t.ecoPoints },
+            { path: '/prices',     sub: "today's rates", title: 'Prices' },
+            { path: '/profile',    sub: 'your account',  title: 'Profile' },
+          ].map(({ path, sub, title }) => (
+            <button
+              key={path}
+              onClick={() => navigate(path)}
+              className="flex flex-col gap-1 border-[1.5px] border-[var(--ink)] px-4 py-4 text-left bg-transparent cursor-pointer hover:bg-[var(--ink)] hover:text-[var(--paper)] transition-colors group"
+            >
+              <span className="font-data text-[10px] text-[var(--ink-3)] uppercase tracking-widest group-hover:text-[var(--paper)]">
+                {sub}
+              </span>
+              <span className="font-brand text-[16px] text-[var(--ink)] group-hover:text-[var(--paper)]">
+                {title}
+              </span>
+            </button>
+          ))}
+        </div>
       </div>
     </div>
   )

@@ -3,6 +3,7 @@ import { useSelector, useDispatch } from 'react-redux'
 import { useNavigate } from 'react-router-dom'
 import { setLanguage } from '../store/userSlice'
 import { useT } from '../hooks/useT'
+import { Logo } from '../components/Logo'
 
 function IconHome() {
   return (
@@ -95,9 +96,10 @@ export function UserLayout() {
       <header className="sticky top-0 z-40 flex items-center justify-between px-4 py-3 bg-[var(--paper)] border-b-[1.5px] border-[var(--ink)]">
         <button
           onClick={() => navigate('/home')}
-          className="font-brand text-[20px] text-[var(--ink)] bg-transparent border-none cursor-pointer hover:text-[var(--green)] transition-colors p-0"
+          className="bg-transparent border-none cursor-pointer p-0 hover:opacity-75 transition-opacity"
+          aria-label="GreenPlus.Ai home"
         >
-          GreenPlus<span className="text-[var(--green)]">.</span>Ai
+          <Logo height={30} />
         </button>
 
         <div className="flex items-center gap-3">

@@ -4,6 +4,7 @@ import { useSelector } from 'react-redux'
 import { supabase } from '../lib/supabase'
 import { Card } from '../components/Card'
 import { Button } from '../components/Button'
+import { Logo } from '../components/Logo'
 
 export function AdminLoginPage() {
   const navigate             = useNavigate()
@@ -39,8 +40,8 @@ export function AdminLoginPage() {
   return (
     <main className="flex flex-col items-center justify-center min-h-screen px-6 bg-[var(--ink)]">
       <Card className="w-full max-w-xs flex flex-col gap-5 bg-[var(--paper)]">
-        <div className="flex flex-col gap-1">
-          <span className="font-data text-[10px] text-[var(--ink-3)] uppercase tracking-widest">GreenPlus Ai</span>
+        <div className="flex flex-col gap-2">
+          <Logo height={32} />
           <h1 className="font-brand text-[24px] text-[var(--ink)] m-0">Admin Access</h1>
         </div>
 

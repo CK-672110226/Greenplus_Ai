@@ -37,42 +37,56 @@ export function LoginPage() {
     }
   }, [session, profile, navigate])
 
+  async function insertProfile(userId) {
+    await supabase.from('user_profiles').insert({
+      id:            userId,
+      role,
+      display_name:  email.split('@')[0],
+      language_pref: 'th',
+      eco_points:    0,
+    })
+  }
+
+  async function doSignUp() {
+    const { data, error: authErr } = await supabase.auth.signUp({ email, password })
+    if (authErr) {
+      if (authErr.message?.toLowerCase().includes('user already registered')) {
+        setMode('signin')
+        const { error: signInErr } = await supabase.auth.signInWithPassword({ email, password })
+        if (signInErr) {
+          if (signInErr.message?.toLowerCase().includes('email not confirmed')) setUnverified(true)
+          else setError(signInErr.message)
+        }
+      } else {
+        setError(authErr.message)
+      }
+      return
+    }
+    if (data.user && !data.user.confirmed_at) { setUnverified(true); return }
+    if (data.user) await insertProfile(data.user.id)
+  }
+
+  async function doSignIn() {
+    const { error: authErr } = await supabase.auth.signInWithPassword({ email, password })
+    if (authErr) {
+      if (authErr.message?.toLowerCase().includes('invalid login credentials')) {
+        setMode('signup')
+        await doSignUp()
+      } else if (authErr.message?.toLowerCase().includes('email not confirmed')) {
+        setUnverified(true)
+      } else {
+        setError(authErr.message)
+      }
+    }
+  }
+
   async function handleSubmit(e) {
     e.preventDefault()
     setError(null)
     setUnverified(false)
     setLoading(true)
-
-    if (mode === 'signup') {
-      const { data, error: authErr } = await supabase.auth.signUp({ email, password })
-      if (authErr) { setError(authErr.message); setLoading(false); return }
-      if (data.user && !data.user.confirmed_at) {
-        setUnverified(true)
-        setLoading(false)
-        return
-      }
-      if (data.user) {
-        await supabase.from('user_profiles').insert({
-          id:            data.user.id,
-          role,
-          display_name:  email.split('@')[0],
-          language_pref: 'th',
-          eco_points:    0,
-        })
-      }
-    } else {
-      const { error: authErr } = await supabase.auth.signInWithPassword({ email, password })
-      if (authErr) {
-        if (authErr.message?.toLowerCase().includes('email not confirmed')) {
-          setUnverified(true)
-        } else {
-          setError(authErr.message)
-        }
-        setLoading(false)
-        return
-      }
-    }
-
+    if (mode === 'signup') await doSignUp()
+    else await doSignIn()
     setLoading(false)
   }
 
@@ -117,31 +131,6 @@ export function LoginPage() {
           </div>
         )}
 
-        {/* Google OAuth — not shown for admin */}
-        {role !== 'admin' && !unverified && (
-          <>
-            <button
-              type="button"
-              onClick={handleGoogleSignIn}
-              disabled={loading}
-              className="w-full flex items-center justify-center gap-3 px-4 py-2.5 border-[1.5px] border-[var(--ink)] bg-[var(--paper)] font-body text-[15px] text-[var(--ink)] cursor-pointer hover:bg-[var(--ink)] hover:text-[var(--paper)] transition-colors disabled:opacity-50"
-            >
-              <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true">
-                <path fill="#4285F4" d="M44.5 20H24v8.5h11.8C34.7 33.9 30.1 37 24 37c-7.2 0-13-5.8-13-13s5.8-13 13-13c3.1 0 5.9 1.1 8.1 2.9l6.4-6.4C34.6 4.1 29.6 2 24 2 11.8 2 2 11.8 2 24s9.8 22 22 22c11 0 21-8 21-22 0-1.3-.2-2.7-.5-4z"/>
-                <path fill="#34A853" d="M6.3 14.7l7 5.1C15 16.1 19.1 13 24 13c3.1 0 5.9 1.1 8.1 2.9l6.4-6.4C34.6 4.1 29.6 2 24 2 16.3 2 9.7 7.4 6.3 14.7z"/>
-                <path fill="#FBBC05" d="M24 46c5.9 0 10.9-2 14.5-5.4l-6.7-5.5C29.8 36.9 27 38 24 38c-6.1 0-10.7-3.9-11.8-9.2l-7 5.4C8.1 41.1 15.5 46 24 46z"/>
-                <path fill="#EA4335" d="M44.5 20H24v8.5h11.8c-.9 2.8-2.8 5.1-5.3 6.6l6.7 5.5C41.8 37.3 45 31.5 45 24c0-1.3-.2-2.7-.5-4z"/>
-              </svg>
-              {t.signInWithGoogle}
-            </button>
-            <div className="flex items-center gap-3">
-              <div className="flex-1 h-px bg-[var(--ink-3)]" />
-              <span className="font-data text-[11px] text-[var(--ink-3)] uppercase tracking-widest">{t.orDivider}</span>
-              <div className="flex-1 h-px bg-[var(--ink-3)]" />
-            </div>
-          </>
-        )}
-
         {/* Email / Password form */}
         {!unverified && (
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
@@ -173,6 +162,31 @@ export function LoginPage() {
               {loading ? '...' : mode === 'signin' ? t.signIn : t.signUp}
             </Button>
           </form>
+        )}
+
+        {/* Google OAuth — below form, not shown for admin */}
+        {role !== 'admin' && !unverified && (
+          <>
+            <div className="flex items-center gap-3">
+              <div className="flex-1 h-px bg-[var(--ink-3)]" />
+              <span className="font-data text-[11px] text-[var(--ink-3)] uppercase tracking-widest">{t.orDivider}</span>
+              <div className="flex-1 h-px bg-[var(--ink-3)]" />
+            </div>
+            <button
+              type="button"
+              onClick={handleGoogleSignIn}
+              disabled={loading}
+              className="w-full flex items-center justify-center gap-3 px-4 py-2.5 border-[1.5px] border-[var(--ink)] bg-[var(--paper)] font-body text-[15px] text-[var(--ink)] cursor-pointer hover:bg-[var(--ink)] hover:text-[var(--paper)] transition-colors disabled:opacity-50"
+            >
+              <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true">
+                <path fill="#4285F4" d="M44.5 20H24v8.5h11.8C34.7 33.9 30.1 37 24 37c-7.2 0-13-5.8-13-13s5.8-13 13-13c3.1 0 5.9 1.1 8.1 2.9l6.4-6.4C34.6 4.1 29.6 2 24 2 11.8 2 2 11.8 2 24s9.8 22 22 22c11 0 21-8 21-22 0-1.3-.2-2.7-.5-4z"/>
+                <path fill="#34A853" d="M6.3 14.7l7 5.1C15 16.1 19.1 13 24 13c3.1 0 5.9 1.1 8.1 2.9l6.4-6.4C34.6 4.1 29.6 2 24 2 16.3 2 9.7 7.4 6.3 14.7z"/>
+                <path fill="#FBBC05" d="M24 46c5.9 0 10.9-2 14.5-5.4l-6.7-5.5C29.8 36.9 27 38 24 38c-6.1 0-10.7-3.9-11.8-9.2l-7 5.4C8.1 41.1 15.5 46 24 46z"/>
+                <path fill="#EA4335" d="M44.5 20H24v8.5h11.8c-.9 2.8-2.8 5.1-5.3 6.6l6.7 5.5C41.8 37.3 45 31.5 45 24c0-1.3-.2-2.7-.5-4z"/>
+              </svg>
+              {t.signInWithGoogle}
+            </button>
+          </>
         )}
 
         {!unverified && (
