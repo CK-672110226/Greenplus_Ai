@@ -43,3 +43,4 @@ This folder stores canonical implementation history for the repository.
 - `Feature/PilotLaunch/` (baseline: `Feature-PilotLaunch.00.md`) — M10 Supabase schema, seed data, Vercel config, dark mode, pricing CRUD
 - `Feature/AuthRoles/` — now at `.03`: `.02` login overhaul; `.03` C-03 user portal — SmartLayout, UserLayout (TopBar+BottomTabBar), HomePage
 - `Fix/CICD/` (baseline: `Fix-CICD.00.md`) — PR Preview 403 fix (permissions block + return await), CI artifact name dedup
+- `Feature/PageDesign/` (baseline: `Feature-PageDesign.00.md`) — Wireframe design applied: HomePage hatch chart + KPIs, EcoPoints 4-tier table + timeline, ProfilePage impact grid, SettingsPage sections, LoginPage smart auth + Google moved below form

@@ -26,6 +26,37 @@ This is a **React 19 + Vite 8** single-page application. Entry point: `index.htm
 
 ESLint is configured with `react-hooks` and `react-refresh` rules (see `eslint.config.js`). No TypeScript.
 
+## Design Specification
+
+Before building or restyling any page, read **`docs/design-spec.md`**. It is the visual source-of-truth derived from the wireframes and covers:
+
+- Design language (neo-brutalist, borders, shadows, hatch charts, font roles)
+- Navigation anatomy (UserLayout / BuyerLayout / Admin shell with ASCII diagrams)
+- Every page spec: layout zones, exact UI zones, data shown, missing pieces vs wireframe
+- Shared micro-patterns: KpiCard, SectionDivider, ProgressBar, Timeline, Toggle pill, BookingRow, hatch bar chart
+- List of what's missing per page and what's not yet wireframed
+
+## User Flow & Page Composition
+
+Before creating or editing any page, read **`docs/user-flow.md`**. It covers:
+
+- Entry points and role-based routing (`user` → UserLayout, `buyer` → BuyerLayout, `admin` → default shell)
+- Full navigation flow for each role (user / buyer / admin)
+- Per-page composition: which components, Redux slices, services, and data each page needs
+- Redux state ↔ page map (which slice is read/written where)
+- Checklist for adding a new page correctly
+
+## UI Design System
+
+Before writing any JSX or CSS, read **`docs/ui-components.md`**. It covers:
+
+- All CSS custom property tokens (`--ink`, `--paper`, `--green`, etc.) — never use raw hex values
+- Typography classes: `font-brand`, `font-body`, `font-data`
+- Component APIs: `<Button>`, `<Card>`, `<GradeTag>`, `<NavBar>`, `<ProtectedRoute>`
+- Layout components: `<SmartLayout>`, `<UserLayout>`, `<BuyerLayout>`
+- Common patterns (uppercase labels, key/value grids, tab buttons)
+- Anti-patterns to avoid (e.g. `--ink-5` does not exist, only `--ink` through `--ink-4`)
+
 ## AI Working Rules (from PROJECT_AI_WORKING_RULES.md)
 
 These rules govern all AI-assisted work in this repository.

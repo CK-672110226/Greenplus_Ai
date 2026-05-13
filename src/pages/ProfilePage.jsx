@@ -8,11 +8,11 @@ import { GradeTag } from '../components/GradeTag'
 import { WASTE_ITEMS, localName } from '../data/wasteItems'
 
 const MOCK_SCAN_HISTORY = [
-  { id: 1, materialType: 'aluminum_can',     grade: 'A', date: '13 May 2026', value: 1.44 },
-  { id: 2, materialType: 'cardboard',         grade: 'B', date: '12 May 2026', value: 0.90 },
-  { id: 3, materialType: 'pet_bottle_clear',  grade: 'A', date: '12 May 2026', value: 0.58 },
-  { id: 4, materialType: 'copper',            grade: 'A', date: '11 May 2026', value: 30.00 },
-  { id: 5, materialType: 'mixed_plastic',     grade: 'C', date: '10 May 2026', value: 0.35 },
+  { id: 1, materialType: 'aluminum_can',     grade: 'A', date: '13 May 2026', value: 1.44,  weight: 0.5 },
+  { id: 2, materialType: 'cardboard',         grade: 'B', date: '12 May 2026', value: 0.90,  weight: 2.0 },
+  { id: 3, materialType: 'pet_bottle_clear',  grade: 'A', date: '12 May 2026', value: 0.58,  weight: 0.3 },
+  { id: 4, materialType: 'copper',            grade: 'A', date: '11 May 2026', value: 30.00, weight: 1.2 },
+  { id: 5, materialType: 'mixed_plastic',     grade: 'C', date: '10 May 2026', value: 0.35,  weight: 0.8 },
 ]
 
 const BUYER_ACCEPTED = ['aluminum_can', 'pet_bottle_clear', 'cardboard', 'copper']
@@ -30,6 +30,8 @@ function Avatar({ name }) {
 
 function UserProfile({ profile, session, t, language }) {
   const totalValue = MOCK_SCAN_HISTORY.reduce((s, h) => s + h.value, 0)
+  const totalKg    = MOCK_SCAN_HISTORY.reduce((s, h) => s + (h.weight ?? 1), 0)
+  const totalCo2   = (totalKg * 0.37).toFixed(1)
 
   return (
     <>
@@ -47,18 +49,19 @@ function UserProfile({ profile, session, t, language }) {
             </span>
           </div>
         </div>
-        <div className="flex gap-6 border-t-[1.5px] border-[var(--ink-4)] pt-3">
-          <div className="flex flex-col gap-0.5">
-            <span className="font-data text-[10px] text-[var(--ink-3)] uppercase tracking-widest">{t.ecoPoints}</span>
-            <span className="font-brand text-[24px] text-[var(--green)] leading-none">{profile?.eco_points ?? 0}</span>
+        {/* Lifetime impact grid */}
+        <div className="grid grid-cols-3 border-t-[1.5px] border-[var(--ink-4)] pt-3">
+          <div className="flex flex-col gap-0.5 border-r border-[var(--ink-4)] pr-3">
+            <span className="font-brand text-[22px] text-[var(--ink)] leading-none">{totalKg.toFixed(1)}</span>
+            <span className="font-data text-[9px] text-[var(--ink-3)] uppercase tracking-widest leading-tight">kg recycled</span>
           </div>
-          <div className="flex flex-col gap-0.5">
-            <span className="font-data text-[10px] text-[var(--ink-3)] uppercase tracking-widest">{t.totalScans}</span>
-            <span className="font-brand text-[24px] text-[var(--ink)] leading-none">{MOCK_SCAN_HISTORY.length}</span>
+          <div className="flex flex-col gap-0.5 border-r border-[var(--ink-4)] px-3">
+            <span className="font-brand text-[22px] text-[var(--green)] leading-none">฿{totalValue.toFixed(0)}</span>
+            <span className="font-data text-[9px] text-[var(--ink-3)] uppercase tracking-widest leading-tight">earned</span>
           </div>
-          <div className="flex flex-col gap-0.5">
-            <span className="font-data text-[10px] text-[var(--ink-3)] uppercase tracking-widest">Total ฿</span>
-            <span className="font-brand text-[24px] text-[var(--green)] leading-none">฿{totalValue.toFixed(2)}</span>
+          <div className="flex flex-col gap-0.5 pl-3">
+            <span className="font-brand text-[22px] text-[var(--ink)] leading-none">{totalCo2}</span>
+            <span className="font-data text-[9px] text-[var(--ink-3)] uppercase tracking-widest leading-tight">kg CO₂ saved</span>
           </div>
         </div>
       </Card>
