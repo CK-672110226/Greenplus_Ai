@@ -2,10 +2,11 @@ import { useEffect } from 'react'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { Toaster } from 'sonner'
 import { useSelector } from 'react-redux'
-import { NavBar } from './components/NavBar'
+import { SmartLayout } from './layouts/SmartLayout'
 import { ProtectedRoute } from './components/ProtectedRoute'
 import { LandingPage } from './pages/LandingPage'
 import { LoginPage } from './pages/LoginPage'
+import { HomePage } from './pages/HomePage'
 import { ScanPage } from './pages/ScanPage'
 import { BasketPage } from './pages/BasketPage'
 import { MapPage } from './pages/MapPage'
@@ -34,41 +35,32 @@ function App() {
     <BrowserRouter>
       <AuthInitializer>
         <Toaster richColors position="top-right" />
-        <div className="min-h-screen bg-[var(--paper)] flex flex-col">
-          <NavBar />
-          <Routes>
-            <Route path="/" element={<LandingPage />} />
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/x/admin" element={<AdminLoginPage />} />
-            <Route path="/scan" element={
-              <ProtectedRoute requiredRole="user"><ScanPage /></ProtectedRoute>
-            } />
-            <Route path="/basket" element={
-              <ProtectedRoute requiredRole="user"><BasketPage /></ProtectedRoute>
-            } />
-            <Route path="/map" element={
-              <ProtectedRoute requiredRole="user"><MapPage /></ProtectedRoute>
-            } />
-            <Route path="/marketplace" element={
-              <ProtectedRoute><MarketplacePage /></ProtectedRoute>
-            } />
-            <Route path="/dashboard" element={
-              <ProtectedRoute requiredRole="buyer"><DashboardPage /></ProtectedRoute>
-            } />
-            <Route path="/admin" element={
-              <ProtectedRoute requiredRole="admin"><AdminPage /></ProtectedRoute>
-            } />
-            <Route path="/settings" element={
-              <ProtectedRoute><SettingsPage /></ProtectedRoute>
-            } />
-            <Route path="/eco-points" element={
-              <ProtectedRoute><EcoPointsPage /></ProtectedRoute>
-            } />
-            <Route path="/profile" element={
-              <ProtectedRoute><ProfilePage /></ProtectedRoute>
-            } />
-          </Routes>
-        </div>
+        <Routes>
+          <Route element={<SmartLayout />}>
+            {/* Public */}
+            <Route path="/"         element={<LandingPage />} />
+            <Route path="/login"    element={<LoginPage />} />
+            <Route path="/x/admin"  element={<AdminLoginPage />} />
+
+            {/* User portal */}
+            <Route path="/home"       element={<ProtectedRoute requiredRole="user"><HomePage /></ProtectedRoute>} />
+            <Route path="/scan"       element={<ProtectedRoute requiredRole="user"><ScanPage /></ProtectedRoute>} />
+            <Route path="/basket"     element={<ProtectedRoute requiredRole="user"><BasketPage /></ProtectedRoute>} />
+            <Route path="/map"        element={<ProtectedRoute requiredRole="user"><MapPage /></ProtectedRoute>} />
+            <Route path="/eco-points" element={<ProtectedRoute requiredRole="user"><EcoPointsPage /></ProtectedRoute>} />
+
+            {/* Buyer portal */}
+            <Route path="/dashboard"  element={<ProtectedRoute requiredRole="buyer"><DashboardPage /></ProtectedRoute>} />
+
+            {/* Admin */}
+            <Route path="/admin"      element={<ProtectedRoute requiredRole="admin"><AdminPage /></ProtectedRoute>} />
+
+            {/* All authenticated roles */}
+            <Route path="/marketplace" element={<ProtectedRoute><MarketplacePage /></ProtectedRoute>} />
+            <Route path="/settings"    element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
+            <Route path="/profile"     element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
+          </Route>
+        </Routes>
       </AuthInitializer>
     </BrowserRouter>
   )

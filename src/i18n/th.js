@@ -25,6 +25,7 @@ export const th = {
   admin:         'ผู้ดูแล',
   ecoPoints:     'Eco-Points',
   role:          'บทบาท',
+  home:          'หน้าหลัก',
   comingSoon:    'จะเปิดให้ใช้ใน Milestone ถัดไป',
 
   // Scanner
