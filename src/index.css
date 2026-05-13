@@ -1,7 +1,5 @@
 @import "tailwindcss";
 
-@import url('https://fonts.googleapis.com/css2?family=Architects+Daughter&family=Caveat:wght@400;600&family=JetBrains+Mono:wght@400;700&family=Sarabun:wght@400;600&family=IBM+Plex+Sans+Thai:wght@400;600&family=Mitr:wght@400;500&display=swap');
-
 @theme {
   --font-brand: 'Architects Daughter', Mitr, sans-serif;
   --font-body:  Caveat, Sarabun, sans-serif;

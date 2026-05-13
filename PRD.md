@@ -303,43 +303,87 @@ All inference runs client-side (Edge AI). **No user images are transmitted to an
 
 ---
 
-## 5. Design System — Mono-Logic Minimalist v0
+## 5. Design System — Neo-Brutalist Mono v0.4
 
-### Principles
-1. **No drop shadows. No gradients.** Use 1.5px solid borders and flat 2px offset shadows instead.
-2. **Paper, not screen.** Background is `#FAFAF7`, not white.
-3. **Data is the UI.** Prices and weights are primary visual elements.
-4. **One accent, infinite restraint.** `#22C55E` is the only accent color system-wide.
+> Full visual spec: `docs/design-spec.md`. UI component API: `docs/ui-components.md`.
+
+### Aesthetic: Neo-brutalist mono
+
+| Principle | Implementation |
+|-----------|---------------|
+| **Border** | `border-[1.5px] border-[var(--ink)]` on every card/button/input — zero border-radius on desktop |
+| **Shadow** | `shadow-[2px_2px_0_var(--ink)]` flat offset only — no blur, no gradients |
+| **Color** | ink/paper base palette; `--green` / `--green-ink` accent for CTA and positive metrics only |
+| **Charts** | SVG hatch fill (45° diagonal lines, `stroke: var(--green)`) — never solid fill |
+| **Typography** | uppercase + `tracking-widest` for all label/chip text; JetBrains Mono for data/prices |
+| **Active state** | ink/paper inverted pill — never underline |
+| **Spacing** | 4/8/12/16/20/24px grid; prefer `gap-*` over `margin-*` |
 
 ### Color Tokens
 ```css
+/* Light mode (default) */
 --ink:        #1A1A1A   /* borders, primary text */
 --ink-2:      #3A3A3A   /* secondary text */
 --ink-3:      #7A7A7A   /* muted / placeholders */
---ink-4:      #B8B8B8   /* dividers */
---paper:      #FAFAF7   /* primary background */
+--ink-4:      #B8B8B8   /* dividers — use only 1px/h-px width */
+--paper:      #FAFAF7   /* primary background — NOT white */
 --paper-2:    #F1EFE8   /* card fill, secondary bg */
---green:      #22C55E   /* primary accent */
---green-soft: rgba(34,197,94,.14)
---green-ink:  #0F7A3A   /* green text on light */
---orange:     #F59E0B   /* alert / Grade C warning */
---blue:       #5BC0BE   /* bounding box */
+--green:      #22C55E   /* sole accent color */
+--green-soft: rgba(34,197,94,.14)  /* tinted bg for active badges */
+--green-ink:  #0F7A3A   /* green text on light backgrounds */
+--orange:     #F59E0B   /* alerts, Grade C, destructive */
+--blue:       #5BC0BE   /* bounding box overlay only */
+
+/* Dark mode — .dark class overrides */
+--ink:        #FAFAF7
+--paper:      #151512
+--paper-2:    #1E1E1A
 ```
 
-### Grade Colors
-| Grade | Background | Text |
-|-------|-----------|------|
-| A | `#22C55E` | `#062040` |
-| B | `#FFF3A8` | `#5A4A1A` |
-| C | `#FFFFFF` | `#7A7A7A` |
+> **Anti-pattern:** `--ink-5` does not exist. Max is `--ink-4`. Never use raw hex values in JSX — always reference a token.
+
+### Grade Tag Colors
+| Grade | Background | Text | Tailwind class |
+|-------|-----------|------|----------------|
+| A | `#22C55E` | `#062040` | `<GradeTag grade="A" />` |
+| B | `#FFF3A8` | `#5A4A1A` | `<GradeTag grade="B" />` |
+| C | `#FFFFFF` | `#7A7A7A` | `<GradeTag grade="C" />` |
 
 ### Typography
-| Role | Font (EN) | Font (TH) | Size |
-|------|-----------|-----------|------|
-| Heading / Brand | Architects Daughter | Mitr | 28–34px |
-| Body / Button / Nav | Caveat | Sarabun | 17–18px |
-| Price / Data / Metric | JetBrains Mono | IBM Plex Sans Thai | varies |
-| Tag / Chip | JetBrains Mono | IBM Plex Sans Thai | 10–12px |
+| Tailwind class | Font stack | Used for | Size range |
+|---------------|-----------|---------|------------|
+| `font-brand` | Architects Daughter → Mitr | h1, logo wordmark, KPI numbers, personality text | 24–48px |
+| `font-body` | Caveat → Sarabun | body text, button labels, nav labels, material names | 14–18px |
+| `font-data` | JetBrains Mono → IBM Plex Sans Thai | prices, percentages, labels uppercase, chips, badges, metadata | 9–14px |
+
+Font loading: declared in `index.html` `<link rel="stylesheet">` with `<link rel="preconnect">` for performance (not CSS @import).
+
+### Component Patterns
+
+**Card** — `bg-[var(--paper-2)] border-[1.5px] border-[var(--ink)] shadow-[2px_2px_0_var(--ink)] p-5`
+
+**Button variants:**
+- `primary` — `bg-[var(--green)] text-[#062040]` + ink border + flat shadow
+- `secondary` — `bg-[var(--paper)] text-[var(--ink)]` + ink border
+- `ghost` — transparent, ink text, no shadow
+
+**SectionDivider** — label (uppercase mono 10px) LEFT, then `flex-1 h-px bg-[var(--ink-4)]` line extending right
+
+**KpiCard** — font-brand 32px value, mono 10px label uppercase, mono 11px trend with ▲/▼
+
+**Toggle pill** — 40×20px, green bg when on, ink-4 bg when off; white dot slides via `left` CSS
+
+**Progress bar** — `h-2 border-[1.5px] border-[var(--ink)]` container, inner div `bg-[var(--green)]` or tier color
+
+**Hatch bar chart** — SVG with `<pattern>` diagonal lines `stroke: var(--green)`, bars `stroke: var(--ink)`
+
+### Navigation Shells
+
+| Shell | Used by | Layout |
+|-------|---------|--------|
+| `UserLayout` | `user` role | TopBar (sticky, 56px) + `<Outlet />` + BottomTabBar (fixed, 68px) |
+| `BuyerLayout` | `buyer` role | Desktop: 200px sidebar + main; Mobile: TopBar + horizontal nav strip |
+| Default | `admin` role | Top nav only |
 
 ---
 
