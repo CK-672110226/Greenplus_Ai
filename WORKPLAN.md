@@ -42,30 +42,30 @@ Version 1 prototype merged to `main`. พื้นฐานครบ แต่�
 
 | # | งาน | Branch | สถานะ |
 |---|-----|--------|-------|
-| C-01 | **Fix LoginPage** — ลบ Google button ซ้ำ, รวม handler เดียว, แก้ email-not-confirmed error | `fix/login` | 🔄 In Progress |
-| C-02 | **Admin Login URL ซ่อน** — route `/x/admin` ไม่โชว์ใน nav, ไม่มีลิงก์จากหน้าไหน | `fix/login` | 🔄 In Progress |
-| C-03 | **User portal layout** — Shopee-like, bottom tab bar, layout แยกจาก buyer | `feat/user-portal` | ⏳ Next |
-| C-04 | **Buyer portal layout** — industrial dashboard layout, sidebar nav | `feat/buyer-portal` | ⏳ Next |
+| C-01 | **Fix LoginPage** — ลบ Google button ซ้ำ, รวม handler เดียว, แก้ email-not-confirmed error | `fix/login` | ✅ Done |
+| C-02 | **Admin Login URL ซ่อน** — route `/x/admin` ไม่โชว์ใน nav, ไม่มีลิงก์จากหน้าไหน | `fix/login` | ✅ Done |
+| C-03 | **User portal layout** — Shopee-like, bottom tab bar, layout แยกจาก buyer | `feat/auth-roles` | ✅ Done |
+| C-04 | **Buyer portal layout** — industrial dashboard layout, sidebar nav | `feat/auth-roles` | ✅ Done |
 
 #### 🟡 ถัดไป
 
 | # | งาน | Branch | สถานะ |
 |---|-----|--------|-------|
-| C-05 | **Marketplace post form** — User โพสต์ขายของใน Marketplace ด้วยตัวเอง | `feat/marketplace-post` | ⏳ |
-| C-06 | **Two-Stage AI architecture** — Stage 1: type+size classification, Stage 2: cleanliness scoring | `feat/ai-v2` | ⏳ |
-| C-07 | **Admin Teachable Machine UI** — อัปโหลด training data, เทรนโมเดล, deploy | `feat/admin-ai-studio` | ⏳ |
-| C-08 | **Waste Rules Engine** — Backend rules/guidelines per material type (Thai standard) | `feat/waste-rules` | ⏳ |
-| C-09 | **Email verification flow** — หน้า verify-email, resend email, blocked state | `fix/login` | ⏳ |
+| C-05 | **Marketplace post form** — User โพสต์ขายของใน Marketplace ด้วยตัวเอง | `feat/ai-suite` | ✅ Done |
+| C-06 | **Two-Stage AI architecture** — Stage 1: type+size classification, Stage 2: cleanliness scoring | `feat/ai-suite` | ✅ Done |
+| C-07 | **Admin Teachable Machine UI** — อัปโหลด training data, เทรนโมเดล, deploy | `feat/ai-suite` | ✅ Done |
+| C-08 | **Waste Rules Engine** — Backend rules/guidelines per material type (Thai standard) | `feat/ai-suite` | ✅ Done |
+| C-09 | **Email verification flow** — หน้า verify-email, resend email, blocked state | `fix/login` | ✅ Done |
 
 #### 🟢 ทีหลัง
 
-| # | งาน |
-|---|-----|
-| C-10 | Supabase live data hooks (scan_history insert, eco_points increment) |
-| C-11 | Real GPS distance (Haversine) ใน Basket routing |
-| C-12 | ONNX model integration (replace mock inference) |
-| C-13 | Booking system (seller → shop slot booking) |
-| C-14 | Admin moderation (flagged posts removal) |
+| # | งาน | สถานะ |
+|---|-----|-------|
+| C-10 | Supabase live data hooks (scan_history insert, eco_points increment) | ✅ Done |
+| C-11 | Real GPS distance (Haversine) ใน Basket routing | ✅ Done |
+| C-12 | ONNX model integration (replace mock inference) | ✅ Done |
+| C-13 | Booking system (seller → shop slot booking) | ✅ Done |
+| C-14 | Admin moderation (flagged posts removal) | ✅ Done |
 
 ---
 
