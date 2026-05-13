@@ -18,7 +18,6 @@ export function LandingPage() {
   const roles = [
     { key: 'user',  label: t.roleUser,  desc: t.roleUserDesc,  marker: 'U' },
     { key: 'buyer', label: t.roleBuyer, desc: t.roleBuyerDesc, marker: 'B' },
-    { key: 'admin', label: t.roleAdmin, desc: t.roleAdminDesc, marker: 'A' },
   ]
 
   return (
@@ -30,7 +29,7 @@ export function LandingPage() {
         <p className="font-body text-[18px] text-[var(--ink-2)] m-0">{t.tagline}</p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 w-full max-w-2xl">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 w-full max-w-xl">
         {roles.map(r => (
           <Card
             key={r.key}

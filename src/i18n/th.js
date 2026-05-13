@@ -141,4 +141,8 @@ export const th = {
   darkMode:          'โหมดมืด',
   appearance:        'ธีม',
   orDivider:         'หรือ',
+
+  // Login
+  emailNotVerified:     'กรุณายืนยันอีเมลก่อนเข้าสู่ระบบ — เช็กกล่องจดหมายของคุณ',
+  resendVerification:   'ส่งอีเมลยืนยันอีกครั้ง',
 }
