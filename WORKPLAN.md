@@ -20,7 +20,7 @@ Version 1 prototype merged to `main`. พื้นฐานครบ แต่�
 
 | # | งาน | วิธีทำ |
 |---|-----|--------|
-| S-01 | **ปิด Email Confirmation** (สำหรับ dev) | Supabase Dashboard → Authentication → Providers → Email → ปิด "Confirm email" |
+| S-01 | **ปิด Email Confirmation** (สำหรับ dev) | Supabase Dashboard → Authentication → Providers → Email → ปิด "Confirm email" | 
 | S-02 | **เปิด Google OAuth** | Supabase → Authentication → Providers → Google → เปิด, ใส่ Client ID + Secret จาก Google Cloud Console |
 | S-03 | **ตั้ง Redirect URLs** | Supabase → Authentication → URL Configuration → เพิ่ม `http://localhost:5173/**` และ production URL |
 | S-04 | **สร้าง Google OAuth App** | Google Cloud Console → APIs & Services → Credentials → OAuth 2.0 → เพิ่ม `https://<project>.supabase.co/auth/v1/callback` ใน Authorized redirect URIs |
