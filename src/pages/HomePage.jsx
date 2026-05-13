@@ -59,7 +59,7 @@ export function HomePage() {
             {activeItems.slice(0, 3).map(item => (
               <div
                 key={item.id}
-                className="flex items-center justify-between border-[1.5px] border-[var(--ink-5)] px-3 py-2"
+                className="flex items-center justify-between border-[1.5px] border-[var(--ink-4)] px-3 py-2"
               >
                 <span className="font-body text-[15px] text-[var(--ink)]">
                   {localName(item.material, language)}
