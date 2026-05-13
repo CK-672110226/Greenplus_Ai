@@ -110,4 +110,35 @@ export const en = {
   modelVersion:      'Model Version',
   promptConfig:      'System Prompt',
   saveConfig:        'Save Config',
+
+  // Profile (M3b)
+  profile:           'Profile',
+  displayName:       'Display Name',
+  scanHistory:       'Scan History',
+  totalScans:        'Total Scans',
+  shopInfo:          'Shop Info',
+  acceptedMaterials: 'Accepted Materials',
+  pricingTable:      'Pricing Table',
+  adminBadge:        'Platform Admin',
+  pendingActions:    'Pending Actions',
+  shopsToApprove:    'Shops to Approve',
+
+  // Basket routing (U-11/U-12/U-13)
+  findRoute:         'Find Route',
+  routeMode:         'Route Mode',
+  noAcceptingShop:   'No shop accepts this item',
+  totalDistance:     'Total Distance',
+  openInMaps:        'Open in Maps',
+
+  // Dashboard pricing CRUD (B-02)
+  myPricing:         'My Pricing',
+  gradeA:            'Grade A (฿/kg)',
+  gradeB:            'Grade B (฿/kg)',
+  gradeC:            'Grade C (฿/kg)',
+  savePricing:       'Save Pricing',
+
+  // Settings
+  darkMode:          'Dark Mode',
+  appearance:        'Appearance',
+  orDivider:         'or',
 }

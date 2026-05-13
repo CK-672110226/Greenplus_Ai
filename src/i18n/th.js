@@ -110,4 +110,35 @@ export const th = {
   modelVersion:      'เวอร์ชันโมเดล',
   promptConfig:      'System Prompt',
   saveConfig:        'บันทึก',
+
+  // Profile (M3b)
+  profile:           'โปรไฟล์',
+  displayName:       'ชื่อที่แสดง',
+  scanHistory:       'ประวัติการสแกน',
+  totalScans:        'สแกนทั้งหมด',
+  shopInfo:          'ข้อมูลร้าน',
+  acceptedMaterials: 'วัสดุที่รับ',
+  pricingTable:      'ตารางราคา',
+  adminBadge:        'ผู้ดูแลแพลตฟอร์ม',
+  pendingActions:    'รอดำเนินการ',
+  shopsToApprove:    'ร้านรออนุมัติ',
+
+  // Basket routing (U-11/U-12/U-13)
+  findRoute:         'หาเส้นทาง',
+  routeMode:         'โหมดเส้นทาง',
+  noAcceptingShop:   'ไม่มีร้านรับวัสดุนี้',
+  totalDistance:     'ระยะทางรวม',
+  openInMaps:        'เปิดแผนที่',
+
+  // Dashboard pricing CRUD (B-02)
+  myPricing:         'ราคารับซื้อ',
+  gradeA:            'เกรด A (฿/กก.)',
+  gradeB:            'เกรด B (฿/กก.)',
+  gradeC:            'เกรด C (฿/กก.)',
+  savePricing:       'บันทึกราคา',
+
+  // Settings
+  darkMode:          'โหมดมืด',
+  appearance:        'ธีม',
+  orDivider:         'หรือ',
 }

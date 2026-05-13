@@ -1,5 +1,5 @@
 import { useDispatch, useSelector } from 'react-redux'
-import { setLanguage } from '../store/userSlice'
+import { setLanguage, toggleDarkMode } from '../store/userSlice'
 import { Card } from '../components/Card'
 import { useT } from '../hooks/useT'
 
@@ -21,15 +21,16 @@ function LangBtn({ active, onClick, children }) {
 }
 
 export function SettingsPage() {
-  const dispatch             = useDispatch()
-  const { profile, language } = useSelector(s => s.user)
-  const t                    = useT()
+  const dispatch               = useDispatch()
+  const { profile, language, darkMode } = useSelector(s => s.user)
+  const t                      = useT()
 
   return (
     <main className="flex flex-col items-center px-6 py-12 gap-6">
       <h1 className="font-brand text-[28px] text-[var(--ink)] m-0">{t.settings}</h1>
 
       <Card className="w-full max-w-sm flex flex-col gap-6">
+        {/* Language */}
         <section className="flex flex-col gap-3">
           <label className="font-data text-[12px] text-[var(--ink-3)] uppercase tracking-widest">{t.language}</label>
           <div className="flex gap-3">
@@ -38,6 +39,27 @@ export function SettingsPage() {
           </div>
         </section>
 
+        {/* Dark mode */}
+        <section className="flex flex-col gap-3 border-t-[1.5px] border-[var(--ink-4)] pt-4">
+          <label className="font-data text-[12px] text-[var(--ink-3)] uppercase tracking-widest">{t.appearance}</label>
+          <button
+            type="button"
+            onClick={() => dispatch(toggleDarkMode())}
+            className="flex items-center justify-between px-4 py-3 border-[1.5px] border-[var(--ink)] bg-[var(--paper)] cursor-pointer"
+          >
+            <span className="font-body text-[16px] text-[var(--ink)]">{t.darkMode}</span>
+            <span
+              className={`w-10 h-5 border-[1.5px] border-[var(--ink)] relative transition-colors ${darkMode ? 'bg-[var(--green)]' : 'bg-[var(--ink-4)]'}`}
+            >
+              <span
+                className="absolute top-0.5 w-3 h-3 bg-[var(--paper)] border-[1px] border-[var(--ink)] transition-all"
+                style={{ left: darkMode ? 'calc(100% - 14px)' : '2px' }}
+              />
+            </span>
+          </button>
+        </section>
+
+        {/* Profile info */}
         {profile && (
           <section className="flex flex-col gap-3 border-t-[1.5px] border-[var(--ink-4)] pt-4">
             <div className="flex flex-col gap-1">

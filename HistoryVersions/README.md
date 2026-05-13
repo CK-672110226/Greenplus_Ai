@@ -38,3 +38,6 @@ This folder stores canonical implementation history for the repository.
 - `Feature/EcoPoints/` (baseline: `Feature-EcoPoints.00.md`) — M9 EcoPoints page with tiers and rewards
 - `Feature/CICD/` (baseline: `Feature-CICD.00.md`) — GitHub Actions CI/CD workflows
 - `Feature/Tests/` (baseline: `Feature-Tests.00.md`) — Vitest unit tests for wasteItems and secondBrain
+- `Feature/ProfilePages/` (baseline: `Feature-ProfilePages.00.md`) — M3b role-aware profile pages (User/Buyer/Admin)
+- `Feature/BasketRouting/` (baseline: `Feature-BasketRouting.00.md`) — U-11/U-12/U-13 Single Shop + Multi-Stop route planning
+- `Feature/PilotLaunch/` (baseline: `Feature-PilotLaunch.00.md`) — M10 Supabase schema, seed data, Vercel config, dark mode, pricing CRUD

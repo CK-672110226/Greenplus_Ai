@@ -3,6 +3,7 @@ import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet'
 import L from 'leaflet'
 import { useT } from '../hooks/useT'
 import { WASTE_ITEMS, localName } from '../data/wasteItems'
+import { SHOPS } from '../data/shops'
 import { useSelector } from 'react-redux'
 import 'leaflet/dist/leaflet.css'
 
@@ -11,44 +12,6 @@ L.Icon.Default.mergeOptions({
   iconUrl:       'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
   shadowUrl:     'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
 })
-
-const SHOPS = [
-  {
-    id: 1,
-    name: 'เฮียอ้วน รีไซเคิล',
-    lat: 18.7955, lng: 98.9963,
-    accepts: ['aluminum_can', 'pet_bottle_clear', 'mixed_plastic'],
-    distanceKm: 1.2,
-  },
-  {
-    id: 2,
-    name: 'แม่น้อย ของเก่า',
-    lat: 18.7810, lng: 98.9880,
-    accepts: ['copper', 'glass', 'aluminum_can'],
-    distanceKm: 2.5,
-  },
-  {
-    id: 3,
-    name: 'ร้านบุญชู',
-    lat: 18.7920, lng: 98.9780,
-    accepts: ['cardboard', 'newspaper', 'mixed_plastic'],
-    distanceKm: 0.8,
-  },
-  {
-    id: 4,
-    name: 'กรีน พอยท์ CM',
-    lat: 18.8040, lng: 98.9950,
-    accepts: ['pet_bottle_clear', 'aluminum_can', 'cardboard', 'newspaper', 'copper'],
-    distanceKm: 3.1,
-  },
-  {
-    id: 5,
-    name: 'ไบโอ ออยล์ CMU',
-    lat: 18.7991, lng: 98.9528,
-    accepts: ['cooking_oil'],
-    distanceKm: 5.6,
-  },
-]
 
 const MATERIAL_FILTERS = ['all', ...Object.keys(WASTE_ITEMS)]
 
