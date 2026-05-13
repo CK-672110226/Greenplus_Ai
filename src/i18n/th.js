@@ -11,10 +11,9 @@ export const th = {
   password:      'รหัสผ่าน',
   signIn:        'เข้าสู่ระบบ',
   signUp:        'สมัครสมาชิก',
+  signInWithGoogle: 'เข้าสู่ระบบด้วย Google',
   noAccount:        'ยังไม่มีบัญชี?',
   hasAccount:       'มีบัญชีแล้ว?',
-  signInWithGoogle: 'เข้าสู่ระบบด้วย Google',
-  orDivider:        'หรือ',
   language:      'ภาษา',
   settings:      'ตั้งค่า',
   logout:        'ออกจากระบบ',
@@ -27,4 +26,119 @@ export const th = {
   ecoPoints:     'Eco-Points',
   role:          'บทบาท',
   comingSoon:    'จะเปิดให้ใช้ใน Milestone ถัดไป',
+
+  // Scanner
+  scanTap:       'แตะเพื่อสแกนขยะ',
+  scanBtn:       'สแกนวัสดุ',
+  analyzing:     'กำลังวิเคราะห์...',
+  scanResult:    'ผลการสแกน',
+  addToBasket:   'เพิ่มลงตะกร้า',
+  scanAgain:     'สแกนใหม่',
+  estWeight:     'น้ำหนักประมาณ',
+  scoreLabel:    'คะแนนคุณภาพ',
+  confidence:    'ความมั่นใจ',
+  cameraError:   'ไม่ได้รับอนุญาตเข้าถึงกล้อง กรุณาอนุญาตการใช้กล้อง',
+  antiTroll:     'ระบบกรองข้อมูลผิดปกติ',
+  rejected:      'ถูกปฏิเสธ',
+  rejectedHint:  'วัสดุนี้ไม่ผ่านมาตรฐานการรีไซเคิล',
+
+  // Basket
+  basketEmpty:   'ตะกร้าว่างอยู่ กรุณาสแกนวัสดุก่อน',
+  basketTotal:   'มูลค่ารวม',
+  noShopWarning: 'ไม่มีร้านใกล้เคียงที่รับวัสดุทั้งหมด',
+  skipItem:      'ข้าม',
+  removeItem:    'ลบออก',
+  singleShop:    'ร้านเดียว',
+  multiStop:     'หลายจุด',
+  acceptsAll:    'รับทั้งหมด',
+  stop:          'จุดหยุด',
+  distanceKm:    'กม.',
+  clearBasket:   'ล้างตะกร้า',
+
+  // Marketplace
+  marketplaceTitle: 'ตลาดซื้อขาย',
+  filterAll:     'ทั้งหมด',
+  filterA:       'เกรด A',
+  filterB:       'เกรด B',
+  filterC:       'เกรด C',
+  noListings:    'ไม่มีรายการที่ตรงกับตัวกรอง',
+  postAd:        'ลงประกาศ',
+  contactSeller: 'ติดต่อ',
+
+  // Map
+  mapTitle:      'แผนที่อัจฉริยะ',
+  nearbyShops:   'ร้านรับซื้อใกล้เคียง',
+  kmAway:        'กม.',
+  noShopsNear:   'ไม่พบร้านใกล้เคียง',
+  shopAccepts:   'รับ',
+  directions:    'นำทาง',
+
+  // Dashboard
+  dashboardTitle:    'แดชบอร์ดผู้ซื้อ',
+  pendingOrders:     'รอดำเนินการ',
+  completedOrders:   'เสร็จวันนี้',
+  totalRevenue:      'รายได้วันนี้',
+  avgGrade:          'เกรดเฉลี่ย',
+  recentBookings:    'การจองล่าสุด',
+  acceptOrder:       'รับ',
+  rejectOrder:       'ปฏิเสธ',
+
+  // Admin
+  adminTitle:        'แผงผู้ดูแล',
+  shopManagement:    'จัดการร้าน',
+  approveShop:       'อนุมัติ',
+  rejectShop:        'ปฏิเสธ',
+  pendingApproval:   'รออนุมัติ',
+  activeShops:       'ร้านที่เปิดใช้',
+  heatmap:           'ฮีทแมป',
+  modelConfig:       'ตั้งค่า AI',
+
+  // Eco Points
+  ecoPointsTitle:    'คะแนน Eco',
+  yourPoints:        'คะแนนของคุณ',
+  pointsHistory:     'ประวัติคะแนน',
+  earnedFrom:        'ได้จาก',
+  redeemPoints:      'แลก',
+  pointsExplain:     'รับคะแนนจากการสแกนและขายขยะ',
+
+  // Second Brain
+  secondBrainTitle:  'สมองที่ 2',
+  analyzeWaste:      'วิเคราะห์วัสดุ',
+  brainResult:       'ผลลัพธ์ AI',
+  brainConfidence:   'ความมั่นใจ',
+  brainSuggestion:   'ข้อเสนอแนะ',
+  modelVersion:      'เวอร์ชันโมเดล',
+  promptConfig:      'System Prompt',
+  saveConfig:        'บันทึก',
+
+  // Profile (M3b)
+  profile:           'โปรไฟล์',
+  displayName:       'ชื่อที่แสดง',
+  scanHistory:       'ประวัติการสแกน',
+  totalScans:        'สแกนทั้งหมด',
+  shopInfo:          'ข้อมูลร้าน',
+  acceptedMaterials: 'วัสดุที่รับ',
+  pricingTable:      'ตารางราคา',
+  adminBadge:        'ผู้ดูแลแพลตฟอร์ม',
+  pendingActions:    'รอดำเนินการ',
+  shopsToApprove:    'ร้านรออนุมัติ',
+
+  // Basket routing (U-11/U-12/U-13)
+  findRoute:         'หาเส้นทาง',
+  routeMode:         'โหมดเส้นทาง',
+  noAcceptingShop:   'ไม่มีร้านรับวัสดุนี้',
+  totalDistance:     'ระยะทางรวม',
+  openInMaps:        'เปิดแผนที่',
+
+  // Dashboard pricing CRUD (B-02)
+  myPricing:         'ราคารับซื้อ',
+  gradeA:            'เกรด A (฿/กก.)',
+  gradeB:            'เกรด B (฿/กก.)',
+  gradeC:            'เกรด C (฿/กก.)',
+  savePricing:       'บันทึกราคา',
+
+  // Settings
+  darkMode:          'โหมดมืด',
+  appearance:        'ธีม',
+  orDivider:         'หรือ',
 }

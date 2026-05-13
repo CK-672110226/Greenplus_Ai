@@ -18,21 +18,21 @@ async function fetchOrCreateProfile(user, dispatch) {
   // First-time Google OAuth user — create profile
   const role = localStorage.getItem('gp_pending_role') ?? 'user'
   localStorage.removeItem('gp_pending_role')
-  const displayName = user.user_metadata?.full_name ?? user.email?.split('@')[0] ?? ''
+  const displayName = user.user_metadata?.full_name ?? user.email?.split('@')[0] ?? 'User'
 
-  const { data: newProfile } = await supabase
+  const { data: created } = await supabase
     .from('user_profiles')
     .insert({
-      id: user.id,
+      id:            user.id,
       role,
-      display_name: displayName,
+      display_name:  displayName,
       language_pref: 'th',
-      eco_points: 0,
+      eco_points:    0,
     })
     .select()
     .single()
 
-  if (newProfile) dispatch(setProfile(newProfile))
+  if (created) dispatch(setProfile(created))
 }
 
 export function useAuth() {

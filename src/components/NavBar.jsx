@@ -34,6 +34,7 @@ export function NavBar() {
             <NavLink to="/basket">{t.basket}</NavLink>
             <NavLink to="/map">{t.map}</NavLink>
             <NavLink to="/marketplace">{t.marketplace}</NavLink>
+            <NavLink to="/eco-points">{t.ecoPoints}</NavLink>
           </>
         )}
         {session && role === 'buyer' && (
@@ -45,6 +46,7 @@ export function NavBar() {
         {session && role === 'admin' && (
           <NavLink to="/admin">{t.admin}</NavLink>
         )}
+        {session && <NavLink to="/profile">{t.profile}</NavLink>}
         {session && <NavLink to="/settings">{t.settings}</NavLink>}
 
         <button

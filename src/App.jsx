@@ -1,5 +1,7 @@
+import { useEffect } from 'react'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { Toaster } from 'sonner'
+import { useSelector } from 'react-redux'
 import { NavBar } from './components/NavBar'
 import { ProtectedRoute } from './components/ProtectedRoute'
 import { LandingPage } from './pages/LandingPage'
@@ -11,10 +13,18 @@ import { MarketplacePage } from './pages/MarketplacePage'
 import { DashboardPage } from './pages/DashboardPage'
 import { AdminPage } from './pages/AdminPage'
 import { SettingsPage } from './pages/SettingsPage'
+import { EcoPointsPage } from './pages/EcoPointsPage'
+import { ProfilePage } from './pages/ProfilePage'
 import { useAuth } from './hooks/useAuth'
 
 function AuthInitializer({ children }) {
   useAuth()
+  const darkMode = useSelector(s => s.user.darkMode)
+
+  useEffect(() => {
+    document.documentElement.classList.toggle('dark', darkMode)
+  }, [darkMode])
+
   return children
 }
 
@@ -48,6 +58,12 @@ function App() {
             } />
             <Route path="/settings" element={
               <ProtectedRoute><SettingsPage /></ProtectedRoute>
+            } />
+            <Route path="/eco-points" element={
+              <ProtectedRoute><EcoPointsPage /></ProtectedRoute>
+            } />
+            <Route path="/profile" element={
+              <ProtectedRoute><ProfilePage /></ProtectedRoute>
             } />
           </Routes>
         </div>

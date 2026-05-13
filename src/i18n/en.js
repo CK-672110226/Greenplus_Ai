@@ -11,10 +11,9 @@ export const en = {
   password:      'Password',
   signIn:        'Sign In',
   signUp:        'Sign Up',
+  signInWithGoogle: 'Sign in with Google',
   noAccount:        "No account?",
   hasAccount:       'Already have an account?',
-  signInWithGoogle: 'Sign in with Google',
-  orDivider:        'or',
   language:      'Language',
   settings:      'Settings',
   logout:        'Sign Out',
@@ -27,4 +26,119 @@ export const en = {
   ecoPoints:     'Eco-Points',
   role:          'Role',
   comingSoon:    'Coming in the next milestone.',
+
+  // Scanner
+  scanTap:       'Tap to scan waste item',
+  scanBtn:       'Scan Item',
+  analyzing:     'Analyzing...',
+  scanResult:    'Scan Result',
+  addToBasket:   'Add to Basket',
+  scanAgain:     'Scan Again',
+  estWeight:     'Est. Weight',
+  scoreLabel:    'Quality Score',
+  confidence:    'Confidence',
+  cameraError:   'Camera access denied. Please allow camera permission.',
+  antiTroll:     'Anti-Troll Filter Active',
+  rejected:      'Item Rejected',
+  rejectedHint:  'This item does not meet recycling standards.',
+
+  // Basket
+  basketEmpty:   'Your basket is empty. Scan some items first.',
+  basketTotal:   'Total Value',
+  noShopWarning: 'No nearby shop accepts all items.',
+  skipItem:      'Skip',
+  removeItem:    'Remove',
+  singleShop:    'Single Shop Route',
+  multiStop:     'Multi-Stop Route',
+  acceptsAll:    'Accepts All',
+  stop:          'Stop',
+  distanceKm:    'km away',
+  clearBasket:   'Clear Basket',
+
+  // Marketplace
+  marketplaceTitle: 'Marketplace',
+  filterAll:     'All',
+  filterA:       'Grade A',
+  filterB:       'Grade B',
+  filterC:       'Grade C',
+  noListings:    'No listings match the filter.',
+  postAd:        'Post Ad',
+  contactSeller: 'Contact',
+
+  // Map
+  mapTitle:      'Smart Map',
+  nearbyShops:   'Nearby Shops',
+  kmAway:        'km',
+  noShopsNear:   'No shops found nearby.',
+  shopAccepts:   'Accepts',
+  directions:    'Get Directions',
+
+  // Dashboard
+  dashboardTitle:    'Buyer Dashboard',
+  pendingOrders:     'Pending',
+  completedOrders:   'Completed Today',
+  totalRevenue:      "Today's Revenue",
+  avgGrade:          'Avg Grade',
+  recentBookings:    'Recent Bookings',
+  acceptOrder:       'Accept',
+  rejectOrder:       'Reject',
+
+  // Admin
+  adminTitle:        'Admin Panel',
+  shopManagement:    'Shop Management',
+  approveShop:       'Approve',
+  rejectShop:        'Reject',
+  pendingApproval:   'Pending Approval',
+  activeShops:       'Active Shops',
+  heatmap:           'Heatmap',
+  modelConfig:       'AI Model Config',
+
+  // Eco Points
+  ecoPointsTitle:    'Eco Points',
+  yourPoints:        'Your Points',
+  pointsHistory:     'Points History',
+  earnedFrom:        'Earned from',
+  redeemPoints:      'Redeem',
+  pointsExplain:     'Earn points by scanning and selling waste.',
+
+  // Second Brain
+  secondBrainTitle:  'Second Brain',
+  analyzeWaste:      'Analyze Waste Item',
+  brainResult:       'AI Result',
+  brainConfidence:   'Confidence',
+  brainSuggestion:   'Suggestion',
+  modelVersion:      'Model Version',
+  promptConfig:      'System Prompt',
+  saveConfig:        'Save Config',
+
+  // Profile (M3b)
+  profile:           'Profile',
+  displayName:       'Display Name',
+  scanHistory:       'Scan History',
+  totalScans:        'Total Scans',
+  shopInfo:          'Shop Info',
+  acceptedMaterials: 'Accepted Materials',
+  pricingTable:      'Pricing Table',
+  adminBadge:        'Platform Admin',
+  pendingActions:    'Pending Actions',
+  shopsToApprove:    'Shops to Approve',
+
+  // Basket routing (U-11/U-12/U-13)
+  findRoute:         'Find Route',
+  routeMode:         'Route Mode',
+  noAcceptingShop:   'No shop accepts this item',
+  totalDistance:     'Total Distance',
+  openInMaps:        'Open in Maps',
+
+  // Dashboard pricing CRUD (B-02)
+  myPricing:         'My Pricing',
+  gradeA:            'Grade A (฿/kg)',
+  gradeB:            'Grade B (฿/kg)',
+  gradeC:            'Grade C (฿/kg)',
+  savePricing:       'Save Pricing',
+
+  // Settings
+  darkMode:          'Dark Mode',
+  appearance:        'Appearance',
+  orDivider:         'or',
 }

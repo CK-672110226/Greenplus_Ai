@@ -30,6 +30,7 @@ export function LoginPage() {
   const [error, setError]       = useState(null)
   const [loading, setLoading]   = useState(false)
 
+
   // Navigate after email/password login OR after Google OAuth redirect
   useEffect(() => {
     if (session && profile) {
@@ -47,11 +48,11 @@ export function LoginPage() {
       if (authErr) { setError(authErr.message); setLoading(false); return }
       if (data.user) {
         await supabase.from('user_profiles').insert({
-          id: data.user.id,
+          id:            data.user.id,
           role,
-          display_name: email.split('@')[0],
+          display_name:  email.split('@')[0],
           language_pref: 'th',
-          eco_points: 0,
+          eco_points:    0,
         })
       }
     } else {
@@ -73,6 +74,15 @@ export function LoginPage() {
     })
     if (authErr) { setError(authErr.message); setLoading(false) }
     // On success the browser redirects — no further action needed
+  }
+
+  async function handleGoogle() {
+    setError(null)
+    const { error: authErr } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: window.location.origin + (ROLE_DEST[role] ?? '/scan') },
+    })
+    if (authErr) setError(authErr.message)
   }
 
   return (
@@ -136,6 +146,16 @@ export function LoginPage() {
             {loading ? '...' : mode === 'signin' ? t.signIn : t.signUp}
           </Button>
         </form>
+
+        <div className="flex items-center gap-3">
+          <div className="flex-1 h-[1.5px] bg-[var(--ink-4)]" />
+          <span className="font-data text-[10px] text-[var(--ink-4)] uppercase">or</span>
+          <div className="flex-1 h-[1.5px] bg-[var(--ink-4)]" />
+        </div>
+
+        <Button variant="secondary" fullWidth onClick={handleGoogle}>
+          {t.signInWithGoogle}
+        </Button>
 
         <button
           type="button"

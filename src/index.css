@@ -30,6 +30,20 @@
   --blue:       #5BC0BE;
 }
 
+.dark {
+  --ink:        #FAFAF7;
+  --ink-2:      #D8D8D0;
+  --ink-3:      #9A9A92;
+  --ink-4:      #4A4A48;
+  --paper:      #151512;
+  --paper-2:    #1E1E1A;
+  --green:      #22C55E;
+  --green-soft: rgba(34, 197, 94, .18);
+  --green-ink:  #4ADE80;
+  --orange:     #FBBF24;
+  --blue:       #5BC0BE;
+}
+
 *, *::before, *::after { box-sizing: border-box; }
 
 body {
@@ -40,4 +54,5 @@ body {
   font-size: 17px;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
+  transition: background 0.2s, color 0.2s;
 }
