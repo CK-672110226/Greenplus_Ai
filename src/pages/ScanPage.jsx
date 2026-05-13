@@ -6,6 +6,7 @@ import { Card } from '../components/Card'
 import { Button } from '../components/Button'
 import { GradeTag } from '../components/GradeTag'
 import { WASTE_ITEMS, pricePerKg, localName } from '../data/wasteItems'
+import { getRulesFor, SEVERITY_COLOR } from '../data/wasteRules'
 import { addToBasket, setLastScan } from '../store/wasteSlice'
 import { useSelector } from 'react-redux'
 
@@ -187,6 +188,18 @@ export function ScanPage() {
               <span className="font-data text-[11px] text-[var(--ink-3)] uppercase">{t.confidence}</span>
               <span className="font-data text-[13px] text-[var(--ink)]">{(result.confidence * 100).toFixed(0)}%</span>
             </div>
+
+            {/* Waste preparation rules */}
+            {getRulesFor(result.materialType).length > 0 && (
+              <div className="flex flex-col gap-1.5 border-t-[1.5px] border-[var(--ink-4)] pt-3 mt-1">
+                {getRulesFor(result.materialType).map((rule, i) => (
+                  <p key={i} className="font-data text-[11px] m-0" style={{ color: SEVERITY_COLOR[rule.severity] }}>
+                    {rule.severity === 'reject' ? '✕ ' : rule.severity === 'warning' ? '! ' : '· '}
+                    {language === 'th' ? rule.titleTh : rule.titleEn}
+                  </p>
+                ))}
+              </div>
+            )}
 
             <div className="flex gap-3 pt-1">
               <Button variant="primary" onClick={handleAdd} fullWidth>{t.addToBasket}</Button>

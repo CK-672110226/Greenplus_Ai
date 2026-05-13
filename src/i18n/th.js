@@ -135,6 +135,7 @@ export const th = {
 
   // Basket routing (U-11/U-12/U-13)
   findRoute:         'หาเส้นทาง',
+  useMyLocation:     'ใช้ตำแหน่งของฉัน',
   routeMode:         'โหมดเส้นทาง',
   noAcceptingShop:   'ไม่มีร้านรับวัสดุนี้',
   totalDistance:     'ระยะทางรวม',
