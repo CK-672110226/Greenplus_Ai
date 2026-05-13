@@ -375,6 +375,45 @@ When MCP-compatible tools are available in the AI environment, AI should use the
 
 ---
 
+## Agent & Skill Selection Rules
+
+When AI operates inside Claude Code (CLI), specialized sub-agents and skill commands are available. AI must select the correct agent type for each task category rather than defaulting to the general-purpose agent.
+
+### Agent Selection Table
+
+| Task Category | Required Agent | When to Use |
+|---|---|---|
+| Codebase search / file discovery | `Explore` | Finding files by pattern, grepping for symbols, answering "where is X defined?" |
+| Multi-step research / web + code | `general-purpose` | Researching APIs, searching across the codebase, tasks spanning >3 queries |
+| Implementation planning | `Plan` | Designing architecture, identifying critical files, evaluating trade-offs before writing code |
+| Claude Code CLI / API questions | `claude-code-guide` | Questions about Claude Code features, SDK, hooks, slash commands, MCP setup |
+| Obsidian knowledge graph | `connection-agent` | Linking notes, finding orphaned content, building knowledge graph connections |
+| Status line configuration | `statusline-setup` | Configuring the Claude Code status line only |
+
+### Mandatory Selection Rules
+
+1. **Always use `Explore` for file/symbol lookups** — do not use `grep` via Bash when the scope is unclear or spans >1 directory.
+2. **Always use `Plan` before implementing a non-trivial multi-file change** — especially when the task involves new architecture, cross-module refactors, or new feature scaffolding.
+3. **Spawn independent agents in parallel** — if two sub-tasks are independent (e.g., search + web research), launch both in a single message with multiple `Agent` tool calls.
+4. **Do not re-do work a sub-agent already did** — if research is delegated to an agent, do not repeat the same searches in the main context.
+5. **Background agents for non-blocking work** — use `run_in_background: true` when the main context can continue without waiting for the result (e.g., a slow build validation).
+
+### Skill Command Selection
+
+Claude Code skill commands (`/skill-name`) must be invoked via the `Skill` tool. AI must:
+- Only invoke skills that appear in the `available-skills` system reminder.
+- Never guess or invent a skill name.
+- Check whether a relevant skill agent is already running before spawning a new one (use `SendMessage` to resume instead).
+
+### Anti-Patterns to Avoid
+
+- Using raw `Bash grep` when `Explore` agent would give better structured results.
+- Using `general-purpose` agent for a simple file lookup that `Explore` handles in one query.
+- Spawning a new `claude-code-guide` agent when one is already active — use `SendMessage` to continue it.
+- Running agents sequentially when the tasks are fully independent.
+
+---
+
 ## References & Further Reading
 
 ### Official React & Redux Docs
