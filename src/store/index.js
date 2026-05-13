@@ -3,6 +3,7 @@ import userReducer from './userSlice'
 import wasteReducer from './wasteSlice'
 import marketplaceReducer from './marketplaceSlice'
 import aiConfigReducer from './aiConfigSlice'
+import bookingReducer from './bookingSlice'
 
 export const store = configureStore({
   reducer: {
@@ -10,5 +11,6 @@ export const store = configureStore({
     waste:       wasteReducer,
     marketplace: marketplaceReducer,
     aiConfig:    aiConfigReducer,
+    bookings:    bookingReducer,
   },
 })

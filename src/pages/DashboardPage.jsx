@@ -3,17 +3,10 @@ import { toast } from 'sonner'
 import { useT } from '../hooks/useT'
 import { Card } from '../components/Card'
 import { Button } from '../components/Button'
-import { GradeTag } from '../components/GradeTag'
-import { useSelector } from 'react-redux'
-import { localName, WASTE_ITEMS, pricePerKg } from '../data/wasteItems'
 
-const MOCK_BOOKINGS = [
-  { id: 1, seller: 'ณัฐวุฒิ ใจดี',  materialType: 'aluminum_can',     grade: 'A', weight: 12, status: 'pending'  },
-  { id: 2, seller: 'สุภาพร แสนสุข', materialType: 'cardboard',         grade: 'B', weight: 30, status: 'pending'  },
-  { id: 3, seller: 'ธนกร มีสุข',    materialType: 'copper',            grade: 'A', weight: 5,  status: 'accepted' },
-  { id: 4, seller: 'กัญญา รักดี',   materialType: 'pet_bottle_clear',  grade: 'B', weight: 18, status: 'accepted' },
-  { id: 5, seller: 'ประเสริฐ งาม',  materialType: 'mixed_plastic',     grade: 'C', weight: 40, status: 'rejected' },
-]
+import { useSelector, useDispatch } from 'react-redux'
+import { localName, WASTE_ITEMS, pricePerKg } from '../data/wasteItems'
+import { updateStatus } from '../store/bookingSlice'
 
 const WEEKLY = [42, 65, 38, 90, 55, 72, 48]
 const DAYS   = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
@@ -46,18 +39,19 @@ function TabBtn({ active, onClick, children }) {
 
 export function DashboardPage() {
   const t        = useT()
+  const dispatch = useDispatch()
   const language = useSelector(s => s.user.language)
+  const bookings = useSelector(s => s.bookings.bookings)
 
-  const [tab, setTab]           = useState('orders')
-  const [bookings, setBookings] = useState(MOCK_BOOKINGS)
-  const [pricing, setPricing]   = useState(initPricing)
+  const [tab, setTab]       = useState('orders')
+  const [pricing, setPricing] = useState(initPricing)
 
   function handleAccept(id) {
-    setBookings(b => b.map(x => x.id === id ? { ...x, status: 'accepted' } : x))
+    dispatch(updateStatus({ id, status: 'accepted' }))
     toast.success('Order accepted')
   }
   function handleReject(id) {
-    setBookings(b => b.map(x => x.id === id ? { ...x, status: 'rejected' } : x))
+    dispatch(updateStatus({ id, status: 'rejected' }))
     toast.error('Order rejected')
   }
   function handlePriceChange(mat, grade, val) {
@@ -116,10 +110,13 @@ export function DashboardPage() {
           {bookings.map(b => (
             <Card key={b.id} className="flex flex-col gap-2">
               <div className="flex items-center justify-between flex-wrap gap-2">
-                <div className="flex items-center gap-2">
-                  <GradeTag grade={b.grade} />
-                  <span className="font-body text-[15px] text-[var(--ink)]">{localName(b.materialType, language)}</span>
-                  <span className="font-data text-[12px] text-[var(--ink-3)]">{b.weight}kg</span>
+                <div className="flex flex-col gap-0.5">
+                  <span className="font-body text-[15px] text-[var(--ink)]">
+                    {(b.materials ?? [b.materialType]).map(m => localName(m, language)).join(', ')}
+                  </span>
+                  <span className="font-data text-[12px] text-[var(--ink-3)]">
+                    {b.totalKg ?? b.weight}kg · ฿{b.estValue ?? 0}
+                  </span>
                 </div>
                 <span
                   className="font-data text-[11px] uppercase tracking-widest"
@@ -128,11 +125,11 @@ export function DashboardPage() {
                   {b.status}
                 </span>
               </div>
-              <span className="font-body text-[13px] text-[var(--ink-3)]">{b.seller}</span>
+              <span className="font-body text-[13px] text-[var(--ink-3)]">{b.seller ?? b.shopName}</span>
               {b.status === 'pending' && (
                 <div className="flex gap-2 pt-1">
-                  <Button variant="primary"    onClick={() => handleAccept(b.id)}>{t.acceptOrder}</Button>
-                  <Button variant="secondary"  onClick={() => handleReject(b.id)}>{t.rejectOrder}</Button>
+                  <Button variant="primary"   onClick={() => handleAccept(b.id)}>{t.acceptOrder}</Button>
+                  <Button variant="secondary" onClick={() => handleReject(b.id)}>{t.rejectOrder}</Button>
                 </div>
               )}
             </Card>
