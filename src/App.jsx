@@ -15,6 +15,7 @@ import { AdminPage } from './pages/AdminPage'
 import { SettingsPage } from './pages/SettingsPage'
 import { EcoPointsPage } from './pages/EcoPointsPage'
 import { ProfilePage } from './pages/ProfilePage'
+import { AdminLoginPage } from './pages/AdminLoginPage'
 import { useAuth } from './hooks/useAuth'
 
 function AuthInitializer({ children }) {
@@ -38,6 +39,7 @@ function App() {
           <Routes>
             <Route path="/" element={<LandingPage />} />
             <Route path="/login" element={<LoginPage />} />
+            <Route path="/x/admin" element={<AdminLoginPage />} />
             <Route path="/scan" element={
               <ProtectedRoute requiredRole="user"><ScanPage /></ProtectedRoute>
             } />

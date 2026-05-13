@@ -141,4 +141,8 @@ export const en = {
   darkMode:          'Dark Mode',
   appearance:        'Appearance',
   orDivider:         'or',
+
+  // Login
+  emailNotVerified:     'Please verify your email before signing in — check your inbox.',
+  resendVerification:   'Resend verification email',
 }
