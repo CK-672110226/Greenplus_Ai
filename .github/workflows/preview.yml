@@ -4,6 +4,10 @@ on:
   pull_request:
     branches: [main]
 
+permissions:
+  pull-requests: write
+  contents: read
+
 jobs:
   build-preview:
     runs-on: ubuntu-latest
@@ -26,9 +30,9 @@ jobs:
         with:
           script: |
             const run_url = `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`
-            github.rest.issues.createComment({
+            return await github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: `Build preview artifact uploaded. [View run](${run_url})`
+              body: `✅ Build preview artifact uploaded. [View run](${run_url})`
             })

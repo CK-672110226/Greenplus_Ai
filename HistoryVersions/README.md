@@ -42,3 +42,4 @@ This folder stores canonical implementation history for the repository.
 - `Feature/BasketRouting/` (baseline: `Feature-BasketRouting.00.md`) — U-11/U-12/U-13 Single Shop + Multi-Stop route planning
 - `Feature/PilotLaunch/` (baseline: `Feature-PilotLaunch.00.md`) — M10 Supabase schema, seed data, Vercel config, dark mode, pricing CRUD
 - `Feature/AuthRoles/` — now at `.02`: login overhaul (duplicate Google button fix, email verification flow, hidden admin URL `/x/admin`)
+- `Fix/CICD/` (baseline: `Fix-CICD.00.md`) — PR Preview 403 fix (permissions block + return await), CI artifact name dedup
