@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef, useCallback } from 'react'
 import { toast } from 'sonner'
 import { useDispatch, useSelector } from 'react-redux'
 import { useT } from '../hooks/useT'
@@ -8,7 +8,7 @@ import { GradeTag } from '../components/GradeTag'
 import { classifyWaste } from '../services/secondBrain'
 import { setAiConfig } from '../store/aiConfigSlice'
 import { removePost, flagPost } from '../store/marketplaceSlice'
-import { localName } from '../data/wasteItems'
+import { WASTE_ITEMS, localName } from '../data/wasteItems'
 
 const PENDING_SHOPS = [
   { id: 1, name: 'สยาม รีไซเคิล', owner: 'สมชาย ใจดี',    area: 'นิมมานเหมินท์' },
@@ -64,6 +64,48 @@ function TabBtn({ active, onClick, children }) {
   )
 }
 
+const MATERIAL_KEYS = Object.keys(WASTE_ITEMS)
+
+function ClassUploadCard({ label, count, enough, onAdd, t }) {
+  const fileRef = useRef(null)
+
+  function handleFiles(e) {
+    const n = e.target.files?.length ?? 0
+    if (n > 0) onAdd(n)
+    e.target.value = ''
+  }
+
+  return (
+    <div
+      className={[
+        'flex flex-col gap-2 p-3 border-[1.5px]',
+        enough ? 'border-[var(--green)]' : 'border-[var(--ink-4)]',
+        'bg-[var(--paper)]',
+      ].join(' ')}
+    >
+      <span className="font-body text-[13px] text-[var(--ink)] font-semibold truncate">{label}</span>
+      <span className={`font-data text-[12px] ${enough ? 'text-[var(--green)]' : 'text-[var(--ink-3)]'}`}>
+        {count > 0 ? `${count} images` : t.noImagesYet}
+        {enough ? ' ✓' : count > 0 ? ` (need ${3 - count} more)` : ''}
+      </span>
+      <input
+        ref={fileRef}
+        type="file"
+        accept="image/*"
+        multiple
+        className="hidden"
+        onChange={handleFiles}
+      />
+      <button
+        onClick={() => fileRef.current?.click()}
+        className="font-data text-[11px] uppercase tracking-widest px-2 py-1 border-[1px] border-[var(--ink-3)] text-[var(--ink-2)] hover:border-[var(--ink)] hover:bg-[var(--paper-2)]"
+      >
+        {t.addImages}
+      </button>
+    </div>
+  )
+}
+
 export function AdminPage() {
   const t        = useT()
   const dispatch = useDispatch()
@@ -80,6 +122,53 @@ export function AdminPage() {
   const [testInput, setTestInput]   = useState('')
   const [testResult, setTestResult] = useState(null)
   const [testing, setTesting]       = useState(false)
+
+  // C-07: AI Studio state
+  const [classImages, setClassImages]     = useState(() => Object.fromEntries(MATERIAL_KEYS.map(k => [k, 0])))
+  const [trainProgress, setTrainProgress] = useState(null)
+  const [trainPhase, setTrainPhase]       = useState('idle')   // idle | training | ready | deployed
+  const [trainedVersion, setTrainedVersion] = useState(null)
+  const trainTimer = useRef(null)
+
+  const handleAddImages = useCallback((materialKey, count) => {
+    setClassImages(prev => ({ ...prev, [materialKey]: prev[materialKey] + count }))
+  }, [])
+
+  function handleTrain() {
+    const classesReady = Object.values(classImages).filter(n => n >= 3).length
+    if (classesReady < 2) {
+      toast.error('Upload ≥3 images for at least 2 classes first.')
+      return
+    }
+    setTrainPhase('training')
+    setTrainProgress(0)
+    let p = 0
+    trainTimer.current = setInterval(() => {
+      p += 4 + Math.floor(Math.random() * 4)
+      if (p >= 100) {
+        p = 100
+        clearInterval(trainTimer.current)
+        const ver = `v${Date.now().toString(36).slice(-5)}-studio`
+        setTrainedVersion(ver)
+        setTrainProgress(100)
+        setTrainPhase('ready')
+        toast.success('Training complete!')
+      } else {
+        setTrainProgress(p)
+      }
+    }, 80)
+  }
+
+  function handleDeploy() {
+    if (!trainedVersion) return
+    dispatch(setAiConfig({
+      onnxStage1Url: `local://${trainedVersion}-s1`,
+      onnxStage2Url: `local://${trainedVersion}-s2`,
+      modelVersion:  trainedVersion,
+    }))
+    setTrainPhase('deployed')
+    toast.success(t.modelDeployed)
+  }
 
   function handleApprove(id) {
     setPending(p => p.filter(s => s.id !== id))
@@ -124,6 +213,7 @@ export function AdminPage() {
         <TabBtn active={tab === 'heatmap'}    onClick={() => setTab('heatmap')}>{t.heatmap}</TabBtn>
         <TabBtn active={tab === 'model'}      onClick={() => setTab('model')}>{t.modelConfig}</TabBtn>
         <TabBtn active={tab === 'moderation'} onClick={() => setTab('moderation')}>{t.moderation}</TabBtn>
+        <TabBtn active={tab === 'studio'}     onClick={() => setTab('studio')}>{t.aiStudio}</TabBtn>
       </div>
 
       {/* Shops tab */}
@@ -296,6 +386,88 @@ export function AdminPage() {
               </div>
             )}
           </Card>
+        </div>
+      )}
+
+      {/* AI Studio tab (C-07) */}
+      {tab === 'studio' && (
+        <div className="w-full max-w-2xl flex flex-col gap-6">
+          {/* Status bar */}
+          <Card className="flex flex-col gap-2">
+            <div className="flex items-center justify-between flex-wrap gap-2">
+              <span className="font-data text-[12px] text-[var(--ink-2)] uppercase tracking-widest">{t.studioActiveVer}</span>
+              <span className="font-data text-[13px] text-[var(--green)]">{aiConfig.modelVersion ?? 'v0-mock'}</span>
+            </div>
+            <p className="font-body text-[13px] text-[var(--ink-3)] m-0">{t.studioHint}</p>
+          </Card>
+
+          {/* Per-class image upload */}
+          <section className="flex flex-col gap-3">
+            <span className="font-data text-[12px] text-[var(--ink-2)] uppercase tracking-widest">{t.trainingClasses}</span>
+            <div className="grid grid-cols-2 gap-3">
+              {MATERIAL_KEYS.map(key => {
+                const count  = classImages[key]
+                const enough = count >= 3
+                return (
+                  <ClassUploadCard
+                    key={key}
+                    label={localName(key, language)}
+                    count={count}
+                    enough={enough}
+                    onAdd={n => handleAddImages(key, n)}
+                    t={t}
+                  />
+                )
+              })}
+            </div>
+          </section>
+
+          {/* Training progress */}
+          {trainPhase === 'training' && (
+            <Card className="flex flex-col gap-3">
+              <span className="font-data text-[12px] text-[var(--green)] uppercase tracking-widest animate-pulse">{t.training}</span>
+              <div className="w-full h-3 bg-[var(--paper-2)] border-[1.5px] border-[var(--ink)]">
+                <div
+                  style={{ width: `${trainProgress}%`, background: 'var(--green)', height: '100%', transition: 'width 0.1s linear' }}
+                />
+              </div>
+              <span className="font-data text-[11px] text-[var(--ink-3)]">{trainProgress}%</span>
+            </Card>
+          )}
+
+          {/* Train / Deploy buttons */}
+          {(trainPhase === 'idle' || trainPhase === 'ready' || trainPhase === 'deployed') && (
+            <div className="flex gap-3">
+              <Button
+                variant="secondary"
+                fullWidth
+                onClick={handleTrain}
+                disabled={trainPhase === 'training'}
+              >
+                {t.trainModel}
+              </Button>
+              <Button
+                variant="primary"
+                fullWidth
+                onClick={handleDeploy}
+                disabled={trainPhase !== 'ready'}
+                title={trainPhase !== 'ready' ? t.trainFirst : ''}
+              >
+                {trainPhase === 'deployed' ? `✓ ${t.modelDeployed}` : t.deployModel}
+              </Button>
+            </div>
+          )}
+
+          {/* Trained model info */}
+          {trainedVersion && (
+            <Card className="flex flex-col gap-1">
+              <span className="font-data text-[11px] text-[var(--ink-3)] uppercase tracking-widest">{t.modelVersion}</span>
+              <span className="font-data text-[14px] text-[var(--ink)]">{trainedVersion}</span>
+              <span className="font-data text-[11px] text-[var(--ink-3)]">
+                Stage 1: local://{trainedVersion}-s1 · Stage 2: local://{trainedVersion}-s2
+              </span>
+            </Card>
+          )}
         </div>
       )}
 
