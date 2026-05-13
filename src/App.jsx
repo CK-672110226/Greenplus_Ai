@@ -11,6 +11,7 @@ import { MarketplacePage } from './pages/MarketplacePage'
 import { DashboardPage } from './pages/DashboardPage'
 import { AdminPage } from './pages/AdminPage'
 import { SettingsPage } from './pages/SettingsPage'
+import { EcoPointsPage } from './pages/EcoPointsPage'
 import { useAuth } from './hooks/useAuth'
 
 function AuthInitializer({ children }) {
@@ -48,6 +49,9 @@ function App() {
             } />
             <Route path="/settings" element={
               <ProtectedRoute><SettingsPage /></ProtectedRoute>
+            } />
+            <Route path="/eco-points" element={
+              <ProtectedRoute><EcoPointsPage /></ProtectedRoute>
             } />
           </Routes>
         </div>

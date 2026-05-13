@@ -11,6 +11,7 @@ export const en = {
   password:      'Password',
   signIn:        'Sign In',
   signUp:        'Sign Up',
+  signInWithGoogle: 'Sign in with Google',
   noAccount:     "No account?",
   hasAccount:    'Already have an account?',
   language:      'Language',
@@ -25,4 +26,88 @@ export const en = {
   ecoPoints:     'Eco-Points',
   role:          'Role',
   comingSoon:    'Coming in the next milestone.',
+
+  // Scanner
+  scanTap:       'Tap to scan waste item',
+  scanBtn:       'Scan Item',
+  analyzing:     'Analyzing...',
+  scanResult:    'Scan Result',
+  addToBasket:   'Add to Basket',
+  scanAgain:     'Scan Again',
+  estWeight:     'Est. Weight',
+  scoreLabel:    'Quality Score',
+  confidence:    'Confidence',
+  cameraError:   'Camera access denied. Please allow camera permission.',
+  antiTroll:     'Anti-Troll Filter Active',
+  rejected:      'Item Rejected',
+  rejectedHint:  'This item does not meet recycling standards.',
+
+  // Basket
+  basketEmpty:   'Your basket is empty. Scan some items first.',
+  basketTotal:   'Total Value',
+  noShopWarning: 'No nearby shop accepts all items.',
+  skipItem:      'Skip',
+  removeItem:    'Remove',
+  singleShop:    'Single Shop Route',
+  multiStop:     'Multi-Stop Route',
+  acceptsAll:    'Accepts All',
+  stop:          'Stop',
+  distanceKm:    'km away',
+  clearBasket:   'Clear Basket',
+
+  // Marketplace
+  marketplaceTitle: 'Marketplace',
+  filterAll:     'All',
+  filterA:       'Grade A',
+  filterB:       'Grade B',
+  filterC:       'Grade C',
+  noListings:    'No listings match the filter.',
+  postAd:        'Post Ad',
+  contactSeller: 'Contact',
+
+  // Map
+  mapTitle:      'Smart Map',
+  nearbyShops:   'Nearby Shops',
+  kmAway:        'km',
+  noShopsNear:   'No shops found nearby.',
+  shopAccepts:   'Accepts',
+  directions:    'Get Directions',
+
+  // Dashboard
+  dashboardTitle:    'Buyer Dashboard',
+  pendingOrders:     'Pending',
+  completedOrders:   'Completed Today',
+  totalRevenue:      "Today's Revenue",
+  avgGrade:          'Avg Grade',
+  recentBookings:    'Recent Bookings',
+  acceptOrder:       'Accept',
+  rejectOrder:       'Reject',
+
+  // Admin
+  adminTitle:        'Admin Panel',
+  shopManagement:    'Shop Management',
+  approveShop:       'Approve',
+  rejectShop:        'Reject',
+  pendingApproval:   'Pending Approval',
+  activeShops:       'Active Shops',
+  heatmap:           'Heatmap',
+  modelConfig:       'AI Model Config',
+
+  // Eco Points
+  ecoPointsTitle:    'Eco Points',
+  yourPoints:        'Your Points',
+  pointsHistory:     'Points History',
+  earnedFrom:        'Earned from',
+  redeemPoints:      'Redeem',
+  pointsExplain:     'Earn points by scanning and selling waste.',
+
+  // Second Brain
+  secondBrainTitle:  'Second Brain',
+  analyzeWaste:      'Analyze Waste Item',
+  brainResult:       'AI Result',
+  brainConfidence:   'Confidence',
+  brainSuggestion:   'Suggestion',
+  modelVersion:      'Model Version',
+  promptConfig:      'System Prompt',
+  saveConfig:        'Save Config',
 }

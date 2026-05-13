@@ -11,6 +11,7 @@ export const th = {
   password:      'รหัสผ่าน',
   signIn:        'เข้าสู่ระบบ',
   signUp:        'สมัครสมาชิก',
+  signInWithGoogle: 'เข้าสู่ระบบด้วย Google',
   noAccount:     'ยังไม่มีบัญชี?',
   hasAccount:    'มีบัญชีแล้ว?',
   language:      'ภาษา',
@@ -25,4 +26,88 @@ export const th = {
   ecoPoints:     'Eco-Points',
   role:          'บทบาท',
   comingSoon:    'จะเปิดให้ใช้ใน Milestone ถัดไป',
+
+  // Scanner
+  scanTap:       'แตะเพื่อสแกนขยะ',
+  scanBtn:       'สแกนวัสดุ',
+  analyzing:     'กำลังวิเคราะห์...',
+  scanResult:    'ผลการสแกน',
+  addToBasket:   'เพิ่มลงตะกร้า',
+  scanAgain:     'สแกนใหม่',
+  estWeight:     'น้ำหนักประมาณ',
+  scoreLabel:    'คะแนนคุณภาพ',
+  confidence:    'ความมั่นใจ',
+  cameraError:   'ไม่ได้รับอนุญาตเข้าถึงกล้อง กรุณาอนุญาตการใช้กล้อง',
+  antiTroll:     'ระบบกรองข้อมูลผิดปกติ',
+  rejected:      'ถูกปฏิเสธ',
+  rejectedHint:  'วัสดุนี้ไม่ผ่านมาตรฐานการรีไซเคิล',
+
+  // Basket
+  basketEmpty:   'ตะกร้าว่างอยู่ กรุณาสแกนวัสดุก่อน',
+  basketTotal:   'มูลค่ารวม',
+  noShopWarning: 'ไม่มีร้านใกล้เคียงที่รับวัสดุทั้งหมด',
+  skipItem:      'ข้าม',
+  removeItem:    'ลบออก',
+  singleShop:    'ร้านเดียว',
+  multiStop:     'หลายจุด',
+  acceptsAll:    'รับทั้งหมด',
+  stop:          'จุดหยุด',
+  distanceKm:    'กม.',
+  clearBasket:   'ล้างตะกร้า',
+
+  // Marketplace
+  marketplaceTitle: 'ตลาดซื้อขาย',
+  filterAll:     'ทั้งหมด',
+  filterA:       'เกรด A',
+  filterB:       'เกรด B',
+  filterC:       'เกรด C',
+  noListings:    'ไม่มีรายการที่ตรงกับตัวกรอง',
+  postAd:        'ลงประกาศ',
+  contactSeller: 'ติดต่อ',
+
+  // Map
+  mapTitle:      'แผนที่อัจฉริยะ',
+  nearbyShops:   'ร้านรับซื้อใกล้เคียง',
+  kmAway:        'กม.',
+  noShopsNear:   'ไม่พบร้านใกล้เคียง',
+  shopAccepts:   'รับ',
+  directions:    'นำทาง',
+
+  // Dashboard
+  dashboardTitle:    'แดชบอร์ดผู้ซื้อ',
+  pendingOrders:     'รอดำเนินการ',
+  completedOrders:   'เสร็จวันนี้',
+  totalRevenue:      'รายได้วันนี้',
+  avgGrade:          'เกรดเฉลี่ย',
+  recentBookings:    'การจองล่าสุด',
+  acceptOrder:       'รับ',
+  rejectOrder:       'ปฏิเสธ',
+
+  // Admin
+  adminTitle:        'แผงผู้ดูแล',
+  shopManagement:    'จัดการร้าน',
+  approveShop:       'อนุมัติ',
+  rejectShop:        'ปฏิเสธ',
+  pendingApproval:   'รออนุมัติ',
+  activeShops:       'ร้านที่เปิดใช้',
+  heatmap:           'ฮีทแมป',
+  modelConfig:       'ตั้งค่า AI',
+
+  // Eco Points
+  ecoPointsTitle:    'คะแนน Eco',
+  yourPoints:        'คะแนนของคุณ',
+  pointsHistory:     'ประวัติคะแนน',
+  earnedFrom:        'ได้จาก',
+  redeemPoints:      'แลก',
+  pointsExplain:     'รับคะแนนจากการสแกนและขายขยะ',
+
+  // Second Brain
+  secondBrainTitle:  'สมองที่ 2',
+  analyzeWaste:      'วิเคราะห์วัสดุ',
+  brainResult:       'ผลลัพธ์ AI',
+  brainConfidence:   'ความมั่นใจ',
+  brainSuggestion:   'ข้อเสนอแนะ',
+  modelVersion:      'เวอร์ชันโมเดล',
+  promptConfig:      'System Prompt',
+  saveConfig:        'บันทึก',
 }
