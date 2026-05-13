@@ -7,26 +7,37 @@ import { GradeTag } from '../components/GradeTag'
 import { localName, pricePerKg } from '../data/wasteItems'
 import { SHOPS } from '../data/shops'
 import { removeFromBasket, updateWeight, toggleSkip, clearBasket } from '../store/wasteSlice'
+import { useGPS } from '../hooks/useGPS'
+import { haversineKm } from '../utils/haversine'
 
-function computeRoutes(basket) {
+function distOf(shop, userLat, userLng) {
+  if (userLat != null && userLng != null) {
+    return Math.round(haversineKm(userLat, userLng, shop.lat, shop.lng) * 10) / 10
+  }
+  return shop.distanceKm
+}
+
+function computeRoutes(basket, userLat, userLng) {
   const active = basket.filter(i => !i.skipped)
   const materials = [...new Set(active.map(i => i.materialType))]
 
-  const single = SHOPS
+  const shopsWithDist = SHOPS.map(s => ({ ...s, dist: distOf(s, userLat, userLng) }))
+
+  const single = shopsWithDist
     .filter(s => materials.every(m => s.accepts.includes(m)))
-    .sort((a, b) => a.distanceKm - b.distanceKm)
+    .sort((a, b) => a.dist - b.dist)
 
   const stopsMap = new Map()
   const unmatched = []
   materials.forEach(mat => {
-    const shop = SHOPS
+    const shop = shopsWithDist
       .filter(s => s.accepts.includes(mat))
-      .sort((a, b) => a.distanceKm - b.distanceKm)[0]
+      .sort((a, b) => a.dist - b.dist)[0]
     if (!shop) { unmatched.push(mat); return }
     if (!stopsMap.has(shop.id)) stopsMap.set(shop.id, { shop, materials: [] })
     stopsMap.get(shop.id).materials.push(mat)
   })
-  const multi = [...stopsMap.values()].sort((a, b) => a.shop.distanceKm - b.shop.distanceKm)
+  const multi = [...stopsMap.values()].sort((a, b) => a.shop.dist - b.shop.dist)
 
   return { single, multi, unmatched, materials }
 }
@@ -39,12 +50,13 @@ export function BasketPage() {
 
   const [routeMode, setRouteMode] = useState('single')
   const [showRoute, setShowRoute] = useState(false)
+  const gps = useGPS()
 
   const total = basket
     .filter(i => !i.skipped)
     .reduce((sum, i) => sum + pricePerKg(i.materialType, i.grade) * (i.weight ?? 0), 0)
 
-  const { single, multi, unmatched, materials } = computeRoutes(basket)
+  const { single, multi, unmatched, materials } = computeRoutes(basket, gps.lat, gps.lng)
 
   function openMaps(shop) {
     window.open(`https://www.google.com/maps/search/?api=1&query=${shop.lat},${shop.lng}`, '_blank')
@@ -127,6 +139,14 @@ export function BasketPage() {
                 {t.clearBasket}
               </Button>
             </div>
+            {/* GPS locate */}
+            <button
+              onClick={gps.request}
+              disabled={gps.loading}
+              className="font-data text-[11px] text-[var(--green)] uppercase tracking-widest bg-transparent border-none cursor-pointer disabled:opacity-50 text-left"
+            >
+              {gps.loading ? '...' : gps.lat ? `GPS: ${gps.lat.toFixed(4)}, ${gps.lng.toFixed(4)}` : '+ ' + t.useMyLocation}
+            </button>
           </Card>
 
           {/* Route planner */}
@@ -157,7 +177,7 @@ export function BasketPage() {
                     <div key={shop.id} className="flex items-center justify-between border-[1.5px] border-[var(--ink-4)] p-3">
                       <div>
                         <p className="font-body text-[15px] text-[var(--ink)] m-0 font-semibold">{shop.name}</p>
-                        <p className="font-data text-[11px] text-[var(--ink-3)] m-0">{shop.distanceKm} {t.distanceKm} · {shop.area}</p>
+                        <p className="font-data text-[11px] text-[var(--ink-3)] m-0">{shop.dist} {t.distanceKm} · {shop.area}</p>
                         <p className="font-data text-[10px] text-[var(--green)] m-0">{t.acceptsAll}</p>
                       </div>
                       <Button variant="secondary" onClick={() => openMaps(shop)}>{t.openInMaps}</Button>
@@ -173,7 +193,7 @@ export function BasketPage() {
                     <div key={stop.shop.id} className="flex flex-col gap-1 border-[1.5px] border-[var(--ink-4)] p-3">
                       <div className="flex items-center justify-between">
                         <span className="font-data text-[11px] text-[var(--ink-3)] uppercase">{t.stop} {i + 1}</span>
-                        <span className="font-data text-[11px] text-[var(--ink-3)]">{stop.shop.distanceKm} {t.distanceKm}</span>
+                        <span className="font-data text-[11px] text-[var(--ink-3)]">{stop.shop.dist} {t.distanceKm}</span>
                       </div>
                       <p className="font-body text-[15px] text-[var(--ink)] m-0 font-semibold">{stop.shop.name}</p>
                       <p className="font-data text-[11px] text-[var(--ink-3)] m-0">

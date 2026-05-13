@@ -135,6 +135,7 @@ export const en = {
 
   // Basket routing (U-11/U-12/U-13)
   findRoute:         'Find Route',
+  useMyLocation:     'Use my location',
   routeMode:         'Route Mode',
   noAcceptingShop:   'No shop accepts this item',
   totalDistance:     'Total Distance',
