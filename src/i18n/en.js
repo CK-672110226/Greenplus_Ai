@@ -25,6 +25,7 @@ export const en = {
   admin:         'Admin',
   ecoPoints:     'Eco-Points',
   role:          'Role',
+  home:          'Home',
   comingSoon:    'Coming in the next milestone.',
 
   // Scanner

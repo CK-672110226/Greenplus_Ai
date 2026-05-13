@@ -4,7 +4,7 @@ import { Card } from '../components/Card'
 import { Button } from '../components/Button'
 import { useT } from '../hooks/useT'
 
-const ROLE_DEST = { user: '/scan', buyer: '/dashboard', admin: '/admin' }
+const ROLE_DEST = { user: '/home', buyer: '/dashboard', admin: '/admin' }
 
 export function LandingPage() {
   const navigate          = useNavigate()
