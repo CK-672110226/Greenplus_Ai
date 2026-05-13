@@ -3,6 +3,7 @@ import { useSelector, useDispatch } from 'react-redux'
 import { supabase } from '../lib/supabase'
 import { clearUser, setLanguage } from '../store/userSlice'
 import { useT } from '../hooks/useT'
+import { Logo } from '../components/Logo'
 
 const NAV = [
   { to: '/dashboard',   key: 'dashboard' },
@@ -64,12 +65,10 @@ export function BuyerLayout() {
       {/* ── Desktop sidebar ── */}
       <aside className="hidden md:flex flex-col w-[200px] min-h-screen border-r-[1.5px] border-[var(--ink)] sticky top-0 self-start h-screen">
         <div className="px-5 py-4 border-b-[1.5px] border-[var(--ink)]">
-          <span className="font-data text-[10px] text-[var(--ink-3)] uppercase tracking-widest block mb-1">
+          <span className="font-data text-[10px] text-[var(--ink-3)] uppercase tracking-widest block mb-2">
             {t.roleBuyer}
           </span>
-          <span className="font-brand text-[18px] text-[var(--ink)]">
-            GreenPlus<span className="text-[var(--green)]">.</span>Ai
-          </span>
+          <Logo height={22} />
         </div>
 
         <nav className="flex flex-col flex-1 py-2">
@@ -96,9 +95,7 @@ export function BuyerLayout() {
       <div className="flex flex-col flex-1 min-w-0">
         {/* Mobile top bar */}
         <header className="sticky top-0 z-40 md:hidden flex items-center justify-between px-4 py-3 bg-[var(--paper)] border-b-[1.5px] border-[var(--ink)]">
-          <span className="font-brand text-[18px] text-[var(--ink)]">
-            GreenPlus<span className="text-[var(--green)]">.</span>Ai
-          </span>
+          <Logo height={22} />
           <div className="flex items-center gap-3">
             <button
               onClick={toggleLang}
