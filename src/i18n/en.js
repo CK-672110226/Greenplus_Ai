@@ -153,6 +153,17 @@ export const en = {
   appearance:        'Appearance',
   orDivider:         'or',
 
+  // Booking (C-13)
+  bookAppointment: 'Book',
+  bookingConfirmed:'Booking sent!',
+
+  // Admin Moderation (C-14)
+  moderation:      'Moderation',
+  totalPosts:      'posts',
+  flagPost:        'Flag',
+  unflagPost:      'Unflag',
+  removePostLabel: 'Remove',
+
   // Login
   emailNotVerified:     'Please verify your email before signing in — check your inbox.',
   resendVerification:   'Resend verification email',

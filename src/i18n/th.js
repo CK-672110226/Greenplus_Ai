@@ -153,6 +153,17 @@ export const th = {
   appearance:        'ธีม',
   orDivider:         'หรือ',
 
+  // Booking (C-13)
+  bookAppointment: 'จอง',
+  bookingConfirmed:'ส่งการจองแล้ว',
+
+  // Admin Moderation (C-14)
+  moderation:      'กลั่นกรอง',
+  totalPosts:      'รายการ',
+  flagPost:        'รายงาน',
+  unflagPost:      'ยกเลิกรายงาน',
+  removePostLabel: 'ลบ',
+
   // Login
   emailNotVerified:     'กรุณายืนยันอีเมลก่อนเข้าสู่ระบบ — เช็กกล่องจดหมายของคุณ',
   resendVerification:   'ส่งอีเมลยืนยันอีกครั้ง',

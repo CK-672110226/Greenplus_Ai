@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { toast } from 'sonner'
 import { useDispatch, useSelector } from 'react-redux'
 import { useT } from '../hooks/useT'
 import { Card } from '../components/Card'
@@ -9,6 +10,7 @@ import { SHOPS } from '../data/shops'
 import { removeFromBasket, updateWeight, toggleSkip, clearBasket } from '../store/wasteSlice'
 import { useGPS } from '../hooks/useGPS'
 import { haversineKm } from '../utils/haversine'
+import { addBooking } from '../store/bookingSlice'
 
 function distOf(shop, userLat, userLng) {
   if (userLat != null && userLng != null) {
@@ -51,6 +53,19 @@ export function BasketPage() {
   const [routeMode, setRouteMode] = useState('single')
   const [showRoute, setShowRoute] = useState(false)
   const gps = useGPS()
+
+  function handleBook(shop) {
+    const active = basket.filter(i => !i.skipped)
+    dispatch(addBooking({
+      shopId:    shop.id,
+      shopName:  shop.name,
+      seller:    'me',
+      materials: [...new Set(active.map(i => i.materialType))],
+      totalKg:   active.reduce((s, i) => s + (i.weight ?? 0), 0),
+      estValue:  Math.round(active.reduce((s, i) => s + pricePerKg(i.materialType, i.grade) * (i.weight ?? 0), 0)),
+    }))
+    toast.success(t.bookingConfirmed)
+  }
 
   const total = basket
     .filter(i => !i.skipped)
@@ -174,13 +189,18 @@ export function BasketPage() {
                   <p className="font-body text-[13px] text-[var(--orange)] m-0">{t.noShopWarning}</p>
                 ) : (
                   single.slice(0, 3).map(shop => (
-                    <div key={shop.id} className="flex items-center justify-between border-[1.5px] border-[var(--ink-4)] p-3">
-                      <div>
-                        <p className="font-body text-[15px] text-[var(--ink)] m-0 font-semibold">{shop.name}</p>
-                        <p className="font-data text-[11px] text-[var(--ink-3)] m-0">{shop.dist} {t.distanceKm} · {shop.area}</p>
-                        <p className="font-data text-[10px] text-[var(--green)] m-0">{t.acceptsAll}</p>
+                    <div key={shop.id} className="flex flex-col gap-2 border-[1.5px] border-[var(--ink-4)] p-3">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="font-body text-[15px] text-[var(--ink)] m-0 font-semibold">{shop.name}</p>
+                          <p className="font-data text-[11px] text-[var(--ink-3)] m-0">{shop.dist} {t.distanceKm} · {shop.area}</p>
+                          <p className="font-data text-[10px] text-[var(--green)] m-0">{t.acceptsAll}</p>
+                        </div>
                       </div>
-                      <Button variant="secondary" onClick={() => openMaps(shop)}>{t.openInMaps}</Button>
+                      <div className="flex gap-2">
+                        <Button variant="secondary" onClick={() => openMaps(shop)}>{t.openInMaps}</Button>
+                        <Button variant="primary" onClick={() => handleBook(shop)}>{t.bookAppointment}</Button>
+                      </div>
                     </div>
                   ))
                 )
@@ -199,7 +219,10 @@ export function BasketPage() {
                       <p className="font-data text-[11px] text-[var(--ink-3)] m-0">
                         {stop.materials.map(m => localName(m, language)).join(', ')}
                       </p>
-                      <Button variant="secondary" onClick={() => openMaps(stop.shop)}>{t.openInMaps}</Button>
+                      <div className="flex gap-2">
+                        <Button variant="secondary" onClick={() => openMaps(stop.shop)}>{t.openInMaps}</Button>
+                        <Button variant="primary" onClick={() => handleBook(stop.shop)}>{t.bookAppointment}</Button>
+                      </div>
                     </div>
                   ))}
                   {unmatched.length > 0 && (

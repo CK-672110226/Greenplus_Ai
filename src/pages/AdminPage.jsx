@@ -4,8 +4,11 @@ import { useDispatch, useSelector } from 'react-redux'
 import { useT } from '../hooks/useT'
 import { Card } from '../components/Card'
 import { Button } from '../components/Button'
+import { GradeTag } from '../components/GradeTag'
 import { classifyWaste } from '../services/secondBrain'
 import { setAiConfig } from '../store/aiConfigSlice'
+import { removePost, flagPost } from '../store/marketplaceSlice'
+import { localName } from '../data/wasteItems'
 
 const PENDING_SHOPS = [
   { id: 1, name: 'สยาม รีไซเคิล', owner: 'สมชาย ใจดี',    area: 'นิมมานเหมินท์' },
@@ -65,6 +68,8 @@ export function AdminPage() {
   const t        = useT()
   const dispatch = useDispatch()
   const aiConfig = useSelector(s => s.aiConfig)
+  const posts    = useSelector(s => s.marketplace.posts)
+  const language = useSelector(s => s.user.language)
 
   const [tab, setTab]               = useState('shops')
   const [pending, setPending]       = useState(PENDING_SHOPS)
@@ -114,10 +119,11 @@ export function AdminPage() {
       <h1 className="font-brand text-[28px] text-[var(--ink)] m-0">{t.admin}</h1>
 
       {/* Tab bar */}
-      <div className="w-full max-w-2xl flex gap-2">
-        <TabBtn active={tab === 'shops'} onClick={() => setTab('shops')}>{t.shopManagement}</TabBtn>
-        <TabBtn active={tab === 'heatmap'} onClick={() => setTab('heatmap')}>{t.heatmap}</TabBtn>
-        <TabBtn active={tab === 'model'} onClick={() => setTab('model')}>{t.modelConfig}</TabBtn>
+      <div className="w-full max-w-2xl flex gap-2 flex-wrap">
+        <TabBtn active={tab === 'shops'}      onClick={() => setTab('shops')}>{t.shopManagement}</TabBtn>
+        <TabBtn active={tab === 'heatmap'}    onClick={() => setTab('heatmap')}>{t.heatmap}</TabBtn>
+        <TabBtn active={tab === 'model'}      onClick={() => setTab('model')}>{t.modelConfig}</TabBtn>
+        <TabBtn active={tab === 'moderation'} onClick={() => setTab('moderation')}>{t.moderation}</TabBtn>
       </div>
 
       {/* Shops tab */}
@@ -290,6 +296,58 @@ export function AdminPage() {
               </div>
             )}
           </Card>
+        </div>
+      )}
+
+      {/* Moderation tab (C-14) */}
+      {tab === 'moderation' && (
+        <div className="w-full max-w-2xl flex flex-col gap-4">
+          <span className="font-data text-[12px] text-[var(--ink-2)] uppercase tracking-widest">
+            {t.moderation} ({posts.length} {t.totalPosts})
+          </span>
+
+          {posts.length === 0 && (
+            <Card className="flex items-center justify-center py-8">
+              <p className="font-body text-[15px] text-[var(--ink-3)] m-0">{t.noListings}</p>
+            </Card>
+          )}
+
+          <div className="flex flex-col gap-3">
+            {posts.map(post => (
+              <Card
+                key={post.id}
+                className={`flex flex-col gap-2 ${post.flagged ? 'border-[var(--orange)]' : ''}`}
+              >
+                <div className="flex items-center justify-between flex-wrap gap-2">
+                  <div className="flex items-center gap-2">
+                    <GradeTag grade={post.grade} />
+                    <span className="font-body text-[15px] text-[var(--ink)]">
+                      {localName(post.materialType, language)}
+                    </span>
+                    <span className="font-data text-[12px] text-[var(--ink-3)]">{post.qty}kg · ฿{post.pricePerKg}/kg</span>
+                  </div>
+                  {post.flagged && (
+                    <span className="font-data text-[10px] text-[var(--orange)] uppercase tracking-widest">flagged</span>
+                  )}
+                </div>
+                <span className="font-body text-[13px] text-[var(--ink-3)]">{post.shop}</span>
+                <div className="flex gap-2 pt-1">
+                  <Button
+                    variant={post.flagged ? 'primary' : 'secondary'}
+                    onClick={() => { dispatch(flagPost(post.id)); toast.info(post.flagged ? 'Unflagged' : 'Flagged') }}
+                  >
+                    {post.flagged ? t.unflagPost : t.flagPost}
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    onClick={() => { dispatch(removePost(post.id)); toast.error('Post removed') }}
+                  >
+                    {t.removePostLabel}
+                  </Button>
+                </div>
+              </Card>
+            ))}
+          </div>
         </div>
       )}
     </main>
