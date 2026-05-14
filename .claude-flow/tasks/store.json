@@ -1,0 +1,205 @@
+{
+  "tasks": {
+    "task-1778745244335-vrlot0": {
+      "taskId": "task-1778745244335-vrlot0",
+      "type": "feature",
+      "description": "Desktop layout — Scanner page 2-col split (left: camera viewport, right: fixed result panel with factor breakdown + swipe replaced by buttons), Basket page 2-col (left: basket items, right: Smart Map + route steps). CSS: md: grid-cols-2 breakpoint, sidebar sticky.",
+      "priority": "high",
+      "status": "pending",
+      "progress": 0,
+      "assignedTo": [],
+      "tags": [
+        "desktop",
+        "layout",
+        "scanner",
+        "basket",
+        "responsive"
+      ],
+      "createdAt": "2026-05-14T07:54:04.335Z",
+      "startedAt": null,
+      "completedAt": null
+    },
+    "task-1778745247552-sz2t8m": {
+      "taskId": "task-1778745247552-sz2t8m",
+      "type": "feature",
+      "description": "Mobile layout — Marketplace filter drawer (hidden behind button on mobile, persistent sidebar on desktop md:), Buyer Dashboard horizontal-scroll tables on mobile, Scanner bottom-sheet swipe gesture polish. Ensure no layout breaks at 375px.",
+      "priority": "high",
+      "status": "pending",
+      "progress": 0,
+      "assignedTo": [],
+      "tags": [
+        "mobile",
+        "layout",
+        "marketplace",
+        "dashboard",
+        "responsive"
+      ],
+      "createdAt": "2026-05-14T07:54:07.552Z",
+      "startedAt": null,
+      "completedAt": null
+    },
+    "task-1778745249884-ij0qqj": {
+      "taskId": "task-1778745249884-ij0qqj",
+      "type": "feature",
+      "description": "B-06 — Buyer can update accepted material types from DashboardPage (new Materials tab or section in existing tab). Render material type chips with toggle on/off. Persist to Redux buyerSlice or localStorage. Show only toggled materials in shop's routing profile.",
+      "priority": "high",
+      "status": "pending",
+      "progress": 0,
+      "assignedTo": [],
+      "tags": [
+        "buyer",
+        "B-06",
+        "materials",
+        "dashboard"
+      ],
+      "createdAt": "2026-05-14T07:54:09.884Z",
+      "startedAt": null,
+      "completedAt": null
+    },
+    "task-1778745251642-pdwlvk": {
+      "taskId": "task-1778745251642-pdwlvk",
+      "type": "feature",
+      "description": "B-04 Calendar persist — Save openDays to Redux (add buyerSlice or extend userSlice with shopSettings), persist to localStorage, wire DashboardPage Calendar tab Save button to dispatch. No Supabase yet — local persistence only.",
+      "priority": "normal",
+      "status": "pending",
+      "progress": 0,
+      "assignedTo": [],
+      "tags": [
+        "buyer",
+        "B-04",
+        "calendar",
+        "redux",
+        "persist"
+      ],
+      "createdAt": "2026-05-14T07:54:11.642Z",
+      "startedAt": null,
+      "completedAt": null
+    },
+    "task-1778745254706-8pzjdd": {
+      "taskId": "task-1778745254706-8pzjdd",
+      "type": "feature",
+      "description": "U-05 Booking modal — BookingModal component triggered from BasketPage Book button. Shows shop name, date picker (7 days forward, grays closed days), time slot selection (morning/afternoon), booking summary (materials + ฿ estimate), confirm dispatches to bookingSlice. Mobile: bottom sheet. Desktop: centered modal.",
+      "priority": "normal",
+      "status": "pending",
+      "progress": 0,
+      "assignedTo": [],
+      "tags": [
+        "user",
+        "U-05",
+        "booking",
+        "modal",
+        "calendar"
+      ],
+      "createdAt": "2026-05-14T07:54:14.706Z",
+      "startedAt": null,
+      "completedAt": null
+    },
+    "task-1778745257257-t62kkn": {
+      "taskId": "task-1778745257257-t62kkn",
+      "type": "feature",
+      "description": "History + docs — After all agents complete: write Feature-DesktopMobileSplit.00.md, Feature-BuyerMaterials.00.md, Feature-BookingModal.00.md in HistoryVersions/. Update HistoryVersions/README.md. Update PRD milestone status for B-06, U-05.",
+      "priority": "normal",
+      "status": "pending",
+      "progress": 0,
+      "assignedTo": [],
+      "tags": [
+        "history",
+        "docs",
+        "prd",
+        "readme"
+      ],
+      "createdAt": "2026-05-14T07:54:17.257Z",
+      "startedAt": null,
+      "completedAt": null
+    },
+    "task-1778749070047-f3ztph": {
+      "taskId": "task-1778749070047-f3ztph",
+      "type": "feature",
+      "description": "Playwright E2E setup: install @playwright/test, create playwright.config.js (baseURL localhost:5173, chromium+mobile), add e2e script to package.json, add e2e job to ci.yml, create e2e/fixtures/ for Supabase mock + localStorage seed",
+      "priority": "critical",
+      "status": "pending",
+      "progress": 0,
+      "assignedTo": [],
+      "tags": [
+        "e2e",
+        "playwright",
+        "ci",
+        "greenplus"
+      ],
+      "createdAt": "2026-05-14T08:57:50.047Z",
+      "startedAt": null,
+      "completedAt": null
+    },
+    "task-1778749071677-72dads": {
+      "taskId": "task-1778749071677-72dads",
+      "type": "feature",
+      "description": "E2E tests — Auth + Layout: login page render, role redirect (user→/home, buyer→/dashboard, admin→/admin), logout, UserLayout desktop sidebar visible on md+, BottomTabBar hidden on md+, BuyerLayout sidebar always visible",
+      "priority": "high",
+      "status": "pending",
+      "progress": 0,
+      "assignedTo": [],
+      "tags": [
+        "e2e",
+        "auth",
+        "layout",
+        "greenplus"
+      ],
+      "createdAt": "2026-05-14T08:57:51.677Z",
+      "startedAt": null,
+      "completedAt": null
+    },
+    "task-1778749073615-zrsnjd": {
+      "taskId": "task-1778749073615-zrsnjd",
+      "type": "feature",
+      "description": "E2E tests — User flow: Landing page hero+CTA render, ScanPage camera/upload toggle, BasketPage desktop 2-col layout + booking modal, MapPage responsive height + filter pills, MarketplacePage filter sidebar desktop / drawer mobile",
+      "priority": "high",
+      "status": "pending",
+      "progress": 0,
+      "assignedTo": [],
+      "tags": [
+        "e2e",
+        "user-flow",
+        "greenplus"
+      ],
+      "createdAt": "2026-05-14T08:57:53.615Z",
+      "startedAt": null,
+      "completedAt": null
+    },
+    "task-1778749075086-8vn1m8": {
+      "taskId": "task-1778749075086-8vn1m8",
+      "type": "feature",
+      "description": "E2E tests — Buyer + Admin flow: DashboardPage 4 tabs (Overview/Pricing/Calendar/Materials), Calendar open-days toggle + save, ProfilePage BuyerProfile accepted-materials chips, AdminPage tabs render, EcoPointsPage tier progress bar, SettingsPage dark-mode toggle",
+      "priority": "high",
+      "status": "pending",
+      "progress": 0,
+      "assignedTo": [],
+      "tags": [
+        "e2e",
+        "buyer-flow",
+        "admin-flow",
+        "greenplus"
+      ],
+      "createdAt": "2026-05-14T08:57:55.086Z",
+      "startedAt": null,
+      "completedAt": null
+    },
+    "task-1778749409388-hwkv5c": {
+      "taskId": "task-1778749409388-hwkv5c",
+      "type": "feature",
+      "description": "CICD branch plan separation: ci.yml triggers on push (non-main) + PR-only E2E gate, preview.yml deploys Vercel preview on PR, deploy.yml adds lint gate before prod deploy, all upgraded to Node 24",
+      "priority": "critical",
+      "status": "pending",
+      "progress": 0,
+      "assignedTo": [],
+      "tags": [
+        "cicd",
+        "branch-plan",
+        "greenplus"
+      ],
+      "createdAt": "2026-05-14T09:03:29.388Z",
+      "startedAt": null,
+      "completedAt": null
+    }
+  },
+  "version": "3.0.0"
+}

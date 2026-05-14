@@ -1,10 +1,11 @@
 // C-06: Two-stage waste AI pipeline
 // Stage 1 — Material type + size estimation (from camera frame)
 // Stage 2 — Cleanliness scoring → grade (A/B/C)
-// Each stage tries ONNX first, falls back to mock if no model URL or inference fails.
+// Priority per stage: ONNX → Vertex AI → Mock fallback
 
 import { WASTE_ITEMS } from '../data/wasteItems'
 import { runOnnx, softmax } from './onnxInference'
+import { vertexStage1, vertexStage2, imageToBase64 } from './vertexAI'
 
 const MATERIALS = Object.keys(WASTE_ITEMS)
 
@@ -40,7 +41,7 @@ function mockStage2(materialType) {
     // generic fallback
     weightedScore = (factors.cleanliness * 0.4) + (factors.purity * 0.6)
   }
-  
+
   weightedScore = Math.round(weightedScore * 10) // 0-100 scale
 
   const grade = weightedScore >= 80 ? 'A' : weightedScore >= 50 ? 'B' : 'C'
@@ -52,24 +53,23 @@ function mockStage2(materialType) {
 
 async function onnxStage1(imageSource, modelUrl) {
   const logits = await runOnnx(modelUrl, imageSource)
-  if (!logits || logits.length < MATERIALS.length) return null
+  if (!logits) return null
 
-  const probs = softmax(Array.from(logits.slice(0, MATERIALS.length)))
-  let topIdx = 0
-  for (let i = 1; i < probs.length; i++) { if (probs[i] > probs[topIdx]) topIdx = i }
-  const materialType = MATERIALS[topIdx]
-  const confidence   = +probs[topIdx].toFixed(2)
-  const sizeKg       = +(0.1 + Math.random() * 1.9).toFixed(2)
+  const probs       = softmax(Array.from(logits))
+  const topIdx      = probs.indexOf(Math.max(...probs))
+  const materialType = MATERIALS[topIdx % MATERIALS.length]
+  const confidence  = +probs[topIdx].toFixed(2)
+  const sizeKg      = +(0.1 + Math.random() * 1.9).toFixed(2)
   return { pass: true, materialType, confidence, sizeKg }
 }
 
 // eslint-disable-next-line no-unused-vars
 async function onnxStage2(imageSource, modelUrl, _materialType) {
   const logits = await runOnnx(modelUrl, imageSource)
-  if (!logits || logits.length < 1) return null
+  if (!logits) return null
 
   const probs = softmax(Array.from(logits.slice(0, 5)))
-  
+
   // Mapping logits to generic factors for now
   const factorScores = {
     cleanliness: probs[0] * 10,
@@ -78,7 +78,7 @@ async function onnxStage2(imageSource, modelUrl, _materialType) {
     color:       probs[3] * 10,
     purity:      probs[4] * 10,
   }
-  
+
   const weightedScore = Math.round(probs[0] * 100) // simplified for ONNX MVP
   const grade = weightedScore >= 80 ? 'A' : weightedScore >= 50 ? 'B' : 'C'
   return { pass: factorScores.cleanliness >= 3, weightedScore, factorScores, grade, failReasons: [] }
@@ -88,15 +88,21 @@ async function onnxStage2(imageSource, modelUrl, _materialType) {
 
 export async function twoStageInfer(imageSource, config = {}) {
   const {
-    confidenceThreshold = 0.6,
-    onnxStage1Url       = null,
-    onnxStage2Url       = null,
+    confidenceThreshold    = 0.6,
+    onnxStage1Url          = null,
+    onnxStage2Url          = null,
+    vertexStage1Endpoint   = null,
+    vertexStage2Endpoint   = null,
   } = config
+
+  const b64 = imageToBase64(imageSource)
 
   // Stage 1
   const s1Raw = onnxStage1Url
     ? await onnxStage1(imageSource, onnxStage1Url)
-    : null
+    : vertexStage1Endpoint
+      ? await vertexStage1(b64, vertexStage1Endpoint)
+      : null
   const s1 = s1Raw ?? mockStage1()
 
   if (!s1.pass)           return { troll: true }
@@ -107,12 +113,13 @@ export async function twoStageInfer(imageSource, config = {}) {
   // Stage 2
   const s2Raw = onnxStage2Url
     ? await onnxStage2(imageSource, onnxStage2Url, s1.materialType)
-    : null
+    : vertexStage2Endpoint
+      ? await vertexStage2(b64, vertexStage2Endpoint)
+      : null
   const s2 = s2Raw ?? mockStage2(s1.materialType)
 
-  const source = s1Raw
-    ? (s2Raw ? 'onnx'         : 'onnx+mock')
-    : (s2Raw ? 'mock+onnx'    : 'mock')
+  const usedVertex = !onnxStage1Url && vertexStage1Endpoint && s1Raw
+  const usedOnnx   = (onnxStage1Url && s1Raw) && (onnxStage2Url && s2Raw)
 
   return {
     materialType:    s1.materialType,
@@ -123,6 +130,6 @@ export async function twoStageInfer(imageSource, config = {}) {
     grade:           s2.grade,
     failReasons:     s2.failReasons,
     stage2Pass:      s2.pass,
-    source,
+    source:          usedOnnx ? 'onnx' : usedVertex ? 'vertex' : 'mock',
   }
 }

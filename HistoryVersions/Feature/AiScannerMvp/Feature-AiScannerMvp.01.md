@@ -1,59 +1,50 @@
-# Feature-AiScannerMvp.01
+# Feature-AiScannerMvp.01 — Vertex AI AutoML Two-Stage Pipeline + Full Supabase Integration
 
 **Date:** 14 May 2026 (14 พฤษภาคม 2569)
 
 ## Overview
 
-Senior ML/AI pipeline hardening: fixed softmax overflow, ONNX bounds check, session cache invalidation on deploy, Claude API timeout, WASTE_MATERIALS single source of truth, confidence threshold unification, and MODEL_OPTIONS update.
+This revision extends the AI scanner MVP with a production-grade Vertex AI AutoML prediction path alongside the existing ONNX fallback, and wires every major data layer to live Supabase tables. Seed/mock data has been removed from all Redux slices; initial state is now empty and populated at runtime by four new Supabase data hooks. A user-facing "Report Issue" flow and an admin Reports review tab close the human-in-the-loop feedback loop for training dataset improvement.
 
 ## Reason
 
-- `softmax` used `Math.max(...logits)` spread — call stack overflow on ONNX models with 1000+ output classes (ImageNet)
-- `onnxStage1` did not check `logits.length` before indexing — silent wrong-material output with mismatched models
-- `handleDeploy` dispatched new ONNX URLs without calling `clearModelCache` — old sessions kept running after deploy
-- `secondBrain.js` had no fetch timeout — Claude API call could hang indefinitely
-- `WASTE_MATERIALS` hardcoded in `secondBrain.js` duplicating `wasteItems.js` — two sources of truth for material list
-- Confidence threshold default was `0.7` in `secondBrain.js` vs `0.6` everywhere else
-- `MODEL_OPTIONS` used wrong label format ("Claude claude-haiku-4-5") and was missing Opus 4.7
+The two-stage pipeline previously only supported ONNX or a random mock. To move toward a deployable product, a real cloud inference endpoint (Google Vertex AI AutoML) was needed. Simultaneously, all Redux slices carried hard-coded seed data which prevented real-world data from appearing in the UI. This revision removes that seed data, adds live Supabase data hooks, and provides admin tooling to upload training images to Supabase Storage and export dataset manifests for retraining.
 
 ## Changes
 
-### `src/services/onnxInference.js`
-- Replaced `Math.max(...logits)` spread with an explicit loop in `softmax`
-- `softmax` now uses `Float64Array` for exp accumulator (more numerically stable than JS number array)
-- Returns a plain `Array` of probabilities (same as before, compatible with callers)
-
-### `src/services/twoStageAI.js`
-- `onnxStage1`: added guard `if (!logits || logits.length < MATERIALS.length) return null`
-- `onnxStage1`: replaced `Math.max(...probs)` top-index search with explicit loop
-- `onnxStage1`: uses `logits.slice(0, MATERIALS.length)` before softmax when ONNX model has more outputs than material classes
-
-### `src/services/secondBrain.js`
-- Removed hardcoded `WASTE_MATERIALS` array; now derived from `Object.keys(WASTE_ITEMS)` imported from `wasteItems.js`
-- Added `AbortController` with 15s timeout on Claude API fetch
-- `confidenceThreshold` default changed from `0.7` → `0.6` (matches `aiConfigSlice` and `twoStageInfer`)
-- Added `response.ok` check before JSON parse
-- More defensive JSON parsing: validates `materialType` against known materials, falls back to `mixed_plastic` if unknown
-- `lowConfidence` flag now set on the returned object rather than only when `< threshold`
-- Fallback source renamed to `'mock-fallback'` (distinguishes from intentional mock mode)
-- Logs whether error was AbortError (timeout) vs other errors
-
-### `src/pages/AdminPage.jsx`
-- Added `clearModelCache` import from `onnxInference`
-- `handleDeploy` now calls `clearModelCache()` before dispatching new ONNX URLs
-- `MODEL_OPTIONS` updated:
-  - `mock` → "Mock Inference (demo)"
-  - `claude-haiku-4-5` → `claude-haiku-4-5-20251001` with label "Haiku 4.5 — fast, low cost"
-  - `claude-sonnet-4-6` → "Sonnet 4.6 — balanced"
-  - Added `claude-opus-4-7` — "Opus 4.7 — best accuracy"
+| File | Action | Description |
+|------|--------|-------------|
+| `supabase/migrations/002_vertex_ai.sql` | Created | Three new tables: `training_images`, `user_reports`, `model_deployments` with RLS policies |
+| `src/services/vertexAI.js` | Created | Vertex AI AutoML prediction service with `vertexPredict`, `vertexStage1`, `vertexStage2`, `imageToBase64` |
+| `src/services/twoStageAI.js` | Modified | Added Vertex AI import; updated `twoStageInfer` to accept `vertexStage1Endpoint`/`vertexStage2Endpoint`; priority: ONNX → Vertex → mock; source field marks `'vertex'` |
+| `src/store/aiConfigSlice.js` | Modified | Added `vertexProjectId`, `vertexLocation`, `vertexAccessToken`, `vertexStage1Endpoint`, `vertexStage2Endpoint` to initial state with localStorage persistence |
+| `src/store/bookingSlice.js` | Modified | Removed `SEED` data; `initialState` set to `{ bookings: [] }`; added `setBookings` action |
+| `src/store/marketplaceSlice.js` | Modified | Removed `SEED_POSTS` data; `initialState.posts` set to `[]`; added `setPosts` action |
+| `src/store/scheduleSlice.js` | Created | New slice with `{ slots: [] }` initial state and `addSlot`, `updateSlot`, `removeSlot`, `setSlots` actions |
+| `src/store/notificationSlice.js` | Created | New slice with `{ items: [] }` initial state and `addNotification`, `removeNotification`, `clearNotifications` actions |
+| `src/store/index.js` | Modified | Added `notificationReducer` and `scheduleReducer` to store |
+| `src/hooks/useShops.js` | Created | Fetches active shops from Supabase `public.shops`; returns `{ shops, loading }` |
+| `src/hooks/useSupabaseBookings.js` | Created | Fetches buyer's bookings from Supabase; returns `{ bookings, loading, acceptBooking, rejectBooking }` |
+| `src/hooks/useSupabaseMarketplace.js` | Created | Fetches active marketplace posts; returns `{ posts, loading, addPost, removePost }` |
+| `src/hooks/useUserReports.js` | Created | Fetches pending admin reports; returns `{ reports, loading, approveReport, rejectReport }` |
+| `src/pages/MarketplacePage.jsx` | Modified | Uses `useSupabaseMarketplace` hook; dispatches `setPosts` on load; shows loading state |
+| `src/pages/MapPage.jsx` | Modified | Replaced `SHOPS` import with `useShops` hook; shows loading state |
+| `src/pages/BasketPage.jsx` | Modified | Replaced `SHOPS` import with `useShops` hook |
+| `src/pages/DashboardPage.jsx` | Modified | Uses `useSupabaseBookings`; dispatches `setBookings`; replaces `updateStatus` dispatches with hook methods |
+| `src/pages/SchedulePage.jsx` | Created | New page: today's booking slots from Supabase; confirm/cancel/complete actions update Supabase bookings |
+| `src/pages/AdminPage.jsx` | Modified | Stage 1 uploads to Supabase Storage + `training_images` table; Stage 2 cleanliness dataset section; Vertex AI Config section in model tab; Export Dataset Manifest button; new Reports tab using `useUserReports` hook |
+| `src/pages/ScanPage.jsx` | Modified | Passes Vertex endpoint config to `twoStageInfer`; adds Report Issue button with inline material selection form; submits to `user_reports` table |
+| `src/i18n/en.js` | Modified | Added 19 new i18n keys for report, vertex config, stage2, and uploading states |
+| `src/i18n/th.js` | Modified | Added matching 19 Thai translations |
 
 ## Validation
 
-- `npm run lint` — zero errors
-- `npm run build` — successful
+- `npm run lint` — 0 errors in `src/` (pre-existing errors in `.claude/helpers/` are out of scope and unmodified)
+- `npm run build` — passes, 195 modules transformed, 0 errors
 
 ## Notes
 
-API key stored in Redux/localStorage is XSS-readable. Acceptable for pre-launch admin use only; move to server-side proxy (Supabase Edge Function) before public launch.
-
-Weight estimation (`sizeKg`) in both mock and ONNX stage 1 is still random — a real bounding-box / depth-estimation model would be required for production accuracy. This is a known gap, not introduced here.
+- **Vertex AI requires env vars:** `VITE_VERTEX_PROJECT_ID`, `VITE_VERTEX_LOCATION`, `VITE_VERTEX_ACCESS_TOKEN`. The access token is short-lived and must be refreshed via `gcloud auth print-access-token`. Alternatively, configure from the Admin → AI Model Config → Vertex AI Config section.
+- **Supabase Storage bucket:** `training-images` must be created manually in the Supabase dashboard with a `public` read policy. The bucket name must match exactly.
+- **Graceful degradation:** All Supabase calls fail silently if Supabase is not configured (missing env vars). The UI never crashes; it simply shows empty states.
+- **Redux slices** no longer contain seed data. On first load with an unconfigured Supabase, all lists will be empty.

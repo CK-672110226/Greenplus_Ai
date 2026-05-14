@@ -1,84 +1,71 @@
-import { Outlet, NavLink } from 'react-router-dom'
+import { Outlet, NavLink, useNavigate } from 'react-router-dom'
 import { useSelector, useDispatch } from 'react-redux'
-import { useNavigate } from 'react-router-dom'
 import { setLanguage } from '../store/userSlice'
 import { useT } from '../hooks/useT'
 import { Logo } from '../components/Logo'
+import { supabase } from '../lib/supabase'
 
+/* ── Icons ──────────────────────────────────────────────────── */
 function IconHome() {
-  return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
-      <polyline points="9 22 9 12 15 12 15 22" />
-    </svg>
-  )
+  return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" /><polyline points="9 22 9 12 15 12 15 22" /></svg>
 }
-
 function IconScan() {
-  return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <polyline points="4 7 4 4 7 4" />
-      <polyline points="17 4 20 4 20 7" />
-      <polyline points="20 17 20 20 17 20" />
-      <polyline points="7 20 4 20 4 17" />
-      <rect x="8" y="8" width="8" height="8" rx="1" />
-    </svg>
-  )
+  return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="4 7 4 4 7 4" /><polyline points="17 4 20 4 20 7" /><polyline points="20 17 20 20 17 20" /><polyline points="7 20 4 20 4 17" /><rect x="8" y="8" width="8" height="8" rx="1" /></svg>
 }
-
 function IconBasket() {
-  return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" />
-      <line x1="3" y1="6" x2="21" y2="6" />
-      <path d="M16 10a4 4 0 01-8 0" />
-    </svg>
-  )
+  return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" /><line x1="3" y1="6" x2="21" y2="6" /><path d="M16 10a4 4 0 01-8 0" /></svg>
 }
-
 function IconMap() {
-  return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2" />
-      <line x1="8" y1="2" x2="8" y2="18" />
-      <line x1="16" y1="6" x2="16" y2="22" />
-    </svg>
-  )
+  return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2" /><line x1="8" y1="2" x2="8" y2="18" /><line x1="16" y1="6" x2="16" y2="22" /></svg>
 }
-
 function IconProfile() {
-  return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
-      <circle cx="12" cy="7" r="4" />
-    </svg>
-  )
+  return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
+}
+function IconMarket() {
+  return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2 9m13-9l2 9M9 21h6" /></svg>
+}
+function IconEco() {
+  return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22V12" /><path d="M5 12C5 6.5 8 4 12 4c4 0 7 2.5 7 8-2 0-4.5-.5-7-3-2.5 2.5-5 3-7 3z" /></svg>
+}
+function IconSettings() {
+  return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z" /></svg>
+}
+function IconSignOut() {
+  return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" /><polyline points="16 17 21 12 16 7" /><line x1="21" y1="12" x2="9" y2="12" /></svg>
 }
 
-function SidebarLink({ to, icon, label, badge }) {
+/* ── Sidebar nav link (desktop) ──────────────────────────────── */
+function SideLink({ to, icon, label, badge }) {
   return (
     <NavLink
       to={to}
       className={({ isActive }) =>
-        'flex items-center gap-3 px-3 py-2.5 font-data text-[12px] uppercase tracking-wide transition-colors rounded-sm ' +
+        'flex items-center gap-3 px-5 py-2.5 transition-colors relative group ' +
         (isActive
-          ? 'text-[var(--green)] bg-[var(--paper-2)]'
+          ? 'text-[var(--green)] bg-[var(--green-soft)]'
           : 'text-[var(--ink-3)] hover:text-[var(--ink)] hover:bg-[var(--paper-2)]')
       }
     >
-      <span className="relative flex-shrink-0">
-        {icon}
-        {badge > 0 && (
-          <span className="absolute -top-1 -right-1.5 flex items-center justify-center min-w-[14px] h-[14px] px-0.5 bg-[var(--green)] text-[var(--paper)] font-data text-[9px] rounded-full leading-none">
-            {badge}
+      {({ isActive }) => (
+        <>
+          {isActive && (
+            <span className="absolute left-0 top-0 bottom-0 w-[3px] bg-[var(--green)]" />
+          )}
+          <span className="relative flex-shrink-0">{icon}
+            {badge > 0 && (
+              <span className="absolute -top-1 -right-1.5 flex items-center justify-center min-w-[14px] h-[14px] px-0.5 bg-[var(--green)] text-[var(--paper)] font-data text-[9px] rounded-full leading-none">
+                {badge}
+              </span>
+            )}
           </span>
-        )}
-      </span>
-      <span>{label}</span>
+          <span className="font-data text-[12px] uppercase tracking-widest">{label}</span>
+        </>
+      )}
     </NavLink>
   )
 }
 
+/* ── Mobile bottom tab ──────────────────────────────────────── */
 function Tab({ to, icon, label, badge }) {
   return (
     <NavLink
@@ -101,10 +88,11 @@ function Tab({ to, icon, label, badge }) {
   )
 }
 
+/* ── Layout ─────────────────────────────────────────────────── */
 export function UserLayout() {
   const navigate = useNavigate()
   const dispatch = useDispatch()
-  const { language } = useSelector(s => s.user)
+  const { language, profile } = useSelector(s => s.user)
   const basket = useSelector(s => s.waste?.basket ?? [])
   const t = useT()
 
@@ -114,80 +102,142 @@ export function UserLayout() {
     dispatch(setLanguage(language === 'th' ? 'en' : 'th'))
   }
 
+  async function handleSignOut() {
+    await supabase.auth.signOut()
+    navigate('/')
+  }
+
+  const mainNav = [
+    { to: '/home',         icon: <IconHome />,    label: t.home },
+    { to: '/scan',         icon: <IconScan />,    label: 'AI Scanner' },
+    { to: '/marketplace',  icon: <IconMarket />,  label: t.marketplace },
+    { to: '/eco-points',   icon: <IconEco />,     label: t.ecoPoints },
+    { to: '/map',          icon: <IconMap />,     label: t.map },
+  ]
+
+  const mobileNav = [
+    { to: '/home',    icon: <IconHome />,    label: t.home },
+    { to: '/scan',    icon: <IconScan />,    label: t.scan },
+    { to: '/basket',  icon: <IconBasket />,  label: t.basket, badge: activeCount },
+    { to: '/map',     icon: <IconMap />,     label: t.map },
+    { to: '/profile', icon: <IconProfile />, label: t.profile },
+  ]
+
+  // Avatar initial
+  const initial = (profile?.display_name ?? 'U')[0].toUpperCase()
+
   return (
-    <div className="flex flex-col md:flex-row min-h-screen bg-[var(--paper)]">
-      {/* Desktop sidebar — hidden on mobile */}
-      <aside className="hidden md:flex md:flex-col md:fixed md:left-0 md:top-0 md:bottom-0 md:w-[220px] md:z-40 bg-[var(--paper)] border-r-[1.5px] border-[var(--ink)] px-4 py-5 gap-2">
-        <button
-          onClick={() => navigate('/home')}
-          className="bg-transparent border-none cursor-pointer p-0 hover:opacity-75 transition-opacity self-start"
-          aria-label="GreenPlus.Ai home"
-        >
-          <Logo height={30} showWordmark />
-        </button>
+    <div className="flex min-h-screen bg-[var(--paper)]">
 
-        <nav className="flex flex-col gap-1 mt-4 flex-1">
-          <SidebarLink to="/home"    icon={<IconHome />}    label={t.home} />
-          <SidebarLink to="/scan"    icon={<IconScan />}    label={t.scan} />
-          <SidebarLink to="/basket"  icon={<IconBasket />}  label={t.basket} badge={activeCount} />
-          <SidebarLink to="/map"     icon={<IconMap />}     label={t.map} />
-          <SidebarLink to="/profile" icon={<IconProfile />} label={t.profile} />
-        </nav>
+      {/* ══ Desktop Sidebar ══════════════════════════════════════ */}
+      <aside className="hidden lg:flex flex-col w-60 shrink-0 border-r-[1.5px] border-[var(--ink)] sticky top-0 h-screen overflow-y-auto bg-[var(--paper)]">
 
-        <button
-          onClick={toggleLang}
-          className="font-data text-[11px] border-[1.5px] border-[var(--ink-4)] px-2 py-0.5 hover:border-[var(--ink)] transition-colors bg-transparent cursor-pointer self-start"
-        >
-          {language === 'th' ? 'EN' : 'TH'}
-        </button>
-      </aside>
+        {/* Logo */}
+        <div className="flex items-center px-5 py-5 border-b-[1.5px] border-[var(--ink)]">
+          <button
+            onClick={() => navigate('/home')}
+            className="bg-transparent border-none cursor-pointer p-0 hover:opacity-75 transition-opacity"
+            aria-label="GreenPlus.Ai home"
+          >
+            <Logo height={28} showWordmark />
+          </button>
+        </div>
 
-      {/* TopBar — mobile only */}
-      <header className="md:hidden sticky top-0 z-40 flex items-center justify-between px-4 py-3 bg-[var(--paper)] border-b-[1.5px] border-[var(--ink)]">
-        <button
-          onClick={() => navigate('/home')}
-          className="bg-transparent border-none cursor-pointer p-0 hover:opacity-75 transition-opacity"
-          aria-label="GreenPlus.Ai home"
-        >
-          <Logo height={30} showWordmark />
-        </button>
+        {/* MAIN nav */}
+        <div className="flex flex-col pt-4 flex-1">
+          <span className="px-5 pb-1.5 font-data text-[9px] uppercase tracking-[0.15em] text-[var(--ink-4)]">
+            Main
+          </span>
+          {mainNav.map(item => (
+            <SideLink key={item.to} {...item} />
+          ))}
 
-        <div className="flex items-center gap-3">
+          {/* ACCOUNT nav */}
+          <span className="px-5 pt-5 pb-1.5 font-data text-[9px] uppercase tracking-[0.15em] text-[var(--ink-4)]">
+            Account
+          </span>
+          <SideLink to="/profile"  icon={<IconProfile />}  label={t.profile} />
+          <SideLink to="/settings" icon={<IconSettings />} label={t.settings} />
+        </div>
+
+        {/* Sign out + lang */}
+        <div className="border-t-[1.5px] border-[var(--ink)]">
+          <button
+            onClick={handleSignOut}
+            className="flex items-center gap-3 px-5 py-3 w-full text-left text-[var(--ink-3)] hover:text-[var(--ink)] hover:bg-[var(--paper-2)] transition-colors font-data text-[12px] uppercase tracking-widest bg-transparent border-none cursor-pointer"
+          >
+            <IconSignOut />
+            {t.logout}
+          </button>
+        </div>
+
+        {/* User profile chip */}
+        <div className="flex items-center gap-3 px-5 py-4 border-t-[1.5px] border-[var(--ink)] bg-[var(--paper-2)]">
+          <div className="w-8 h-8 border-[1.5px] border-[var(--ink)] bg-[var(--green-soft)] flex items-center justify-center font-brand text-[14px] text-[var(--green-ink)] shrink-0">
+            {initial}
+          </div>
+          <div className="flex flex-col min-w-0">
+            <span className="font-data text-[12px] text-[var(--ink)] truncate">
+              {profile?.display_name ?? '—'}
+            </span>
+            <span className="font-data text-[10px] text-[var(--ink-3)] uppercase tracking-wide">
+              {profile?.role ?? 'user'}
+            </span>
+          </div>
           <button
             onClick={toggleLang}
-            className="font-data text-[11px] border-[1.5px] border-[var(--ink-4)] px-2 py-0.5 hover:border-[var(--ink)] transition-colors bg-transparent cursor-pointer"
+            className="ml-auto font-data text-[10px] border-[1.5px] border-[var(--ink-4)] px-1.5 py-0.5 hover:border-[var(--ink)] transition-colors bg-transparent cursor-pointer shrink-0"
           >
             {language === 'th' ? 'EN' : 'TH'}
           </button>
-
-          <button
-            onClick={() => navigate('/basket')}
-            className="relative flex items-center justify-center w-8 h-8 bg-transparent border-none cursor-pointer text-[var(--ink)] hover:text-[var(--green)] transition-colors"
-            aria-label={t.basket}
-          >
-            <IconBasket />
-            {activeCount > 0 && (
-              <span className="absolute -top-0.5 -right-0.5 flex items-center justify-center min-w-[14px] h-[14px] px-0.5 bg-[var(--green)] text-[var(--paper)] font-data text-[9px] rounded-full leading-none">
-                {activeCount}
-              </span>
-            )}
-          </button>
         </div>
-      </header>
+      </aside>
 
-      {/* Page content */}
-      <main className="flex-1 pb-[68px] md:pb-0 md:ml-[220px]">
-        <Outlet />
-      </main>
+      {/* ══ Right panel ══════════════════════════════════════════ */}
+      <div className="flex flex-col flex-1 min-w-0">
 
-      {/* BottomTabBar — mobile only */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 flex items-stretch bg-[var(--paper)] border-t-[1.5px] border-[var(--ink)]">
-        <Tab to="/home"    icon={<IconHome />}    label={t.home} />
-        <Tab to="/scan"    icon={<IconScan />}    label={t.scan} />
-        <Tab to="/basket"  icon={<IconBasket />}  label={t.basket} badge={activeCount} />
-        <Tab to="/map"     icon={<IconMap />}     label={t.map} />
-        <Tab to="/profile" icon={<IconProfile />} label={t.profile} />
-      </nav>
+        {/* Mobile topbar */}
+        <header className="lg:hidden sticky top-0 z-40 flex items-center justify-between px-4 py-3 bg-[var(--paper)] border-b-[1.5px] border-[var(--ink)]">
+          <button
+            onClick={() => navigate('/home')}
+            className="bg-transparent border-none cursor-pointer p-0 hover:opacity-75 transition-opacity"
+            aria-label="GreenPlus.Ai home"
+          >
+            <Logo height={30} showWordmark />
+          </button>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={toggleLang}
+              className="font-data text-[11px] border-[1.5px] border-[var(--ink-4)] px-2 py-0.5 hover:border-[var(--ink)] transition-colors bg-transparent cursor-pointer"
+            >
+              {language === 'th' ? 'EN' : 'TH'}
+            </button>
+            <button
+              onClick={() => navigate('/basket')}
+              className="relative flex items-center justify-center w-8 h-8 bg-transparent border-none cursor-pointer text-[var(--ink)] hover:text-[var(--green)] transition-colors"
+            >
+              <IconBasket />
+              {activeCount > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 flex items-center justify-center min-w-[14px] h-[14px] px-0.5 bg-[var(--green)] text-[var(--paper)] font-data text-[9px] rounded-full leading-none">
+                  {activeCount}
+                </span>
+              )}
+            </button>
+          </div>
+        </header>
+
+        {/* Page content */}
+        <main className="flex-1 pb-[68px] lg:pb-0">
+          <Outlet />
+        </main>
+
+        {/* Mobile bottom tab bar */}
+        <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 flex items-stretch bg-[var(--paper)] border-t-[1.5px] border-[var(--ink)]">
+          {mobileNav.map(item => (
+            <Tab key={item.to} {...item} />
+          ))}
+        </nav>
+      </div>
     </div>
   )
 }

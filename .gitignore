@@ -57,9 +57,7 @@ Thumbs.db
 .claude
 
 # Project-specific ignores
-WORKPLAN.md
 Greenplus/
-docs/
 
 # Playwright
 playwright-report/

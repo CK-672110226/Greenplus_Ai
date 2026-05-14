@@ -1,28 +1,14 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 import { useT } from '../hooks/useT'
 import { Card } from '../components/Card'
 import { Button } from '../components/Button'
 
 import { useSelector, useDispatch } from 'react-redux'
-import { localName, WASTE_ITEMS, pricePerKg } from '../data/wasteItems'
-import { updateStatus } from '../store/bookingSlice'
+import { localName, WASTE_ITEMS } from '../data/wasteItems'
+import { setBookings } from '../store/bookingSlice'
 import { toggleMaterial, setOpenDays } from '../store/buyerSlice'
-
-const WEEKLY = [42, 65, 38, 90, 55, 72, 48]
-const DAYS   = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
-
-function initPricing() {
-  const p = {}
-  Object.keys(WASTE_ITEMS).forEach(mat => {
-    p[mat] = {
-      A: pricePerKg(mat, 'A'),
-      B: pricePerKg(mat, 'B'),
-      C: pricePerKg(mat, 'C'),
-    }
-  })
-  return p
-}
+import { useSupabaseBookings } from '../hooks/useSupabaseBookings'
 
 function TabBtn({ active, onClick, children }) {
   return (
@@ -42,14 +28,18 @@ export function DashboardPage() {
   const t        = useT()
   const dispatch = useDispatch()
   const language = useSelector(s => s.user.language)
-  const bookings = useSelector(s => s.bookings.bookings)
 
-  const savedOpenDays      = useSelector(s => s.buyer?.openDays ?? [1, 2, 3, 4, 5, 6])
-  const acceptedMaterials  = useSelector(s => s.buyer?.acceptedMaterials ?? Object.keys(WASTE_ITEMS))
+  const savedOpenDays     = useSelector(s => s.buyer?.openDays ?? [1, 2, 3, 4, 5, 6])
+  const acceptedMaterials = useSelector(s => s.buyer?.acceptedMaterials ?? Object.keys(WASTE_ITEMS))
 
-  const [tab, setTab]            = useState('orders')
-  const [pricing, setPricing]    = useState(initPricing)
-  const [openDays, setOpenDays_local] = useState(savedOpenDays)
+  const [tab, setTab]                     = useState('orders')
+  const [openDays, setOpenDays_local]     = useState(savedOpenDays)
+
+  const { bookings, loading, acceptBooking, rejectBooking } = useSupabaseBookings()
+
+  useEffect(() => {
+    dispatch(setBookings(bookings))
+  }, [bookings, dispatch])
 
   function handleToggleDay(dayIndex) {
     setOpenDays_local(prev =>
@@ -65,29 +55,22 @@ export function DashboardPage() {
   }
 
   function handleAccept(id) {
-    dispatch(updateStatus({ id, status: 'accepted' }))
+    acceptBooking(id)
     toast.success('Order accepted')
   }
   function handleReject(id) {
-    dispatch(updateStatus({ id, status: 'rejected' }))
+    rejectBooking(id)
     toast.error('Order rejected')
-  }
-  function handlePriceChange(mat, grade, val) {
-    setPricing(p => ({ ...p, [mat]: { ...p[mat], [grade]: parseFloat(val) || 0 } }))
-  }
-  function handleSavePricing() {
-    toast.success(t.savePricing)
   }
 
   const pending   = bookings.filter(b => b.status === 'pending').length
   const completed = bookings.filter(b => b.status === 'accepted').length
-  const revenue   = bookings.filter(b => b.status === 'accepted').reduce((s, b) => s + b.weight * 10, 0)
+  const revenue   = bookings.filter(b => b.status === 'accepted').reduce((s, b) => s + (b.totalKg ?? 0) * 10, 0)
 
   return (
     <main className="flex flex-col items-center px-4 py-10 gap-6">
       <h1 className="font-brand text-[28px] text-[var(--ink)] m-0">{t.dashboardTitle ?? t.dashboard}</h1>
 
-      {/* Stats row */}
       <div className="w-full max-w-xl grid grid-cols-3 gap-3">
         <Card className="flex flex-col gap-1 items-center">
           <span className="font-data text-[11px] text-[var(--ink-3)] uppercase tracking-widest text-center">{t.pendingOrders}</span>
@@ -103,30 +86,26 @@ export function DashboardPage() {
         </Card>
       </div>
 
-      {/* Weekly chart */}
-      <Card className="w-full max-w-xl flex flex-col gap-3">
-        <span className="font-data text-[11px] text-[var(--ink-3)] uppercase tracking-widest">Weekly Volume (kg)</span>
-        <div className="flex items-end gap-1 h-20">
-          {WEEKLY.map((v, i) => (
-            <div key={i} className="flex flex-col items-center gap-0.5 flex-1">
-              <div style={{ height: `${(v / 100) * 64}px`, background: 'var(--green)', border: '1.5px solid var(--ink)' }} className="w-full" />
-              <span className="font-data text-[9px] text-[var(--ink-3)]">{DAYS[i]}</span>
-            </div>
-          ))}
-        </div>
-      </Card>
-
       {/* Tabs */}
       <div className="w-full max-w-xl flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
-        <TabBtn active={tab === 'orders'}  onClick={() => setTab('orders')}>{t.recentBookings}</TabBtn>
-        <TabBtn active={tab === 'pricing'} onClick={() => setTab('pricing')}>{t.myPricing}</TabBtn>
-        <TabBtn active={tab === 'calendar'} onClick={() => setTab('calendar')}>{language === 'th' ? 'ปฏิทินร้าน' : 'Shop Calendar'}</TabBtn>
+        <TabBtn active={tab === 'orders'}    onClick={() => setTab('orders')}>{t.recentBookings}</TabBtn>
+        <TabBtn active={tab === 'calendar'}  onClick={() => setTab('calendar')}>{language === 'th' ? 'ปฏิทินร้าน' : 'Shop Calendar'}</TabBtn>
         <TabBtn active={tab === 'materials'} onClick={() => setTab('materials')}>{language === 'th' ? 'วัสดุที่รับ' : 'Materials'}</TabBtn>
       </div>
 
       {/* Orders tab */}
       {tab === 'orders' && (
         <div className="w-full max-w-xl flex flex-col gap-3">
+          {loading && (
+            <span className="font-data text-[11px] text-[var(--ink-3)] uppercase tracking-widest animate-pulse self-center">
+              Loading...
+            </span>
+          )}
+          {!loading && bookings.length === 0 && (
+            <Card className="flex items-center justify-center py-8">
+              <p className="font-body text-[15px] text-[var(--ink-3)] m-0">No bookings yet.</p>
+            </Card>
+          )}
           {bookings.map(b => (
             <Card key={b.id} className="flex flex-col gap-2">
               <div className="flex items-center justify-between flex-wrap gap-2">
@@ -157,36 +136,7 @@ export function DashboardPage() {
         </div>
       )}
 
-      {/* Pricing CRUD tab (B-02) */}
-      {tab === 'pricing' && (
-        <div className="w-full max-w-xl flex flex-col gap-3 overflow-x-auto">
-          <div className="grid grid-cols-4 gap-2 font-data text-[11px] text-[var(--ink-3)] uppercase tracking-widest px-3 min-w-[400px]">
-            <span>Material</span>
-            <span>{t.gradeA}</span>
-            <span>{t.gradeB}</span>
-            <span>{t.gradeC}</span>
-          </div>
-          {Object.keys(WASTE_ITEMS).map(mat => (
-            <Card key={mat} className="grid grid-cols-4 gap-2 items-center min-w-[400px]">
-              <span className="font-body text-[13px] text-[var(--ink)]">{localName(mat, language)}</span>
-              {['A', 'B', 'C'].map(grade => (
-                <input
-                  key={grade}
-                  type="number"
-                  min="0"
-                  step="0.5"
-                  value={pricing[mat]?.[grade] ?? 0}
-                  onChange={e => handlePriceChange(mat, grade, e.target.value)}
-                  className="w-full px-2 py-1 border-[1.5px] border-[var(--ink)] bg-[var(--paper)] font-data text-[13px] outline-none focus:border-[var(--green)]"
-                />
-              ))}
-            </Card>
-          ))}
-          <Button variant="primary" onClick={handleSavePricing}>{t.savePricing}</Button>
-        </div>
-      )}
-
-      {/* Calendar Tab (B-04) */}
+      {/* Calendar tab */}
       {tab === 'calendar' && (
         <div className="w-full max-w-xl flex flex-col gap-4">
           <Card className="flex flex-col gap-4">
@@ -194,8 +144,8 @@ export function DashboardPage() {
               {language === 'th' ? 'วันเปิด-ปิดทำการ (Operating Days)' : 'Operating Days'}
             </h2>
             <p className="font-body text-[14px] text-[var(--ink-3)] m-0">
-              {language === 'th' 
-                ? 'เลือกวันที่ร้านเปิดรับซื้อ เพื่อให้ลูกค้าไม่ถูกนำทางมาในวันที่ร้านหยุด' 
+              {language === 'th'
+                ? 'เลือกวันที่ร้านเปิดรับซื้อ เพื่อให้ลูกค้าไม่ถูกนำทางมาในวันที่ร้านหยุด'
                 : 'Select the days your shop is open so users do not route to you when closed.'}
             </p>
             <div className="flex flex-col gap-2 mt-2">
@@ -207,8 +157,8 @@ export function DashboardPage() {
                     <button
                       onClick={() => handleToggleDay(index)}
                       className={`font-data text-[11px] uppercase tracking-widest px-3 py-1.5 border-[1.5px] transition-colors ${
-                        isOpen 
-                          ? 'bg-[var(--green)] border-[var(--green-ink)] text-[var(--ink)]' 
+                        isOpen
+                          ? 'bg-[var(--green)] border-[var(--green-ink)] text-[var(--ink)]'
                           : 'bg-[var(--paper-2)] border-[var(--ink-4)] text-[var(--ink-3)]'
                       }`}
                     >
@@ -224,7 +174,8 @@ export function DashboardPage() {
           </Card>
         </div>
       )}
-      {/* Materials tab (B-06) */}
+
+      {/* Materials tab */}
       {tab === 'materials' && (
         <div className="w-full max-w-xl flex flex-col gap-4">
           <Card className="flex flex-col gap-4">
@@ -234,7 +185,7 @@ export function DashboardPage() {
             <p className="font-body text-[14px] text-[var(--ink-3)] m-0">
               {language === 'th'
                 ? 'เลือกประเภทวัสดุที่ร้านของคุณรับซื้อ ระบบจะแสดงเฉพาะร้านที่รับวัสดุที่ผู้ใช้ต้องการขาย'
-                : 'Select the material types your shop accepts. Only shops that accept the user\'s materials will be shown in routing.'}
+                : "Select the material types your shop accepts. Only shops that accept the user's materials will be shown in routing."}
             </p>
             <div className="grid grid-cols-2 gap-2">
               {Object.keys(WASTE_ITEMS).map(key => {

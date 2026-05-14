@@ -1,331 +1,352 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { toast } from 'sonner'
 import { useT } from '../hooks/useT'
-import { Card } from '../components/Card'
 import { Button } from '../components/Button'
-import { GradeTag } from '../components/GradeTag'
 import { useSelector, useDispatch } from 'react-redux'
 import { localName, WASTE_ITEMS, pricePerKg } from '../data/wasteItems'
-import { addPost, setGradeFilter } from '../store/marketplaceSlice'
+import { addPost, setPosts } from '../store/marketplaceSlice'
+import { useSupabaseMarketplace } from '../hooks/useSupabaseMarketplace'
+import { useShops } from '../hooks/useShops'
+import { useMarketPricing } from '../hooks/useMarketPricing'
 
-const GRADES = ['A', 'B', 'C']
 const MATERIAL_KEYS = Object.keys(WASTE_ITEMS)
 
-const PILL_BASE = 'font-data text-[12px] uppercase tracking-widest border-[1.5px] border-[var(--ink)] transition-colors'
-const PILL_ON   = 'bg-[var(--ink)] text-[var(--paper)]'
-const PILL_OFF  = 'bg-[var(--paper)] text-[var(--ink)] hover:text-[var(--green)]'
+const CATEGORIES = {
+  all:     MATERIAL_KEYS,
+  plastic: ['pet_bottle_clear', 'mixed_plastic'],
+  paper:   ['cardboard', 'newspaper'],
+  metal:   ['aluminum_can', 'copper'],
+  glass:   ['glass', 'cooking_oil'],
+}
 
-function GradePills({ gradeFilter, onGrade, filters, vertical = false }) {
-  const cls = vertical ? `${PILL_BASE} w-full px-3 py-1.5 text-left` : `${PILL_BASE} px-3 py-1`
+/* ── Shop card (replaces mock RequestCard) ────────────────────── */
+function ShopCard({ shop, language, t, marketPrice }) {
+  const materials = (shop.accepts ?? []).slice(0, 3)
+  const bestPrice = materials.length > 0 ? marketPrice(materials[0], 'A') : null
+
   return (
-    <div className={vertical ? 'flex flex-col gap-1.5' : 'flex gap-2 flex-wrap'}>
-      {filters.map(f => (
-        <button key={f.key} onClick={() => onGrade(f.key)}
-          className={`${cls} ${gradeFilter === f.key ? PILL_ON : PILL_OFF}`}>
-          {f.label}
-        </button>
-      ))}
+    <div className="flex flex-col gap-2 border-[1.5px] border-[var(--ink)] p-4 bg-[var(--paper-2)] shadow-[2px_2px_0_var(--ink)]">
+      <div className="flex items-start justify-between gap-2">
+        <div className="flex flex-col gap-0.5">
+          <span className="font-body text-[14px] text-[var(--ink)] leading-tight">{shop.name}</span>
+          {shop.area && (
+            <span className="font-data text-[10px] text-[var(--ink-3)]">{shop.area}</span>
+          )}
+        </div>
+        {bestPrice != null && (
+          <span className="font-brand text-[18px] text-[var(--green-ink)] shrink-0">
+            ฿ {bestPrice.toFixed(1)}/kg
+          </span>
+        )}
+      </div>
+
+      {materials.length > 0 && (
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="font-data text-[9px] text-[var(--ink-4)] uppercase tracking-widest">{t.shopAccepts}:</span>
+          {materials.map(m => (
+            <span key={m} className="font-data text-[10px] text-[var(--ink-2)] border-[1px] border-[var(--ink-4)] px-1.5 py-0.5">
+              {localName(m, language)}
+            </span>
+          ))}
+        </div>
+      )}
+
+      <a
+        href="/map"
+        className="mt-1 w-full py-2 font-data text-[11px] uppercase tracking-widest border-[1.5px] border-[var(--ink)] bg-transparent cursor-pointer hover:bg-[var(--ink)] hover:text-[var(--paper)] transition-colors shadow-[2px_2px_0_var(--ink)] active:shadow-none active:translate-x-[2px] active:translate-y-[2px] text-center block no-underline text-[var(--ink)]"
+      >
+        {t.directions ?? 'View on Map'} →
+      </a>
     </div>
   )
 }
 
-function MaterialPills({ materialFilter, onMaterial, language, allLabel, vertical = false }) {
-  const cls = vertical ? `${PILL_BASE} w-full px-3 py-1.5 text-left` : `${PILL_BASE} px-3 py-1`
-  return (
-    <div className={vertical ? 'flex flex-col gap-1.5' : 'flex gap-2 flex-wrap'}>
-      <button onClick={() => onMaterial('all')}
-        className={`${cls} ${materialFilter === 'all' ? PILL_ON : PILL_OFF}`}>
-        {allLabel}
-      </button>
-      {MATERIAL_KEYS.map(k => (
-        <button key={k} onClick={() => onMaterial(k)}
-          className={`${cls} ${materialFilter === k ? PILL_ON : PILL_OFF}`}>
-          {localName(k, language)}
-        </button>
-      ))}
-    </div>
-  )
-}
-
-function PostAdForm({ onClose }) {
+/* ── Post Ad Form ─────────────────────────────────────────────── */
+function PostAdForm({ onClose, onAdd, marketPrice }) {
   const t        = useT()
   const dispatch = useDispatch()
   const language = useSelector(s => s.user.language)
 
-  const [form, setForm] = useState({
-    materialType: MATERIAL_KEYS[0],
-    grade:        'A',
-    qty:          '',
-    pricePerKg:   '',
-    contact:      '',
-    shop:         '',
-  })
-
+  const [form, setForm] = useState({ materialType: MATERIAL_KEYS[0], grade: 'A', qty: '', pricePerKg: '', contact: '', shop: '' })
   function set(k, v) { setForm(prev => ({ ...prev, [k]: v })) }
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault()
-    if (!form.qty || !form.pricePerKg || !form.shop) {
-      toast.error(t.requiredFields)
-      return
-    }
-    dispatch(addPost({
-      ...form,
-      qty:        Number(form.qty),
-      pricePerKg: Number(form.pricePerKg),
-      distanceKm: 0,
-    }))
+    if (!form.qty || !form.pricePerKg || !form.shop) { toast.error(t.requiredFields); return }
+    const payload = { ...form, qty: Number(form.qty), pricePerKg: Number(form.pricePerKg), distanceKm: 0 }
+    if (onAdd) await onAdd(payload)
+    else dispatch(addPost(payload))
     toast.success(t.postSuccess)
     onClose()
   }
 
-  const suggested = pricePerKg(form.materialType, form.grade).toFixed(1)
+  const suggested = (marketPrice(form.materialType, form.grade) ?? pricePerKg(form.materialType, form.grade)).toFixed(1)
 
   return (
-    <Card className="w-full flex flex-col gap-4 border-[var(--green)]">
+    <div className="border-[1.5px] border-[var(--green)] bg-[var(--paper-2)] p-5 flex flex-col gap-4">
       <div className="flex items-center justify-between">
-        <h2 className="font-brand text-[20px] text-[var(--ink)] m-0">{t.postAd}</h2>
-        <button onClick={onClose} className="font-data text-[12px] text-[var(--ink-3)] uppercase tracking-widest bg-transparent border-none cursor-pointer hover:text-[var(--ink)]">
-          {t.cancelLabel}
-        </button>
+        <span className="font-brand text-[18px] text-[var(--ink)]">{t.postAd}</span>
+        <button onClick={onClose} className="font-data text-[11px] text-[var(--ink-3)] uppercase tracking-widest bg-transparent border-none cursor-pointer hover:text-[var(--ink)]">{t.cancelLabel}</button>
       </div>
-
       <form onSubmit={handleSubmit} className="flex flex-col gap-3">
-        {/* Material */}
         <div className="flex flex-col gap-1">
-          <label className="font-data text-[11px] text-[var(--ink-3)] uppercase tracking-widest">{t.materialTypeLabel}</label>
-          <select
-            value={form.materialType}
-            onChange={e => set('materialType', e.target.value)}
-            className="w-full px-3 py-2 border-[1.5px] border-[var(--ink)] bg-[var(--paper)] font-body text-[16px] outline-none focus:border-[var(--green)]"
-          >
-            {MATERIAL_KEYS.map(k => (
-              <option key={k} value={k}>{localName(k, language)}</option>
-            ))}
+          <label className="font-data text-[10px] text-[var(--ink-3)] uppercase tracking-widest">{t.materialTypeLabel}</label>
+          <select value={form.materialType} onChange={e => set('materialType', e.target.value)} className="w-full px-3 py-2 border-[1.5px] border-[var(--ink)] bg-[var(--paper)] font-body text-[15px] outline-none focus:border-[var(--green)]">
+            {MATERIAL_KEYS.map(k => <option key={k} value={k}>{localName(k, language)}</option>)}
           </select>
         </div>
-
-        {/* Grade */}
         <div className="flex flex-col gap-1">
-          <label className="font-data text-[11px] text-[var(--ink-3)] uppercase tracking-widest">{t.gradeLabel}</label>
+          <label className="font-data text-[10px] text-[var(--ink-3)] uppercase tracking-widest">{t.gradeLabel}</label>
           <div className="flex gap-2">
-            {GRADES.map(g => (
-              <button
-                key={g}
-                type="button"
-                onClick={() => set('grade', g)}
-                className={[
-                  'flex-1 py-2 font-data text-[13px] uppercase tracking-widest border-[1.5px] border-[var(--ink)] transition-colors',
-                  form.grade === g ? 'bg-[var(--ink)] text-[var(--paper)]' : 'bg-transparent text-[var(--ink)] hover:bg-[var(--ink-4)]/20',
-                ].join(' ')}
-              >
-                {g}
-              </button>
+            {['A', 'B', 'C'].map(g => (
+              <button key={g} type="button" onClick={() => set('grade', g)} className={`flex-1 py-2 font-data text-[12px] uppercase tracking-widest border-[1.5px] border-[var(--ink)] transition-colors ${form.grade === g ? 'bg-[var(--ink)] text-[var(--paper)]' : 'bg-transparent text-[var(--ink)]'}`}>{g}</button>
             ))}
           </div>
         </div>
-
         <div className="grid grid-cols-2 gap-3">
-          {/* Qty */}
           <div className="flex flex-col gap-1">
-            <label className="font-data text-[11px] text-[var(--ink-3)] uppercase tracking-widest">{t.weightKg}</label>
-            <input
-              type="number"
-              min="0.1"
-              step="0.1"
-              required
-              value={form.qty}
-              onChange={e => set('qty', e.target.value)}
-              placeholder="kg"
-              className="w-full px-3 py-2 border-[1.5px] border-[var(--ink)] bg-[var(--paper)] font-body text-[16px] outline-none focus:border-[var(--green)]"
-            />
+            <label className="font-data text-[10px] text-[var(--ink-3)] uppercase tracking-widest">{t.weightKg}</label>
+            <input type="number" min="0.1" step="0.1" required value={form.qty} onChange={e => set('qty', e.target.value)} placeholder="kg" className="w-full px-3 py-2 border-[1.5px] border-[var(--ink)] bg-[var(--paper)] font-body text-[15px] outline-none focus:border-[var(--green)]" />
           </div>
-
-          {/* Price */}
           <div className="flex flex-col gap-1">
-            <label className="font-data text-[11px] text-[var(--ink-3)] uppercase tracking-widest">
-              {t.pricePerKgLabel}
-              <span className="ml-1 text-[var(--green)] normal-case tracking-normal">(~฿{suggested})</span>
-            </label>
-            <input
-              type="number"
-              min="0"
-              step="0.1"
-              required
-              value={form.pricePerKg}
-              onChange={e => set('pricePerKg', e.target.value)}
-              placeholder={`฿ ${suggested}`}
-              className="w-full px-3 py-2 border-[1.5px] border-[var(--ink)] bg-[var(--paper)] font-body text-[16px] outline-none focus:border-[var(--green)]"
-            />
+            <label className="font-data text-[10px] text-[var(--ink-3)] uppercase tracking-widest">{t.pricePerKgLabel} <span className="text-[var(--green)] normal-case">(~฿{suggested})</span></label>
+            <input type="number" min="0" step="0.1" required value={form.pricePerKg} onChange={e => set('pricePerKg', e.target.value)} placeholder={`฿ ${suggested}`} className="w-full px-3 py-2 border-[1.5px] border-[var(--ink)] bg-[var(--paper)] font-body text-[15px] outline-none focus:border-[var(--green)]" />
           </div>
         </div>
-
-        {/* Shop name */}
         <div className="flex flex-col gap-1">
-          <label className="font-data text-[11px] text-[var(--ink-3)] uppercase tracking-widest">{t.shopName}</label>
-          <input
-            type="text"
-            required
-            value={form.shop}
-            onChange={e => set('shop', e.target.value)}
-            className="w-full px-3 py-2 border-[1.5px] border-[var(--ink)] bg-[var(--paper)] font-body text-[16px] outline-none focus:border-[var(--green)]"
-          />
+          <label className="font-data text-[10px] text-[var(--ink-3)] uppercase tracking-widest">{t.shopName}</label>
+          <input type="text" required value={form.shop} onChange={e => set('shop', e.target.value)} className="w-full px-3 py-2 border-[1.5px] border-[var(--ink)] bg-[var(--paper)] font-body text-[15px] outline-none focus:border-[var(--green)]" />
         </div>
-
-        {/* Contact */}
         <div className="flex flex-col gap-1">
-          <label className="font-data text-[11px] text-[var(--ink-3)] uppercase tracking-widest">{t.contactInfo}</label>
-          <input
-            type="text"
-            value={form.contact}
-            onChange={e => set('contact', e.target.value)}
-            placeholder="LINE / Tel"
-            className="w-full px-3 py-2 border-[1.5px] border-[var(--ink)] bg-[var(--paper)] font-body text-[16px] outline-none focus:border-[var(--green)]"
-          />
+          <label className="font-data text-[10px] text-[var(--ink-3)] uppercase tracking-widest">{t.contactInfo}</label>
+          <input type="text" value={form.contact} onChange={e => set('contact', e.target.value)} placeholder="LINE / Tel" className="w-full px-3 py-2 border-[1.5px] border-[var(--ink)] bg-[var(--paper)] font-body text-[15px] outline-none focus:border-[var(--green)]" />
         </div>
-
         <Button type="submit" variant="primary" fullWidth>{t.postAd}</Button>
       </form>
-    </Card>
+    </div>
   )
 }
 
+/* ── MarketplacePage ──────────────────────────────────────────── */
 export function MarketplacePage() {
-  const t          = useT()
-  const dispatch   = useDispatch()
-  const language   = useSelector(s => s.user.language)
-  const role       = useSelector(s => s.user.profile?.role)
-  const posts      = useSelector(s => s.marketplace.posts)
-  const gradeFilter= useSelector(s => s.marketplace.gradeFilter ?? 'all')
+  const t        = useT()
+  const dispatch = useDispatch()
+  const language = useSelector(s => s.user.language)
+  const basket   = useSelector(s => s.waste?.basket ?? [])
 
+  const { posts, addPost: supabaseAddPost } = useSupabaseMarketplace()
+  const { shops } = useShops()
+  const { pricing, loading: pricingLoading, marketPrice } = useMarketPricing()
+
+  useEffect(() => {
+    if (posts.length > 0) dispatch(setPosts(posts))
+  }, [posts, dispatch])
+
+  const [catFilter, setCatFilter] = useState('all')
   const [isPosting, setIsPosting] = useState(false)
-  const [filterOpen, setFilterOpen] = useState(false)
-  const [materialFilter, setMaterialFilter] = useState('all')
 
-  // Apply grade filter first, then material filter
-  const visible = posts
-    .filter(p => !p.flagged)
-    .filter(p => gradeFilter === 'all' || p.grade === gradeFilter.toUpperCase())
-    .filter(p => materialFilter === 'all' || p.materialType === materialFilter)
+  const basketMaterials = new Set(basket.filter(i => !i.skipped).map(i => i.materialType))
+  const basketCount     = basket.filter(i => !i.skipped).length
 
-  const GRADE_FILTERS = [
-    { key: 'all', label: t.filterAll },
-    { key: 'a',   label: t.filterA },
-    { key: 'b',   label: t.filterB },
-    { key: 'c',   label: t.filterC },
+  const visibleMaterials = catFilter === 'basket'
+    ? MATERIAL_KEYS.filter(k => basketMaterials.has(k))
+    : CATEGORIES[catFilter] ?? MATERIAL_KEYS
+
+  // Shops that accept at least one material in the current category
+  const categoryMaterials = new Set(CATEGORIES[catFilter] ?? MATERIAL_KEYS)
+  const visibleShops = shops.filter(s =>
+    (s.accepts ?? []).some(m => categoryMaterials.has(m))
+  ).slice(0, 6)
+
+  // Count distinct shops contributing to pricing data
+  const sourceCount = new Set(pricing.map(p => p.shop_id)).size
+
+  const CAT_TABS = [
+    { key: 'all',     label: 'All materials' },
+    { key: 'plastic', label: 'Plastic' },
+    { key: 'paper',   label: 'Paper' },
+    { key: 'metal',   label: 'Metal' },
+    { key: 'glass',   label: 'Glass' },
+    { key: 'basket',  label: `★ My basket (${basketCount})` },
   ]
 
   return (
-    <div className="flex flex-col items-center px-4 py-8 gap-6">
-      {/* Page header */}
-      <div className="w-full max-w-5xl flex items-center justify-between">
-        <h1 className="font-brand text-[28px] text-[var(--ink)] m-0">{t.marketplace}</h1>
-        {(role === 'user' || role === 'buyer') && !isPosting && (
-          <Button variant="secondary" onClick={() => setIsPosting(true)}>
-            + {t.postAd}
-          </Button>
-        )}
+    <div className="flex flex-col min-h-full">
+
+      {/* Breadcrumb */}
+      <div className="px-6 lg:px-10 pt-5 pb-0 border-b-[0px]">
+        <span className="font-data text-[9px] text-[var(--ink-4)] uppercase tracking-[0.15em]">
+          Home / Marketplace / Pricing Table
+        </span>
       </div>
 
-      {/* ── Mobile: filter toggle button ── */}
-      <div className="w-full max-w-5xl md:hidden flex flex-col gap-2">
-        <button
-          onClick={() => setFilterOpen(prev => !prev)}
-          className={[
-            'self-start px-4 py-1.5 font-data text-[12px] uppercase tracking-widest border-[1.5px] border-[var(--ink)] transition-colors shadow-[2px_2px_0_var(--ink)]',
-            filterOpen
-              ? 'bg-[var(--ink)] text-[var(--paper)]'
-              : 'bg-[var(--paper)] text-[var(--ink)]',
-          ].join(' ')}
-        >
-          {filterOpen ? '✕ Filters' : '⊞ Filters'}
-        </button>
+      {/* 2-column body */}
+      <div className="flex flex-col lg:flex-row flex-1 min-h-0">
 
-        {/* Mobile filter drawer — inline card below the button */}
-        {filterOpen && (
-          <div className="border-[1.5px] border-[var(--ink)] bg-[var(--paper-2)] shadow-[2px_2px_0_var(--ink)] p-4 flex flex-col gap-4">
-            <div>
-              <p className="font-data text-[11px] text-[var(--ink-3)] uppercase tracking-widest m-0 mb-2">Grade</p>
-              <GradePills gradeFilter={gradeFilter} onGrade={k => dispatch(setGradeFilter(k))} filters={GRADE_FILTERS} vertical={false} />
+        {/* ══ LEFT: Pricing Table ══════════════════════════════ */}
+        <div className="flex flex-col flex-1 min-w-0 lg:border-r-[1.5px] lg:border-[var(--ink)]">
+
+          {/* Table header */}
+          <div className="px-6 lg:px-10 pt-6 pb-4 border-b-[1.5px] border-[var(--ink)]">
+            <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-3">
+              <div>
+                <h1 className="font-brand text-[28px] lg:text-[36px] text-[var(--ink)] m-0 leading-tight">
+                  Today&apos;s market —
+                </h1>
+                <h1 className="font-brand text-[28px] lg:text-[36px] text-[var(--ink)] m-0 leading-tight">
+                  Chiang Mai
+                </h1>
+              </div>
+              <div className="flex items-center gap-2">
+                <button className="font-data text-[11px] border-[1.5px] border-[var(--ink-4)] px-3 py-1.5 bg-transparent cursor-default text-[var(--ink-3)]">฿ THB ▾</button>
+                <button className="font-data text-[11px] border-[1.5px] border-[var(--ink-4)] px-3 py-1.5 bg-transparent cursor-default text-[var(--ink-3)]">/ kg ▾</button>
+              </div>
             </div>
-            <div>
-              <p className="font-data text-[11px] text-[var(--ink-3)] uppercase tracking-widest m-0 mb-2">Material</p>
-              <MaterialPills materialFilter={materialFilter} onMaterial={setMaterialFilter} language={language} allLabel={t.filterAll} vertical={false} />
-            </div>
-          </div>
-        )}
-      </div>
 
-      {/* ── Desktop: sidebar + main two-column grid ── */}
-      <div className="w-full max-w-5xl md:grid md:grid-cols-[180px_1fr] md:gap-6 md:items-start flex flex-col gap-5">
-
-        {/* Desktop sidebar — hidden on mobile */}
-        <aside className="hidden md:flex md:flex-col gap-2 sticky top-4 self-start">
-          <p className="font-data text-[11px] text-[var(--ink-3)] uppercase tracking-widest m-0">Filters</p>
-          <GradePills gradeFilter={gradeFilter} onGrade={k => dispatch(setGradeFilter(k))} filters={GRADE_FILTERS} vertical={true} />
-
-          {/* Divider */}
-          <hr className="h-px bg-[var(--ink-4)] border-none my-3" />
-
-          <p className="font-data text-[11px] text-[var(--ink-3)] uppercase tracking-widest m-0">Material</p>
-          <MaterialPills materialFilter={materialFilter} onMaterial={setMaterialFilter} language={language} allLabel={t.filterAll} vertical={true} />
-        </aside>
-
-        {/* Main content */}
-        <div className="flex flex-col gap-5">
-          {isPosting && <PostAdForm onClose={() => setIsPosting(false)} />}
-
-          {/* Listings */}
-          {visible.length === 0 ? (
-            <Card className="flex items-center justify-center py-10">
-              <p className="font-body text-[15px] text-[var(--ink-3)] m-0">{t.noListings}</p>
-            </Card>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {visible.map(item => (
-                <Card key={item.id} className="flex flex-col gap-3">
-                  <div className="flex items-center gap-2">
-                    <GradeTag grade={item.grade} />
-                    <span className="font-body text-[15px] text-[var(--ink)] font-semibold">
-                      {localName(item.materialType, language)}
-                    </span>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-x-3 gap-y-0.5">
-                    <span className="font-data text-[11px] text-[var(--ink-3)] uppercase">Qty</span>
-                    <span className="font-data text-[13px] text-[var(--ink)]">{item.qty} kg</span>
-
-                    <span className="font-data text-[11px] text-[var(--ink-3)] uppercase">฿/kg</span>
-                    <span className="font-data text-[13px] text-[var(--green)] font-bold">฿{item.pricePerKg}</span>
-
-                    <span className="font-data text-[11px] text-[var(--ink-3)] uppercase">Shop</span>
-                    <span className="font-body text-[13px] text-[var(--ink)]">{item.shop}</span>
-
-                    {item.distanceKm > 0 && (
-                      <>
-                        <span className="font-data text-[11px] text-[var(--ink-3)] uppercase">Dist</span>
-                        <span className="font-data text-[13px] text-[var(--ink)]">{item.distanceKm} {t.kmAway}</span>
-                      </>
-                    )}
-                    {item.contact && (
-                      <>
-                        <span className="font-data text-[11px] text-[var(--ink-3)] uppercase">Tel</span>
-                        <span className="font-body text-[13px] text-[var(--ink)]">{item.contact}</span>
-                      </>
-                    )}
-                  </div>
-
-                  <Button
-                    variant="secondary"
-                    fullWidth
-                    onClick={() => toast.info(item.contact || t.contactSeller)}
-                  >
-                    {t.contactSeller}
-                  </Button>
-                </Card>
+            {/* Category filter tabs */}
+            <div className="flex gap-2 flex-wrap mt-4">
+              {CAT_TABS.map(tab => (
+                <button
+                  key={tab.key}
+                  onClick={() => setCatFilter(tab.key)}
+                  className={[
+                    'px-3 py-1.5 font-data text-[11px] uppercase tracking-widest border-[1.5px] transition-colors',
+                    catFilter === tab.key
+                      ? 'bg-[var(--ink)] text-[var(--paper)] border-[var(--ink)]'
+                      : 'bg-transparent text-[var(--ink-3)] border-[var(--ink-4)] hover:border-[var(--ink)] hover:text-[var(--ink)]',
+                  ].join(' ')}
+                >
+                  {tab.label}
+                </button>
               ))}
             </div>
-          )}
+          </div>
+
+          {/* Table */}
+          <div className="flex-1 overflow-y-auto">
+            {/* Table head */}
+            <div className="grid grid-cols-[1fr_auto] px-6 lg:px-10 py-2.5 border-b-[1.5px] border-[var(--ink)] bg-[var(--paper-2)]">
+              <span className="font-data text-[9px] text-[var(--ink-4)] uppercase tracking-[0.15em]">Material</span>
+              <span className="font-data text-[9px] text-[var(--ink-4)] uppercase tracking-[0.15em] text-right">
+                {sourceCount > 0 ? `Avg · ${sourceCount} shops` : 'Price (฿/kg)'}
+              </span>
+            </div>
+
+            {pricingLoading ? (
+              <div className="flex items-center justify-center py-16">
+                <span className="font-data text-[11px] text-[var(--ink-4)] uppercase tracking-widest animate-pulse">
+                  Loading prices…
+                </span>
+              </div>
+            ) : visibleMaterials.length === 0 ? (
+              <div className="flex items-center justify-center py-16">
+                <span className="font-data text-[11px] text-[var(--ink-4)] uppercase tracking-widest">
+                  No items in basket
+                </span>
+              </div>
+            ) : (
+              visibleMaterials.map(key => {
+                const price  = marketPrice(key, 'A')
+                const inBask = basketMaterials.has(key)
+                return (
+                  <div
+                    key={key}
+                    className={`grid grid-cols-[1fr_auto] items-center px-6 lg:px-10 py-4 border-b-[1px] border-[var(--ink-4)] hover:bg-[var(--paper-2)] transition-colors ${inBask ? 'bg-[var(--green-soft)]' : ''}`}
+                  >
+                    {/* Material name + badge */}
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className="font-body text-[15px] text-[var(--ink)] truncate">
+                        {language === 'th' ? WASTE_ITEMS[key]?.nameTh : WASTE_ITEMS[key]?.nameEn}
+                      </span>
+                      {inBask && (
+                        <span className="font-data text-[9px] text-[var(--green-ink)] border-[1px] border-[var(--green)] px-1.5 py-0.5 uppercase tracking-wide shrink-0">
+                          in basket
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Price */}
+                    <div className="flex flex-col items-end gap-0.5">
+                      <span className="font-brand text-[22px] text-[var(--ink)] leading-none">
+                        ฿ {price != null ? price.toFixed(2) : '—'}
+                      </span>
+                      <span className="font-data text-[10px] text-[var(--ink-4)]">฿/kg</span>
+                    </div>
+                  </div>
+                )
+              })
+            )}
+          </div>
+
+          {/* Table footer */}
+          <div className="flex items-center justify-between px-6 lg:px-10 py-3 border-t-[1.5px] border-[var(--ink)] bg-[var(--paper-2)]">
+            <span className="font-data text-[10px] text-[var(--ink-4)]">
+              {sourceCount > 0
+                ? `source: ${sourceCount} active ${sourceCount === 1 ? 'shop' : 'shops'}`
+                : 'no shop pricing data yet'}
+            </span>
+            <div className="flex items-center gap-4">
+              <button onClick={() => toast.info('CSV export coming soon')} className="font-data text-[10px] text-[var(--ink-3)] hover:text-[var(--ink)] bg-transparent border-none cursor-pointer transition-colors uppercase tracking-wide">
+                ↓ export CSV
+              </button>
+              <button onClick={() => toast.info('Price alerts coming soon')} className="font-data text-[10px] text-[var(--ink-3)] hover:text-[var(--ink)] bg-transparent border-none cursor-pointer transition-colors uppercase tracking-wide">
+                set price alert
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* ══ RIGHT: Active Shops ═══════════════════════════════ */}
+        <div className="flex flex-col w-full lg:w-[320px] shrink-0 border-t-[1.5px] lg:border-t-0 border-[var(--ink)]">
+
+          {/* Right header */}
+          <div className="px-5 py-5 border-b-[1.5px] border-[var(--ink)]">
+            <h2 className="font-brand text-[20px] text-[var(--ink)] m-0 leading-tight">
+              Active shops —
+            </h2>
+            <h2 className="font-brand text-[20px] text-[var(--ink)] m-0 leading-tight">
+              Chiang Mai
+            </h2>
+          </div>
+
+          {/* Shop cards */}
+          <div className="flex flex-col gap-3 px-5 py-5 flex-1 overflow-y-auto">
+            {visibleShops.length === 0 ? (
+              <div className="flex items-center justify-center py-10">
+                <span className="font-data text-[11px] text-[var(--ink-4)] uppercase tracking-widest">
+                  {t.noShopsNear ?? 'No shops found'}
+                </span>
+              </div>
+            ) : (
+              visibleShops.map(shop => (
+                <ShopCard
+                  key={shop.id}
+                  shop={shop}
+                  language={language}
+                  t={t}
+                  marketPrice={marketPrice}
+                />
+              ))
+            )}
+          </div>
+
+          {/* Post Ad section */}
+          <div className="px-5 pb-5 border-t-[1.5px] border-[var(--ink)] pt-4">
+            {isPosting ? (
+              <PostAdForm
+                onClose={() => setIsPosting(false)}
+                onAdd={supabaseAddPost}
+                marketPrice={marketPrice}
+              />
+            ) : (
+              <button
+                onClick={() => setIsPosting(true)}
+                className="w-full py-3 font-data text-[12px] uppercase tracking-widest border-[1.5px] border-[var(--ink)] bg-transparent cursor-pointer hover:bg-[var(--ink)] hover:text-[var(--paper)] transition-colors shadow-[3px_3px_0_var(--ink)] active:shadow-none active:translate-x-[3px] active:translate-y-[3px]"
+              >
+                + {t.postAd}
+              </button>
+            )}
+          </div>
         </div>
       </div>
     </div>

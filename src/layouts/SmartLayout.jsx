@@ -7,7 +7,7 @@ import { BuyerLayout } from './BuyerLayout'
 export function SmartLayout() {
   const { profile, session, loading } = useSelector(s => s.user)
 
-  if (loading) return null
+  if (loading || (session && !profile)) return null
 
   const role = session ? profile?.role : null
 
