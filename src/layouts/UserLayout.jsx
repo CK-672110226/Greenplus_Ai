@@ -227,7 +227,7 @@ export function UserLayout() {
         </header>
 
         {/* Page content */}
-        <main className="flex-1 pb-[68px] lg:pb-0">
+        <main className="flex-1 min-h-0 pb-[68px] lg:pb-0 overflow-y-auto">
           <Outlet />
         </main>
 
