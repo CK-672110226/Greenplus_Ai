@@ -9,9 +9,6 @@ import { localName } from '../data/wasteItems'
 import { setBookings } from '../store/bookingSlice'
 import { useSupabaseBookings } from '../hooks/useSupabaseBookings'
 
-const WEEKLY = [42, 65, 38, 90, 55, 72, 48]
-const DAYS   = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
-
 export function DashboardPage() {
   const t        = useT()
   const dispatch = useDispatch()
@@ -54,18 +51,6 @@ export function DashboardPage() {
           <span className="font-brand text-[22px] text-[var(--ink)]">฿{revenue}</span>
         </Card>
       </div>
-
-      <Card className="w-full max-w-xl flex flex-col gap-3">
-        <span className="font-data text-[11px] text-[var(--ink-3)] uppercase tracking-widest">Weekly Volume (kg)</span>
-        <div className="flex items-end gap-1 h-20">
-          {WEEKLY.map((v, i) => (
-            <div key={i} className="flex flex-col items-center gap-0.5 flex-1">
-              <div style={{ height: `${(v / 100) * 64}px`, background: 'var(--green)', border: '1.5px solid var(--ink)' }} className="w-full" />
-              <span className="font-data text-[9px] text-[var(--ink-3)]">{DAYS[i]}</span>
-            </div>
-          ))}
-        </div>
-      </Card>
 
       <div className="w-full max-w-xl flex flex-col gap-3">
         <span className="font-data text-[11px] text-[var(--ink-3)] uppercase tracking-widest">{t.recentBookings}</span>

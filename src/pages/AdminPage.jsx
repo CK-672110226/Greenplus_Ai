@@ -5,25 +5,12 @@ import { useT } from '../hooks/useT'
 import { Card } from '../components/Card'
 import { Button } from '../components/Button'
 import { GradeTag } from '../components/GradeTag'
-import { classifyWaste } from '../services/secondBrain'
-import { setAiConfig } from '../store/aiConfigSlice'
 import { removePost, flagPost } from '../store/marketplaceSlice'
 import { WASTE_ITEMS, localName } from '../data/wasteItems'
 import { supabase } from '../lib/supabase'
 import { useUserReports } from '../hooks/useUserReports'
-
-const PENDING_SHOPS = [
-  { id: 1, name: 'สยาม รีไซเคิล', owner: 'สมชาย ใจดี',    area: 'นิมมานเหมินท์' },
-  { id: 2, name: 'ECO Green CM',   owner: 'Napat Kanjana', area: 'สันทราย'       },
-  { id: 3, name: 'วัฒนา ของเก่า',  owner: 'วัฒนา สุขใจ',  area: 'หางดง'         },
-]
-
-const ACTIVE_SHOPS = [
-  { id: 4, name: 'เฮียอ้วน รีไซเคิล', area: 'นิมมานเหมินท์', scans: 342 },
-  { id: 5, name: 'แม่น้อย ของเก่า',   area: 'ช้างเผือก',     scans: 218 },
-  { id: 6, name: 'ร้านบุญชู',          area: 'สุเทพ',          scans: 189 },
-  { id: 7, name: 'กรีน พอยท์ CM',     area: 'ป่าตัน',         scans: 95  },
-]
+import { useShops } from '../hooks/useShops'
+import { setAiConfig } from '../store/aiConfigSlice'
 
 const HEATMAP_DATA = [
   [80, 60, 40, 20, 10, 15, 30, 50, 70, 85],
@@ -39,12 +26,6 @@ const HEATMAP_DATA = [
 ]
 
 const DISTRICTS = ['นิมมาน', 'ช้างเผือก', 'สุเทพ', 'ป่าตัน', 'หางดง', 'สันทราย', 'แม่ริม', 'สันกำแพง', 'ดอยสะเก็ด', 'สารภี']
-
-const MODEL_OPTIONS = [
-  { value: 'mock',                   label: 'Mock Inference (current)' },
-  { value: 'claude-haiku-4-5',       label: 'Claude claude-haiku-4-5 (API)' },
-  { value: 'claude-sonnet-4-6',      label: 'Claude claude-sonnet-4-6 (API)' },
-]
 
 function heatColor(v) {
   if (v >= 80) return 'var(--orange)'
@@ -164,23 +145,10 @@ export function AdminPage() {
   const language = useSelector(s => s.user.language)
   const session  = useSelector(s => s.user.session)
 
+  const { shops: allShops } = useShops()
+
   const [tab, setTab]               = useState('shops')
-  const [pending, setPending]       = useState(PENDING_SHOPS)
-  const [localModel, setLocalModel] = useState(aiConfig.model)
-  const [localKey, setLocalKey]     = useState(aiConfig.apiKey)
-  const [localPrompt, setLocalPrompt] = useState(aiConfig.systemPrompt)
-  const [localThreshold, setLocalThreshold] = useState(aiConfig.confidenceThreshold)
-  const [testInput, setTestInput]   = useState('')
-  const [testResult, setTestResult] = useState(null)
-  const [testing, setTesting]       = useState(false)
-
-  // Vertex AI config local state
-  const [vProjectId, setVProjectId]         = useState(aiConfig.vertexProjectId ?? '')
-  const [vLocation, setVLocation]           = useState(aiConfig.vertexLocation ?? 'us-central1')
-  const [vToken, setVToken]                 = useState(aiConfig.vertexAccessToken ?? '')
-  const [vS1Endpoint, setVS1Endpoint]       = useState(aiConfig.vertexStage1Endpoint ?? '')
-  const [vS2Endpoint, setVS2Endpoint]       = useState(aiConfig.vertexStage2Endpoint ?? '')
-
+  const [pending, setPending]       = useState([])
   // Stage 1 upload state
   const [classImages, setClassImages]       = useState(() => Object.fromEntries(MATERIAL_KEYS.map(k => [k, 0])))
   const [uploadingClass, setUploadingClass] = useState(() => Object.fromEntries(MATERIAL_KEYS.map(k => [k, false])))
@@ -352,41 +320,6 @@ export function AdminPage() {
     toast.error('Shop rejected')
   }
 
-  function handleSaveConfig() {
-    dispatch(setAiConfig({
-      model:               localModel,
-      apiKey:              localKey,
-      systemPrompt:        localPrompt,
-      confidenceThreshold: localThreshold,
-    }))
-    toast.success('AI config saved')
-  }
-
-  function handleSaveVertexConfig() {
-    dispatch(setAiConfig({
-      vertexProjectId:      vProjectId,
-      vertexLocation:       vLocation,
-      vertexAccessToken:    vToken,
-      vertexStage1Endpoint: vS1Endpoint,
-      vertexStage2Endpoint: vS2Endpoint,
-    }))
-    toast.success(t.saveVertexConfig)
-  }
-
-  async function handleTest() {
-    if (!testInput.trim()) return
-    setTesting(true)
-    setTestResult(null)
-    const result = await classifyWaste(testInput, {
-      model:               localModel,
-      apiKey:              localKey,
-      systemPrompt:        localPrompt,
-      confidenceThreshold: localThreshold,
-    })
-    setTestResult(result)
-    setTesting(false)
-  }
-
   async function handleExportManifest() {
     try {
       const { data, error } = await supabase.from('training_images').select('*')
@@ -417,7 +350,6 @@ export function AdminPage() {
       <div className="w-full max-w-2xl flex gap-2 flex-wrap">
         <TabBtn active={tab === 'shops'}      onClick={() => setTab('shops')}>{t.shopManagement}</TabBtn>
         <TabBtn active={tab === 'heatmap'}    onClick={() => setTab('heatmap')}>{t.heatmap}</TabBtn>
-        <TabBtn active={tab === 'model'}      onClick={() => setTab('model')}>{t.modelConfig}</TabBtn>
         <TabBtn active={tab === 'moderation'} onClick={() => setTab('moderation')}>{t.moderation}</TabBtn>
         <TabBtn active={tab === 'studio'}     onClick={() => setTab('studio')}>{t.aiStudio}</TabBtn>
         <TabBtn active={tab === 'reports'}    onClick={() => setTab('reports')}>
@@ -451,13 +383,14 @@ export function AdminPage() {
 
           <section className="flex flex-col gap-3">
             <span className="font-data text-[12px] text-[var(--ink-2)] uppercase tracking-widest">{t.activeShops}</span>
-            {ACTIVE_SHOPS.map(s => (
+            {allShops.length === 0 && (
+              <p className="font-body text-[14px] text-[var(--ink-3)] m-0">—</p>
+            )}
+            {allShops.map(s => (
               <Card key={s.id} className="flex items-center justify-between">
                 <div>
                   <p className="font-body text-[15px] text-[var(--ink)] m-0">{s.name}</p>
-                  <p className="font-data text-[11px] text-[var(--ink-3)] m-0">{s.area}</p>
                 </div>
-                <span className="font-data text-[13px] text-[var(--green)]">{s.scans} scans</span>
               </Card>
             ))}
           </section>
@@ -495,131 +428,6 @@ export function AdminPage() {
               <div className="w-6 h-3" style={{ background: 'var(--orange)', border: '1px solid var(--ink-4)' }} />
               <span className="font-data text-[10px] text-[var(--ink-3)]">High</span>
             </div>
-          </Card>
-        </div>
-      )}
-
-      {/* AI Model Config tab */}
-      {tab === 'model' && (
-        <div className="w-full max-w-2xl flex flex-col gap-4">
-          <Card className="flex flex-col gap-4">
-            <span className="font-data text-[12px] text-[var(--ink-2)] uppercase tracking-widest">{t.modelConfig}</span>
-
-            <div className="flex flex-col gap-1">
-              <label className="font-data text-[11px] text-[var(--ink-3)] uppercase tracking-widest">{t.modelVersion}</label>
-              <select
-                value={localModel}
-                onChange={e => setLocalModel(e.target.value)}
-                className="w-full px-3 py-2 border-[1.5px] border-[var(--ink)] bg-[var(--paper)] font-data text-[14px] outline-none focus:border-[var(--green)]"
-              >
-                {MODEL_OPTIONS.map(o => (
-                  <option key={o.value} value={o.value}>{o.label}</option>
-                ))}
-              </select>
-            </div>
-
-            <div className="flex flex-col gap-1">
-              <label className="font-data text-[11px] text-[var(--ink-3)] uppercase tracking-widest">API Key</label>
-              <input
-                type="password"
-                value={localKey}
-                onChange={e => setLocalKey(e.target.value)}
-                placeholder="sk-ant-..."
-                className="w-full px-3 py-2 border-[1.5px] border-[var(--ink)] bg-[var(--paper)] font-data text-[14px] outline-none focus:border-[var(--green)]"
-              />
-            </div>
-
-            <div className="flex flex-col gap-1">
-              <label className="font-data text-[11px] text-[var(--ink-3)] uppercase tracking-widest">{t.promptConfig}</label>
-              <textarea
-                rows={4}
-                value={localPrompt}
-                onChange={e => setLocalPrompt(e.target.value)}
-                className="w-full px-3 py-2 border-[1.5px] border-[var(--ink)] bg-[var(--paper)] font-body text-[14px] outline-none focus:border-[var(--green)] resize-vertical"
-              />
-            </div>
-
-            <div className="flex flex-col gap-1">
-              <label className="font-data text-[11px] text-[var(--ink-3)] uppercase tracking-widest">
-                Confidence Threshold: {localThreshold}
-              </label>
-              <input
-                type="range"
-                min="0.5"
-                max="0.95"
-                step="0.05"
-                value={localThreshold}
-                onChange={e => setLocalThreshold(parseFloat(e.target.value))}
-                className="w-full"
-              />
-              <div className="flex justify-between">
-                <span className="font-data text-[10px] text-[var(--ink-3)]">0.5 (lenient)</span>
-                <span className="font-data text-[10px] text-[var(--ink-3)]">0.95 (strict)</span>
-              </div>
-            </div>
-
-            <Button variant="primary" onClick={handleSaveConfig}>{t.saveConfig}</Button>
-          </Card>
-
-          {/* Vertex AI Config section */}
-          <Card className="flex flex-col gap-4">
-            <span className="font-data text-[12px] text-[var(--ink-2)] uppercase tracking-widest">{t.vertexConfig}</span>
-
-            {[
-              { label: t.vertexProjectId,  val: vProjectId,    set: setVProjectId,   type: 'text',     ph: 'my-gcp-project' },
-              { label: t.vertexLocation,   val: vLocation,     set: setVLocation,    type: 'text',     ph: 'us-central1' },
-              { label: t.vertexToken,      val: vToken,        set: setVToken,       type: 'password', ph: 'gcloud auth print-access-token' },
-              { label: t.vertexS1Endpoint, val: vS1Endpoint,   set: setVS1Endpoint,  type: 'text',     ph: 'endpoint ID' },
-              { label: t.vertexS2Endpoint, val: vS2Endpoint,   set: setVS2Endpoint,  type: 'text',     ph: 'endpoint ID' },
-            ].map(({ label, val, set, type, ph }) => (
-              <div key={label} className="flex flex-col gap-1">
-                <label className="font-data text-[11px] text-[var(--ink-3)] uppercase tracking-widest">{label}</label>
-                <input
-                  type={type}
-                  value={val}
-                  onChange={e => set(e.target.value)}
-                  placeholder={ph}
-                  className="w-full px-3 py-2 border-[1.5px] border-[var(--ink)] bg-[var(--paper)] font-data text-[14px] outline-none focus:border-[var(--green)]"
-                />
-              </div>
-            ))}
-
-            <Button variant="primary" onClick={handleSaveVertexConfig}>{t.saveVertexConfig}</Button>
-          </Card>
-
-          {/* Test panel */}
-          <Card className="flex flex-col gap-3">
-            <span className="font-data text-[12px] text-[var(--ink-2)] uppercase tracking-widest">{t.secondBrainTitle ?? 'Second Brain'} — Test</span>
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={testInput}
-                onChange={e => setTestInput(e.target.value)}
-                placeholder="Describe a waste item..."
-                className="flex-1 px-3 py-2 border-[1.5px] border-[var(--ink)] bg-[var(--paper)] font-body text-[14px] outline-none focus:border-[var(--green)]"
-                onKeyDown={e => e.key === 'Enter' && handleTest()}
-              />
-              <Button variant="primary" onClick={handleTest} disabled={testing}>
-                {testing ? '...' : t.analyzeWaste}
-              </Button>
-            </div>
-            {testResult && (
-              <div className="flex flex-col gap-1 pt-2 border-t-[1.5px] border-[var(--ink-4)]">
-                <div className="grid grid-cols-2 gap-x-4 gap-y-0.5">
-                  <span className="font-data text-[11px] text-[var(--ink-3)] uppercase">Material</span>
-                  <span className="font-data text-[13px] text-[var(--ink)]">{testResult.materialType}</span>
-                  <span className="font-data text-[11px] text-[var(--ink-3)] uppercase">Grade</span>
-                  <span className="font-data text-[13px] text-[var(--ink)]">{testResult.grade}</span>
-                  <span className="font-data text-[11px] text-[var(--ink-3)] uppercase">{t.confidence}</span>
-                  <span className="font-data text-[13px] text-[var(--ink)]">{(testResult.confidence * 100).toFixed(0)}%</span>
-                  <span className="font-data text-[11px] text-[var(--ink-3)] uppercase">Source</span>
-                  <span className="font-data text-[13px] text-[var(--ink)]">{testResult.source}</span>
-                </div>
-                {testResult.explanation && (
-                  <p className="font-body text-[13px] text-[var(--ink-3)] m-0 mt-1">{testResult.explanation}</p>
-                )}
-              </div>
-            )}
           </Card>
         </div>
       )}

@@ -8,12 +8,13 @@ import { localName } from '../data/wasteItems'
 import { setSlots } from '../store/scheduleSlice'
 import { useSupabaseBookings } from '../hooks/useSupabaseBookings'
 import { supabase } from '../lib/supabase'
+import { todayBangkok } from '../utils/time'
 
-const TODAY = new Date().toISOString().slice(0, 10)
+const TODAY = todayBangkok()
 
 function slotTime(scheduledAt) {
   if (!scheduledAt) return '--:--'
-  return new Date(scheduledAt).toTimeString().slice(0, 5)
+  return new Date(scheduledAt).toLocaleTimeString('th-TH', { timeZone: 'Asia/Bangkok', hour: '2-digit', minute: '2-digit', hour12: false })
 }
 
 function slotHour(time) {

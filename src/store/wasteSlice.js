@@ -7,7 +7,7 @@ const wasteSlice = createSlice({
     lastScan: null,
   },
   reducers: {
-    addToBasket:      (state, action) => { state.basket.push({ ...action.payload, skipped: false }) },
+    addToBasket:      (state, action) => { state.basket.push({ ...action.payload, skipped: false, scannedAt: new Date().toISOString() }) },
     removeFromBasket: (state, action) => { state.basket = state.basket.filter(i => i.id !== action.payload) },
     clearBasket:      (state)         => { state.basket = [] },
     setLastScan:      (state, action) => { state.lastScan = action.payload },
