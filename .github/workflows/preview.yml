@@ -38,6 +38,7 @@ jobs:
 
       - name: Deploy Vercel Preview
         id: deploy
+        if: ${{ secrets.VERCEL_TOKEN != '' }}
         run: |
           PREVIEW_URL=$(npx vercel --token=${{ secrets.VERCEL_TOKEN }} --yes 2>&1 | grep -E '^https://' | tail -1)
           echo "url=$PREVIEW_URL" >> $GITHUB_OUTPUT
