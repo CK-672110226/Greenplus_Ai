@@ -9,6 +9,7 @@ const TYPE_ICON = {
   new_order:       '📦',
   price_alert:     '📈',
   order_completed: '✅',
+  flagged_item:    '🚩',
   system:          '🔔',
 }
 
@@ -18,13 +19,15 @@ function formatTime(iso) {
 }
 
 function NotifCard({ item, dispatch }) {
+  const isFlagged = item.type === 'flagged_item'
   return (
     <Card
-      className="relative flex flex-col gap-1 cursor-pointer"
+      className={`relative flex flex-col gap-1 cursor-pointer ${isFlagged && !item.read ? 'flagged-pulse' : ''}`}
       onClick={() => dispatch(markRead(item.id))}
-      style={{
-        borderLeft: item.read ? '3px solid transparent' : '3px solid var(--green)',
-      }}
+      style={isFlagged
+        ? { borderLeft: '3px solid var(--orange)' }
+        : { borderLeft: item.read ? '3px solid transparent' : '3px solid var(--green)' }
+      }
     >
       <button
         type="button"
@@ -64,7 +67,7 @@ export function NotificationsPage() {
   const items      = useSelector(s => s.notifications.items)
   const unread     = useSelector(selectUnreadCount)
 
-  const TODAY = '2026-05-14'
+  const TODAY   = new Date().toISOString().slice(0, 10)
   const today   = items.filter(n => n.createdAt.startsWith(TODAY))
   const earlier = items.filter(n => !n.createdAt.startsWith(TODAY))
 
