@@ -11,14 +11,6 @@ const TIERS = [
   { name: 'Platinum', min: 3000, max: Infinity, mult: 1.15, color: '#9BA5B7' },
 ]
 
-const MOCK_HISTORY = [
-  { id: 1, description: 'Scanned aluminum can',    points: +5,  date: '13 May, 09:41' },
-  { id: 2, description: 'Completed order #1023',   points: +10, date: '12 May, 16:22' },
-  { id: 3, description: 'Scanned PET bottle',      points: +2,  date: '12 May, 10:05' },
-  { id: 4, description: 'A-grade scan bonus',       points: +5,  date: '11 May, 14:33' },
-  { id: 5, description: 'Scanned cardboard',        points: +2,  date: '11 May, 08:17' },
-]
-
 const REWARDS = [
   { id: 1, title: '5% Discount Coupon', cost: 50,  desc: 'Valid at partner junk shops in CM' },
   { id: 2, title: 'Free Pick-up 1×',   cost: 100, desc: 'Schedule a free pick-up booking'   },
@@ -137,28 +129,7 @@ export function EcoPointsPage() {
       {/* Timeline history */}
       <div className="flex flex-col gap-3">
         <span className="font-data text-[12px] text-[var(--ink-2)] uppercase tracking-widest">{t.pointsHistory}</span>
-        <div className="flex flex-col">
-          {MOCK_HISTORY.map((h, i) => (
-            <div
-              key={h.id}
-              className={`flex items-start justify-between px-1 py-3 ${i < MOCK_HISTORY.length - 1 ? 'border-b-[1px] border-[var(--ink-4)]' : ''}`}
-            >
-              <div className="flex items-start gap-3">
-                <div className="flex flex-col items-center pt-1">
-                  <span className="w-2 h-2 rounded-full border-[1.5px] border-[var(--green)] bg-[var(--green-soft)]" />
-                  {i < MOCK_HISTORY.length - 1 && <span className="w-px h-6 bg-[var(--ink-4)] mt-1" />}
-                </div>
-                <div className="flex flex-col gap-0.5">
-                  <span className="font-body text-[14px] text-[var(--ink)]">{h.description}</span>
-                  <span className="font-data text-[10px] text-[var(--ink-3)]">{h.date}</span>
-                </div>
-              </div>
-              <span className={`font-data text-[13px] font-bold flex-shrink-0 ml-3 ${h.points > 0 ? 'text-[var(--green)]' : 'text-[var(--orange)]'}`}>
-                {h.points > 0 ? '+' : ''}{h.points} pts
-              </span>
-            </div>
-          ))}
-        </div>
+        <p className="font-body text-[14px] text-[var(--ink-3)] m-0">{t.noNotifications}</p>
       </div>
     </main>
   )

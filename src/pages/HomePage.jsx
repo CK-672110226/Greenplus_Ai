@@ -4,18 +4,8 @@ import { useT } from '../hooks/useT'
 import { GradeTag } from '../components/GradeTag'
 import { SectionDivider } from '../components/SectionDivider'
 import { localName, pricePerKg, WASTE_ITEMS } from '../data/wasteItems'
-import { SHOPS } from '../data/shops'
-
-/* ── Mock weekly data ──────────────────────────────────────── */
-const MOCK_WEEKLY = [
-  { label: 'M', val: 1.2 },
-  { label: 'T', val: 0.8 },
-  { label: 'W', val: 2.1 },
-  { label: 'T', val: 0.5 },
-  { label: 'F', val: 1.8 },
-  { label: 'S', val: 3.2 },
-  { label: 'S', val: 0.9 },
-]
+import { useShops } from '../hooks/useShops'
+import { hourBangkok, weeklyBuckets } from '../utils/time'
 
 /* ── Hatch bar chart ───────────────────────────────────────── */
 function HatchBarChart({ data }) {
@@ -62,7 +52,7 @@ function HatchBarChart({ data }) {
 
 /* ── Greeting ──────────────────────────────────────────────── */
 function greeting(name) {
-  const h = new Date().getHours()
+  const h = hourBangkok()
   const salute = h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening'
   return { salute, name: name ?? 'there' }
 }
@@ -75,17 +65,17 @@ export function HomePage() {
   const basket    = useSelector(s => s.waste?.basket ?? [])
   const lastScan  = useSelector(s => s.waste?.lastScan)
 
-  const activeItems = basket.filter(i => !i.skipped)
-  const totalValue  = activeItems.reduce((sum, i) => sum + pricePerKg(i.materialType, i.grade) * (i.weight ?? 0), 0)
-  const weeklyKg    = MOCK_WEEKLY.reduce((s, d) => s + d.val, 0).toFixed(1)
-  const ecoPoints   = profile?.eco_points ?? 0
+  const { shops } = useShops()
+
+  const activeItems  = basket.filter(i => !i.skipped)
+  const totalValue   = activeItems.reduce((sum, i) => sum + pricePerKg(i.materialType, i.grade) * (i.weight ?? 0), 0)
+  const weeklyData   = weeklyBuckets(basket, 'weight')
+  const weeklyKg     = weeklyData.reduce((s, d) => s + d.val, 0).toFixed(1)
+  const ecoPoints    = profile?.eco_points ?? 0
   const { salute, name: displayName } = greeting(profile?.display_name)
 
-  // Recent items: show basket items (up to 5) as "recent scans"
   const recentItems = activeItems.length > 0 ? activeItems.slice(-5).reverse() : []
-
-  // Nearby shops (first 3)
-  const nearbyShops = SHOPS.slice(0, 3)
+  const nearbyShops = shops.slice(0, 3)
 
   return (
     <div className="flex flex-col min-h-full">
@@ -179,7 +169,7 @@ export function HomePage() {
               <span className="font-data text-[10px] text-[var(--ink-4)]">last refresh 4m</span>
             </div>
             <div className="border-[1.5px] border-[var(--ink)] px-4 pt-4 pb-2 bg-[var(--paper-2)]">
-              <HatchBarChart data={MOCK_WEEKLY} />
+              <HatchBarChart data={weeklyData} />
             </div>
           </div>
 
@@ -286,8 +276,8 @@ export function HomePage() {
             <SectionDivider label="Nearby buying requests" />
             <div className="flex flex-col mt-3">
               {nearbyShops.map(shop => {
-                const topMaterial = shop.accepts[0]
-                const price = pricePerKg(topMaterial, 'A')
+                const topMaterial = (shop.accepts ?? [])[0]
+                const price = topMaterial ? pricePerKg(topMaterial, 'A') : 0
                 return (
                   <div
                     key={shop.id}
@@ -296,17 +286,21 @@ export function HomePage() {
                     <div className="flex flex-col gap-0.5">
                       <span className="font-body text-[14px] text-[var(--ink)]">{shop.name}</span>
                       <span className="font-data text-[10px] text-[var(--ink-3)]">
-                        {shop.distanceKm} km · {shop.area}
+                        {shop.distanceKm ?? '—'} km
                       </span>
-                      <span className="font-data text-[10px] text-[var(--ink-4)] mt-0.5">
-                        {language === 'th'
-                          ? (WASTE_ITEMS[topMaterial]?.nameTh ?? topMaterial)
-                          : (WASTE_ITEMS[topMaterial]?.nameEn ?? topMaterial)}
-                      </span>
+                      {topMaterial && (
+                        <span className="font-data text-[10px] text-[var(--ink-4)] mt-0.5">
+                          {language === 'th'
+                            ? (WASTE_ITEMS[topMaterial]?.nameTh ?? topMaterial)
+                            : (WASTE_ITEMS[topMaterial]?.nameEn ?? topMaterial)}
+                        </span>
+                      )}
                     </div>
-                    <span className="font-data text-[13px] text-[var(--green-ink)] mt-0.5 shrink-0">
-                      ฿{price.toFixed(0)}/kg
-                    </span>
+                    {topMaterial && (
+                      <span className="font-data text-[13px] text-[var(--green-ink)] mt-0.5 shrink-0">
+                        ฿{price.toFixed(0)}/kg
+                      </span>
+                    )}
                   </div>
                 )
               })}
