@@ -1,17 +1,13 @@
+import { useState, useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { Navigate, useNavigate } from 'react-router-dom'
 import { setLanguage } from '../store/userSlice'
 import { Logo } from '../components/Logo'
 import { Button } from '../components/Button'
 import { ParticleField } from '../components/ParticleField'
+import { supabase } from '../lib/supabase'
 
 const ROLE_DEST = { user: '/home', buyer: '/dashboard', admin: '/admin' }
-
-const STATS = [
-  { n: '12,480', l: 'kg recycled' },
-  { n: '฿ 286k', l: 'paid out' },
-  { n: '340+',   l: 'active buyers' },
-]
 
 const ROLES = [
   {
@@ -37,9 +33,21 @@ export function LandingPage() {
   const dispatch              = useDispatch()
   const { session, profile, loading, language } = useSelector(s => s.user)
 
+  const [activeShops, setActiveShops] = useState(null)
+  useEffect(() => {
+    supabase.from('shops').select('id', { count: 'exact', head: true }).eq('status', 'active')
+      .then(({ count }) => setActiveShops(count ?? 0))
+  }, [])
+
   if (!loading && session && profile?.role) {
     return <Navigate to={ROLE_DEST[profile.role] ?? '/scan'} replace />
   }
+
+  const stats = [
+    { n: '—',                                      l: 'kg recycled' },
+    { n: '—',                                      l: 'paid out' },
+    { n: activeShops != null ? `${activeShops}` : '—', l: 'active buyers' },
+  ]
 
   return (
     <div className="flex flex-col min-h-screen bg-[var(--paper)]">
@@ -107,7 +115,7 @@ export function LandingPage() {
 
           {/* Stats bar */}
           <div className="flex border-[1.5px] border-[var(--ink)] divide-x-[1.5px] divide-[var(--ink)]">
-            {STATS.map(s => (
+            {stats.map(s => (
               <div key={s.l} className="flex flex-col gap-0.5 px-4 py-3 flex-1">
                 <span className="font-brand text-[22px] md:text-[26px] text-[var(--ink)] leading-none">{s.n}</span>
                 <span className="font-data text-[9px] text-[var(--ink-3)] uppercase tracking-widest">{s.l}</span>
