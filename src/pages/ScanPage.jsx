@@ -41,7 +41,52 @@ export function ScanPage() {
   const [result, setResult]       = useState(null)
   const [uploadSrc, setUploadSrc] = useState(null)         // object URL for preview
   const [inputMode, setInputMode] = useState('camera')     // 'camera' | 'upload'
+  const [dirtyAlert, setDirtyAlert] = useState(false)
   const insertScan = useScanInsert()
+
+  // Swipe logic
+  const [touchStart, setTouchStart] = useState(null)
+  const [touchEnd, setTouchEnd] = useState(null)
+  const minSwipeDistance = 50
+
+  const onTouchStart = (e) => {
+    setTouchEnd(null)
+    setTouchStart(e.targetTouches[0].clientX)
+  }
+  const onTouchMove = (e) => setTouchEnd(e.targetTouches[0].clientX)
+  const onTouchEndEvent = () => {
+    if (!touchStart || !touchEnd) return
+    const distance = touchStart - touchEnd
+    const isLeftSwipe = distance > minSwipeDistance
+    const isRightSwipe = distance < -minSwipeDistance
+    
+    if (isRightSwipe) handleSwipeRight()
+    if (isLeftSwipe) handleSwipeLeft()
+  }
+
+  function handleSwipeRight() {
+    if (result?.factorScores?.cleanliness < 5) {
+      setDirtyAlert(true)
+    } else {
+      handleAdd()
+    }
+  }
+
+  function handleSwipeLeft() {
+    toast('Discarded item')
+    handleReset()
+  }
+
+  function handleConfirmClean() {
+    setDirtyAlert(false)
+    handleAdd()
+  }
+
+  function handleRejectClean() {
+    setDirtyAlert(false)
+    toast.error(language === 'th' ? 'กรุณาทำความสะอาดก่อนนำมาขาย' : 'Please wash it before selling')
+    handleReset()
+  }
 
   // startCamera only calls setState after await (async), never synchronously
   const startCamera = useCallback(async () => {
@@ -128,6 +173,7 @@ export function ScanPage() {
     if (uploadSrc) URL.revokeObjectURL(uploadSrc)
     setUploadSrc(null)
     setResult(null)
+    setDirtyAlert(false)
     setPhase('starting')   // ok here — this is an event handler, not an effect
     startCamera()
   }
@@ -136,16 +182,17 @@ export function ScanPage() {
 
   return (
     <main className="flex flex-col items-center px-4 py-6 gap-5">
-      <div className="w-full max-w-sm flex items-center justify-between">
+      <div className="w-full max-w-4xl flex items-center justify-between">
         <h1 className="font-brand text-[28px] text-[var(--ink)] m-0">{t.scan}</h1>
         <span className={`font-data text-[9px] uppercase tracking-widest px-2 py-0.5 border-[1.5px] ${isMockMode ? 'border-[var(--ink-4)] text-[var(--ink-4)]' : 'border-[var(--green)] text-[var(--green)]'}`}>
           {isMockMode ? 'Demo' : 'ONNX'}
         </span>
       </div>
 
-      <Card className="w-full max-w-sm flex flex-col gap-4">
+      <div className="w-full max-w-4xl grid grid-cols-1 md:grid-cols-2 gap-6">
+        <Card className="w-full flex flex-col gap-4 relative overflow-hidden h-fit">
         {/* Viewport */}
-        <div className="relative w-full aspect-video bg-[var(--ink)] overflow-hidden border-[1.5px] border-[var(--ink)]">
+        <div className={`relative w-full aspect-video bg-[var(--ink)] overflow-hidden border-[1.5px] border-[var(--ink)] transition-all ${phase === 'result' ? 'h-32 opacity-50' : ''}`}>
           {inputMode === 'camera'
             ? <video ref={videoRef} className="w-full h-full object-cover" playsInline muted />
             : uploadSrc && <img src={uploadSrc} alt="scan" className="w-full h-full object-contain bg-[var(--paper-2)]" />
@@ -206,62 +253,6 @@ export function ScanPage() {
           </div>
         )}
 
-        {/* Result */}
-        {phase === 'result' && result && (
-          <div className="flex flex-col gap-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <GradeTag grade={result.grade} />
-                <span className="font-body text-[17px] text-[var(--ink)] font-semibold">
-                  {localName(result.materialType, language)}
-                </span>
-              </div>
-              {(result.source === 'mock' || result.source === 'mock-fallback') && (
-                <span className="font-data text-[9px] text-[var(--ink-4)] border border-[var(--ink-4)] px-1.5 py-0.5 uppercase">demo</span>
-              )}
-            </div>
-
-            <div className="flex flex-col gap-1">
-              <span className="font-data text-[11px] text-[var(--ink-3)] uppercase tracking-widest">{t.scoreLabel}</span>
-              <ScoreBar score={result.score} />
-            </div>
-
-            <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 border-[1px] border-[var(--ink-4)] p-3">
-              <span className="font-data text-[11px] text-[var(--ink-3)] uppercase">{t.estWeight}</span>
-              <span className="font-data text-[13px] text-[var(--ink)] text-right">{result.weight} kg</span>
-
-              <span className="font-data text-[11px] text-[var(--ink-3)] uppercase">฿/kg</span>
-              <span className="font-data text-[13px] text-[var(--ink)] text-right">
-                ฿{pricePerKg(result.materialType, result.grade).toFixed(2)}
-              </span>
-
-              <span className="font-data text-[11px] text-[var(--ink-3)] uppercase">Total</span>
-              <span className="font-data text-[14px] text-[var(--green)] font-bold text-right">
-                ฿{(pricePerKg(result.materialType, result.grade) * result.weight).toFixed(2)}
-              </span>
-
-              <span className="font-data text-[11px] text-[var(--ink-3)] uppercase">{t.confidence}</span>
-              <span className="font-data text-[13px] text-[var(--ink)] text-right">{(result.confidence * 100).toFixed(0)}%</span>
-            </div>
-
-            {getRulesFor(result.materialType).length > 0 && (
-              <div className="flex flex-col gap-1.5 border-t-[1.5px] border-[var(--ink-4)] pt-3">
-                {getRulesFor(result.materialType).map((rule, i) => (
-                  <p key={i} className="font-data text-[11px] m-0" style={{ color: SEVERITY_COLOR[rule.severity] }}>
-                    {rule.severity === 'reject' ? '✕ ' : rule.severity === 'warning' ? '! ' : '· '}
-                    {language === 'th' ? rule.titleTh : rule.titleEn}
-                  </p>
-                ))}
-              </div>
-            )}
-
-            <div className="flex gap-3 pt-1">
-              <Button variant="primary" onClick={handleAdd} fullWidth>{t.addToBasket}</Button>
-              <Button variant="secondary" onClick={handleReset}>{t.scanAgain}</Button>
-            </div>
-          </div>
-        )}
-
         {/* Idle / scanning controls */}
         {(phase === 'idle' || phase === 'analyzing') && (
           <div className="flex flex-col gap-2">
@@ -284,6 +275,121 @@ export function ScanPage() {
             </button>
           </div>
         )}
+      </Card>
+
+      {/* RIGHT COLUMN (DESKTOP) / BOTTOM SHEET (MOBILE) */}
+      <div className="w-full h-full flex flex-col gap-4">
+        {/* Result Bottom Sheet */}
+        {phase === 'result' && result && !dirtyAlert && (
+          <Card className="flex flex-col gap-3 pt-2 pb-1 animate-in slide-in-from-bottom-4 md:slide-in-from-right-4 h-fit">
+            <div 
+              className="md:hidden"
+              onTouchStart={onTouchStart}
+              onTouchMove={onTouchMove}
+              onTouchEnd={onTouchEndEvent}
+            >
+              <div className="w-12 h-1 bg-[var(--ink-4)] mx-auto rounded-full mb-1" />
+              <p className="text-center font-data text-[10px] text-[var(--ink-3)] uppercase tracking-widest mt-0 mb-2">
+                {language === 'th' ? '▽ ปัดหน้าจอเพื่อเลือก' : '▽ Swipe to decide'}
+              </p>
+            </div>
+            
+            <div className="hidden md:block">
+              <p className="text-center font-data text-[10px] text-[var(--ink-3)] uppercase tracking-widest mt-0 mb-2">
+                Scan Results
+              </p>
+            </div>
+
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <GradeTag grade={result.grade} />
+                <span className="font-body text-[17px] text-[var(--ink)] font-semibold">
+                  {localName(result.materialType, language)}
+                </span>
+              </div>
+              {(result.source === 'mock' || result.source === 'mock-fallback') && (
+                <span className="font-data text-[9px] text-[var(--ink-4)] border border-[var(--ink-4)] px-1.5 py-0.5 uppercase">demo</span>
+              )}
+            </div>
+
+            <div className="flex flex-col gap-1">
+              <span className="font-data text-[11px] text-[var(--ink-3)] uppercase tracking-widest">{t.scoreLabel}</span>
+              <ScoreBar score={result.score} />
+            </div>
+
+            {/* Factor breakdown */}
+            {result.factorScores && (
+              <div className="flex flex-col gap-1 mt-2 mb-2 p-2 bg-[var(--paper-2)] border-[1px] border-[var(--ink-4)]">
+                <span className="font-data text-[10px] text-[var(--ink-3)] uppercase mb-1">Factor Breakdown</span>
+                {Object.entries(result.factorScores).map(([factor, fscore]) => (
+                  <div key={factor} className="flex items-center justify-between">
+                    <span className="font-data text-[10px] text-[var(--ink-2)] capitalize">{factor}</span>
+                    <div className="flex items-center gap-2 w-1/2">
+                      <div className="w-full h-1.5 bg-[var(--paper)] border-[1px] border-[var(--ink)]">
+                        <div style={{ width: `${fscore * 10}%`, background: fscore >= 5 ? 'var(--green)' : 'var(--orange)', height: '100%' }} />
+                      </div>
+                      <span className="font-data text-[9px] w-6 text-right">{(fscore).toFixed(1)}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 border-[1px] border-[var(--ink-4)] p-3">
+              <span className="font-data text-[11px] text-[var(--ink-3)] uppercase">{t.estWeight}</span>
+              <span className="font-data text-[13px] text-[var(--ink)] text-right">{result.weight} kg</span>
+
+              <span className="font-data text-[11px] text-[var(--ink-3)] uppercase">฿/kg</span>
+              <span className="font-data text-[13px] text-[var(--ink)] text-right">
+                ฿{pricePerKg(result.materialType, result.grade).toFixed(2)}
+              </span>
+
+              <span className="font-data text-[11px] text-[var(--ink-3)] uppercase">Total</span>
+              <span className="font-data text-[14px] text-[var(--green)] font-bold text-right">
+                ฿{(pricePerKg(result.materialType, result.grade) * result.weight).toFixed(2)}
+              </span>
+            </div>
+
+            <div className="flex items-center justify-between pt-4 pb-2 px-2 border-t-[1.5px] border-[var(--ink-4)] mt-2">
+              <div className="flex flex-col items-center flex-1 cursor-pointer hover:bg-[var(--paper-2)] py-2 transition-colors" onClick={handleSwipeLeft}>
+                <span className="font-brand text-[20px] text-[#E53E3E]">⟵</span>
+                <span className="font-data text-[10px] text-[var(--ink-2)] uppercase">{language === 'th' ? 'ทิ้ง (Discard)' : 'Discard'}</span>
+              </div>
+              <div className="w-px h-8 bg-[var(--ink-4)]" />
+              <div className="flex flex-col items-center flex-1 cursor-pointer hover:bg-[var(--paper-2)] py-2 transition-colors" onClick={handleSwipeRight}>
+                <span className="font-brand text-[20px] text-[var(--green-ink)]">⟶</span>
+                <span className="font-data text-[10px] text-[var(--ink-2)] uppercase">{language === 'th' ? 'ขาย (Sell)' : 'Sell'}</span>
+              </div>
+            </div>
+            
+            <Button variant="ghost" className="mt-2 text-[10px]" onClick={handleReset}>{t.scanAgain}</Button>
+          </Card>
+        )}
+
+        {/* Dirty Alert Popup */}
+        {dirtyAlert && (
+          <div className="md:relative absolute inset-0 bg-[#1A1A1Ae6] flex flex-col justify-center px-4 z-10 animate-in fade-in">
+            <Card className="bg-[var(--paper)] flex flex-col gap-4 border-[2px] border-[var(--orange)] shadow-[4px_4px_0_var(--orange)]">
+              <h2 className="font-brand text-[20px] text-[var(--orange)] m-0">
+                {language === 'th' ? 'พบความสกปรก!' : 'Contamination Detected!'}
+              </h2>
+              <p className="font-body text-[14px] text-[var(--ink)] m-0 leading-relaxed">
+                {language === 'th' 
+                  ? 'สิ่งนี้มีคราบสกปรก คุณได้ทำความสะอาดแล้วใช่ไหม?' 
+                  : 'This item is dirty. Have you washed it?'}
+              </p>
+              <div className="flex flex-col gap-2 mt-2">
+                <Button variant="primary" onClick={handleConfirmClean}>
+                  {language === 'th' ? 'ใช่ (ทำความสะอาดแล้ว)' : 'Yes, I washed it'}
+                </Button>
+                <Button variant="secondary" onClick={handleRejectClean}>
+                  {language === 'th' ? 'ไม่ (ยังไม่ได้ทำ)' : 'No, not yet'}
+                </Button>
+              </div>
+            </Card>
+          </div>
+        )}
+      </div>
       </Card>
 
       {/* Hidden file input */}

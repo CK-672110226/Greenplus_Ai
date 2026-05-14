@@ -29,12 +29,11 @@ The pilot zone (CMU rear / Tambon Suthep) has dense student housing, established
 
 | Persona | Profile | Core Need |
 |---------|---------|-----------|
-| **Student Seller** | CMU dormitory resident, age 18–25, Thai UI | Scan → get price → find nearest shop in < 60 s |
-| **Expat / Digital Nomad** | Non-Thai speaker, English UI required | Same flow, zero Thai required |
-| **Scrap Shop Operator (Buyer)** | Local shop owner, semi-technical | Manage pricing table, see incoming bookings |
-| **Platform Admin** | Internal / university staff | Approve shops, moderate marketplace, view city heatmap |
+| **User (Seller)** | Student, resident, expat | **Strictly selling:** Scan waste, get price, find routing, and post items to Marketplace to sell. Cannot buy. |
+| **Buyer (Shop Operator)** | Local scrap shop owner | **Strictly buying:** Manage shop profile, set open/closed calendar, update prices, and buy waste from Marketplace or direct bookings. Cannot scan/sell. |
+| **Platform Admin** | Internal staff | Approve shops, moderate marketplace, view city heatmap. |
 
----
+> **Role Separation Constraint:** The application strictly enforces separation of concerns. A `User` only interacts with the selling flow (Scanner, Basket, Marketplace Selling). A `Buyer` only interacts with the purchasing flow (Dashboard, Shop Calendar, Marketplace Buying).
 
 ## 3. Core User Stories
 
@@ -64,9 +63,9 @@ The pilot zone (CMU rear / Tambon Suthep) has dense student housing, established
 |----|-------|----------|
 | B-01 | As a buyer, I see an industrial dashboard with today's booking queue and incoming material summary | Must Have |
 | B-02 | As a buyer, I can create, read, update, and delete my shop's pricing table (CRUD) | Must Have |
-| B-03 | As a buyer, I can accept or reject a booking request from a seller | Must Have |
-| B-04 | As a buyer, I can see the material grade and weight estimate before confirming | Should Have |
-| B-05 | As a buyer, I have a shop profile showing name, address, hours, accepted materials, and contact info | Must Have |
+| B-03 | As a buyer, I can browse the Marketplace to find waste posts created by users and offer to buy them | Must Have |
+| B-04 | As a buyer, I can manage my shop's Calendar to set Open/Closed days so users don't route to me when closed | Must Have |
+| B-05 | As a buyer, I have a shop profile showing name, address, operating hours (calendar), accepted materials, and contact info | Must Have |
 | B-06 | As a buyer, I can update my shop's accepted material types so only matching sellers appear in route plans | Must Have |
 
 ### 3.3 Admin
@@ -236,12 +235,27 @@ weight_kg:
 
 ---
 
-### 4.7 Scan Result UI — Factor Breakdown
+### 4.7 Scan Result UI — Bottom Sheet & Swipe UX
 
-After Stage 2, the result screen shows the composite grade AND a per-factor breakdown with improvement hints:
+After Stage 2, the result screen displays information in a **stacked bottom popup (Bottom Sheet)**. Users evaluate the item and make a decision by swiping.
 
-```
+#### Swipe UX Logic
+- **Swipe Right (ปัดขวา)** → **Sell (ขาย):** Adds the item to the basket.
+- **Swipe Left (ปัดซ้าย)** → **Discard (ทิ้ง):** Rejects the item.
+
+#### Contamination / Dirty Alert
+If the model detects that the item is dirty (Cleanliness factor fails / is below threshold), a secondary popup MUST interrupt the user before they can swipe right:
+> **"สิ่งนี้มีคราบสกปรก คุณได้ทำความสะอาดแล้วใช่ไหม?" (This item is dirty. Have you washed it?)**
+> - **[Yes (ทำความสะอาดแล้ว)]** → Proceeds to add to basket.
+> - **[No (ยังไม่ได้ทำความสะอาด)]** → Blocks the sale. Tells the user "กรุณาทำความสะอาดก่อนนำมาขาย" (Please wash it before selling) and returns to the previous screen.
+
+```text
 ┌──────────────────────────────────────┐
+│ [ CAMERA VIEWPORT ]                  │
+│                                      │
+├──────────────────────────────────────┤
+│ ▽ ลากลงเพื่อปิด (Swipe down to close)│
+├──────────────────────────────────────┤
 │  [Grade B]  ขวด PET ใส               │
 │  ≈ ฿7.20/kg  (น้ำหนักมาตรฐาน 0.03kg)│
 ├──────────────────────────────────────┤
@@ -250,13 +264,11 @@ After Stage 2, the result screen shows the composite grade AND a per-factor brea
 │  ความสะอาด   ████████░░  8/10       │
 │  สี (ใส)     ██████████  10/10      │
 │  การเตรียม   █████░░░░░  5/10  ⚠   │ ← pulled grade down
-│  ความชื้น    ████████░░  8/10       │
 │                                      │
 │  ⚠ เพิ่มคะแนนได้: ดึงฝาออก         │
 │    + ลอกฉลาก → คะแนน ≈ 85/100       │
-│    → จะได้ Grade A (฿9/kg)           │
 ├──────────────────────────────────────┤
-│  [+ เพิ่มในตะกร้า]  [สแกนใหม่]      │
+│ ⟵ ปัดซ้ายเพื่อทิ้ง  |  ปัดขวาเพื่อขาย ⟶ │
 └──────────────────────────────────────┘
 ```
 
@@ -306,6 +318,17 @@ All inference runs client-side (Edge AI). **No user images are transmitted to an
 ## 5. Design System — Neo-Brutalist Mono v0.4
 
 > Full visual spec: `docs/design-spec.md`. UI component API: `docs/ui-components.md`.
+
+### Responsive Design Layout Rules (Mobile vs Desktop)
+The application MUST fully support both Desktop and Mobile viewports natively. Avoid forcing a "mobile column" onto desktop users.
+
+| Feature / Page | Mobile Layout (< 768px) | Desktop Layout (≥ 768px) |
+|----------------|--------------------------|--------------------------|
+| **Navigation Shell** | Fixed Bottom Tab Bar for `User`. Hamburger/Horizontal strip for `Buyer`/`Admin`. | Fixed Sidebar on the left (200px-240px wide). Main content expands to fill remaining space. |
+| **Scanner Page** | Full screen camera viewport. Bottom Sheet popup for results (Swipe up/down). | Left column: Camera viewport. Right column: Fixed Panel showing results and factor breakdown. Swipe is replaced or supplemented by Keyboard Arrows or Mouse Drag. |
+| **Basket & Routing** | Stacked cards. Route map hidden behind a toggle or modal. | 2-Column Split: Left side shows Basket items, Right side shows Smart Map and Routing algorithm steps. |
+| **Marketplace** | Single column feed. Filters hidden in a drawer. | Multi-column grid feed (2-3 columns). Filters visible in a persistent sidebar on the left. |
+| **Buyer Dashboard** | Stacked metrics, horizontal scroll for tables. | Grid-based metrics (3-4 per row), full-width data tables for Booking Queue and Pricing CRUD. |
 
 ### Aesthetic: Neo-brutalist mono
 
@@ -629,16 +652,25 @@ The Basket is a **trip-planning tool**. Users accumulate scan results here, then
 └─────────────────────────────────┘
 ```
 
-### Shop Matching Algorithm
+### Shop Matching & Routing Algorithm
 
 **Single Shop mode**
 ```
 shopsForAll = SHOPS
-  .filter(shop => basket.every(item => shop.accepts.includes(item.materialType)))
+  .filter(shop => basket.every(item => shop.accepts.includes(item.materialType)) && shop.isOpenToday())
   .sort((a, b) => a.distance - b.distance)
 ```
 
-**Multi-Stop Route mode** (greedy nearest-first)
+**Multi-Stop Route mode (Tree/Graph Traversal)**
+Instead of simple nearest-first, the app treats locations as nodes in a graph and computes an optimized path (Minimum Spanning Tree / Traveling Salesperson variation) to drop off all items efficiently:
+```
+1. Filter open shops that accept at least one item in the basket.
+2. Build a Distance Graph where:
+   - Node 0 = User's current location
+   - Nodes 1..N = Eligible shops
+3. Use a Tree-based pathfinding algorithm (e.g. nearest neighbor or Christofides heuristic for TSP) to find the shortest path that covers all required material types in the basket.
+4. Return the optimized sequential route.
+```
 ```
 for each item in basket:
   nearestShop = SHOPS

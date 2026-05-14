@@ -18,6 +18,8 @@ export function useScanInsert() {
         weight_kg:     scan.weight,
         confidence:    scan.confidence,
         ai_source:     scan.source ?? 'mock',
+        factor_scores: scan.factorScores,
+        weighted_score: scan.score,
       })
     } catch {
       // Supabase may not be configured yet — fail silently
