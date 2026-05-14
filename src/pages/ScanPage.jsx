@@ -287,7 +287,7 @@ export function ScanPage() {
           <div className="px-6 lg:px-8 py-5 flex flex-col gap-4 flex-1">
             <div className="relative w-full aspect-video bg-[var(--ink)] overflow-hidden border-[1.5px] border-[var(--ink)]">
               {inputMode === 'camera'
-                ? <video ref={videoRef} className="w-full h-full object-cover" playsInline muted />
+                ? <video ref={videoRef} className="w-full h-full object-cover" autoPlay playsInline muted />
                 : uploadSrc && <img src={uploadSrc} alt="scan" className="w-full h-full object-contain bg-[var(--paper-2)]" />
               }
 
