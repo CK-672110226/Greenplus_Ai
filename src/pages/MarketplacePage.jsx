@@ -232,10 +232,11 @@ export function MarketplacePage() {
             </div>
 
             {pricingLoading ? (
-              <div className="flex items-center justify-center py-16">
-                <span className="font-data text-[11px] text-[var(--ink-4)] uppercase tracking-widest animate-pulse">
-                  Loading prices…
-                </span>
+              <div className="flex flex-col gap-2 py-4">
+                <div className="h-12 bg-[var(--paper-2)] animate-pulse border-[1.5px] border-[var(--ink-4)]" />
+                <div className="h-12 bg-[var(--paper-2)] animate-pulse border-[1.5px] border-[var(--ink-4)]" />
+                <div className="h-12 bg-[var(--paper-2)] animate-pulse border-[1.5px] border-[var(--ink-4)]" />
+                <div className="h-12 bg-[var(--paper-2)] animate-pulse border-[1.5px] border-[var(--ink-4)]" />
               </div>
             ) : visibleMaterials.length === 0 ? (
               <div className="flex items-center justify-center py-16">

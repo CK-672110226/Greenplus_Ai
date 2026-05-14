@@ -113,7 +113,7 @@ export function SettingsPage() {
       {/* Version footer */}
       <div className="pt-6 mt-2">
         <span className="font-data text-[10px] text-[var(--ink-4)] uppercase tracking-widest">
-          v0.4.x · build 20260514
+          v0.5.0 · build {new Date().toISOString().slice(0, 10).replace(/-/g, '')}
         </span>
       </div>
     </main>

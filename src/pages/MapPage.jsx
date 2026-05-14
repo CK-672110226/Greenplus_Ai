@@ -164,9 +164,10 @@ export function MapPage() {
           </div>
 
           {loading && (
-            <span className="font-data text-[11px] text-[var(--ink-3)] uppercase tracking-widest animate-pulse">
-              Loading shops…
-            </span>
+            <div className="flex flex-col gap-2">
+              <div className="h-4 w-32 bg-[var(--paper-2)] animate-pulse border-[1.5px] border-[var(--ink-4)]" />
+              <div className="h-[55vw] max-h-[480px] min-h-[260px] bg-[var(--paper-2)] animate-pulse border-[1.5px] border-[var(--ink-4)]" />
+            </div>
           )}
 
           {/* Map container */}
