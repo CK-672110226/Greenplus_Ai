@@ -163,6 +163,7 @@ export function ScanPage() {
       })
       if (infer.troll || infer.lowConfidence) { setPhase('troll'); return }
 
+      navigator.vibrate?.(100)
       setResult(infer)
       dispatch(setLastScan(infer))
 
@@ -216,9 +217,11 @@ export function ScanPage() {
   function handleAddSingle() {
     if (!result) return
     if (result?.factorScores?.cleanliness != null && result.factorScores.cleanliness < 5) {
+      navigator.vibrate?.([100, 50, 100])
       setDirtyAlert(true)
       return
     }
+    navigator.vibrate?.(50)
     // eslint-disable-next-line react-hooks/purity
     const id = `${result.materialType}_${Date.now()}`
     dispatch(addToBasket({ id, materialType: result.materialType, grade: result.grade, weight: result.weight, pricePerKg: pricePerKg(result.materialType, result.grade) }))
@@ -229,6 +232,7 @@ export function ScanPage() {
 
   function handleConfirmClean() {
     setDirtyAlert(false)
+    navigator.vibrate?.(50)
     // eslint-disable-next-line react-hooks/purity
     const id = `${result.materialType}_${Date.now()}`
     dispatch(addToBasket({ id, materialType: result.materialType, grade: result.grade, weight: result.weight, pricePerKg: pricePerKg(result.materialType, result.grade) }))
@@ -329,6 +333,18 @@ export function ScanPage() {
             </div>
           </div>
 
+          {/* Demo mode banner */}
+          {isMockMode && (
+            <div className="px-6 lg:px-8 py-2.5 border-b-[1.5px] border-[var(--orange)] bg-[rgba(245,158,11,0.08)] flex items-center gap-3">
+              <span className="font-data text-[9px] border-[1.5px] border-[var(--orange)] text-[var(--orange)] px-1.5 py-0.5 uppercase tracking-widest shrink-0">DEMO</span>
+              <span className="font-data text-[10px] text-[var(--ink-3)] uppercase tracking-wide">
+                {language === 'th'
+                  ? 'โหมดสาธิต — ผลลัพธ์จำลอง · ตั้งค่า ONNX ใน Admin เพื่อเปิด Edge AI'
+                  : 'Demo mode — results are simulated · configure ONNX in Admin to enable Edge AI'}
+              </span>
+            </div>
+          )}
+
           {/* Viewfinder */}
           <div className="px-6 lg:px-8 py-5 flex flex-col gap-4 flex-1">
             <div className="relative w-full aspect-video bg-[var(--ink)] overflow-hidden border-[1.5px] border-[var(--ink)]">
@@ -337,6 +353,7 @@ export function ScanPage() {
                 : uploadSrc && <img src={uploadSrc} alt="scan" className="w-full h-full object-contain bg-[var(--paper-2)]" />
               }
 
+              {/* Corner guides */}
               {inputMode === 'camera' && (phase === 'idle' || phase === 'analyzing') && (
                 <>
                   <span className="absolute top-3 left-3 w-6 h-6 border-t-2 border-l-2 border-[var(--green)]" />
@@ -344,6 +361,30 @@ export function ScanPage() {
                   <span className="absolute bottom-3 left-3 w-6 h-6 border-b-2 border-l-2 border-[var(--green)]" />
                   <span className="absolute bottom-3 right-3 w-6 h-6 border-b-2 border-r-2 border-[var(--green)]" />
                 </>
+              )}
+
+              {/* Laser scan line */}
+              {phase === 'analyzing' && (
+                <div className="absolute left-0 right-0 h-[1.5px] bg-[var(--green)] scan-laser pointer-events-none"
+                  style={{ boxShadow: '0 0 6px 1px rgba(34,197,94,0.55)' }} />
+              )}
+
+              {/* Bounding box on result */}
+              {phase === 'result' && result && (
+                <div className="absolute bbox-draw pointer-events-none"
+                  style={{ top: '18%', left: '18%', right: '18%', bottom: '18%',
+                    border: '1.5px solid var(--green)',
+                    boxShadow: '0 0 8px 1px rgba(34,197,94,0.35)' }}>
+                  <span className="absolute top-0 left-0 w-5 h-5 border-t-2 border-l-2 border-[var(--green)]" style={{ top: '-2px', left: '-2px' }} />
+                  <span className="absolute top-0 right-0 w-5 h-5 border-t-2 border-r-2 border-[var(--green)]" style={{ top: '-2px', right: '-2px' }} />
+                  <span className="absolute bottom-0 left-0 w-5 h-5 border-b-2 border-l-2 border-[var(--green)]" style={{ bottom: '-2px', left: '-2px' }} />
+                  <span className="absolute bottom-0 right-0 w-5 h-5 border-b-2 border-r-2 border-[var(--green)]" style={{ bottom: '-2px', right: '-2px' }} />
+                  <div className="absolute bottom-0 left-0 px-1.5 py-0.5 bg-[var(--green)]" style={{ bottom: '-22px' }}>
+                    <span className="font-data text-[9px] text-[var(--paper)] uppercase tracking-widest">
+                      {localName(result.materialType, language)} · {(result.confidence * 100).toFixed(0)}%
+                    </span>
+                  </div>
+                </div>
               )}
 
               {phase === 'starting' && (
@@ -355,7 +396,9 @@ export function ScanPage() {
               {phase === 'analyzing' && (
                 <div className="absolute inset-0 bg-[#062040cc] flex flex-col items-center justify-center gap-3">
                   <span className="font-data text-[13px] text-[var(--green)] uppercase tracking-widest animate-pulse">{t.analyzing}</span>
-                  <span className="font-data text-[9px] text-[var(--green-soft)] uppercase tracking-widest opacity-60">gp-vision-2.1</span>
+                  <span className="font-data text-[9px] text-[var(--green-soft)] uppercase tracking-widest opacity-60">
+                    {isMockMode ? 'gp-vision-demo' : 'gp-vision-2.1'}
+                  </span>
                 </div>
               )}
 
