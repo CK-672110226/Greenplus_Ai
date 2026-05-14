@@ -55,3 +55,30 @@ body {
   transition: background 0.2s, color 0.2s;
 }
 
+/* ── AI Scanner animations ───────────────────────────── */
+@keyframes scan-laser {
+  0%, 100% { top: 6%; opacity: 1; }
+  50%       { top: 88%; opacity: 0.65; }
+}
+.scan-laser {
+  animation: scan-laser 2.4s ease-in-out infinite;
+}
+
+@keyframes bbox-draw {
+  0%   { opacity: 0; transform: scale(0.9); }
+  65%  { opacity: 1; transform: scale(1.015); }
+  100% { opacity: 1; transform: scale(1); }
+}
+.bbox-draw {
+  animation: bbox-draw 0.35s ease-out forwards;
+}
+
+/* ── Map pulsing pin ─────────────────────────────────── */
+@keyframes map-ping {
+  0%        { transform: scale(1);   opacity: 0.75; }
+  75%, 100% { transform: scale(2.2); opacity: 0; }
+}
+.map-ping {
+  animation: map-ping 1.4s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
