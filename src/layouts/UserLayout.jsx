@@ -55,6 +55,30 @@ function IconProfile() {
   )
 }
 
+function SidebarLink({ to, icon, label, badge }) {
+  return (
+    <NavLink
+      to={to}
+      className={({ isActive }) =>
+        'flex items-center gap-3 px-3 py-2.5 font-data text-[12px] uppercase tracking-wide transition-colors rounded-sm ' +
+        (isActive
+          ? 'text-[var(--green)] bg-[var(--paper-2)]'
+          : 'text-[var(--ink-3)] hover:text-[var(--ink)] hover:bg-[var(--paper-2)]')
+      }
+    >
+      <span className="relative flex-shrink-0">
+        {icon}
+        {badge > 0 && (
+          <span className="absolute -top-1 -right-1.5 flex items-center justify-center min-w-[14px] h-[14px] px-0.5 bg-[var(--green)] text-[var(--paper)] font-data text-[9px] rounded-full leading-none">
+            {badge}
+          </span>
+        )}
+      </span>
+      <span>{label}</span>
+    </NavLink>
+  )
+}
+
 function Tab({ to, icon, label, badge }) {
   return (
     <NavLink
@@ -91,9 +115,35 @@ export function UserLayout() {
   }
 
   return (
-    <div className="flex flex-col min-h-screen bg-[var(--paper)]">
-      {/* TopBar */}
-      <header className="sticky top-0 z-40 flex items-center justify-between px-4 py-3 bg-[var(--paper)] border-b-[1.5px] border-[var(--ink)]">
+    <div className="flex flex-col md:flex-row min-h-screen bg-[var(--paper)]">
+      {/* Desktop sidebar — hidden on mobile */}
+      <aside className="hidden md:flex md:flex-col md:fixed md:left-0 md:top-0 md:bottom-0 md:w-[220px] md:z-40 bg-[var(--paper)] border-r-[1.5px] border-[var(--ink)] px-4 py-5 gap-2">
+        <button
+          onClick={() => navigate('/home')}
+          className="bg-transparent border-none cursor-pointer p-0 hover:opacity-75 transition-opacity self-start"
+          aria-label="GreenPlus.Ai home"
+        >
+          <Logo height={30} showWordmark />
+        </button>
+
+        <nav className="flex flex-col gap-1 mt-4 flex-1">
+          <SidebarLink to="/home"    icon={<IconHome />}    label={t.home} />
+          <SidebarLink to="/scan"    icon={<IconScan />}    label={t.scan} />
+          <SidebarLink to="/basket"  icon={<IconBasket />}  label={t.basket} badge={activeCount} />
+          <SidebarLink to="/map"     icon={<IconMap />}     label={t.map} />
+          <SidebarLink to="/profile" icon={<IconProfile />} label={t.profile} />
+        </nav>
+
+        <button
+          onClick={toggleLang}
+          className="font-data text-[11px] border-[1.5px] border-[var(--ink-4)] px-2 py-0.5 hover:border-[var(--ink)] transition-colors bg-transparent cursor-pointer self-start"
+        >
+          {language === 'th' ? 'EN' : 'TH'}
+        </button>
+      </aside>
+
+      {/* TopBar — mobile only */}
+      <header className="md:hidden sticky top-0 z-40 flex items-center justify-between px-4 py-3 bg-[var(--paper)] border-b-[1.5px] border-[var(--ink)]">
         <button
           onClick={() => navigate('/home')}
           className="bg-transparent border-none cursor-pointer p-0 hover:opacity-75 transition-opacity"
@@ -125,13 +175,13 @@ export function UserLayout() {
         </div>
       </header>
 
-      {/* Page content — padded so it doesn't hide behind bottom tab bar */}
-      <main className="flex-1 pb-[68px]">
+      {/* Page content */}
+      <main className="flex-1 pb-[68px] md:pb-0 md:ml-[220px]">
         <Outlet />
       </main>
 
-      {/* BottomTabBar */}
-      <nav className="fixed bottom-0 left-0 right-0 z-40 flex items-stretch bg-[var(--paper)] border-t-[1.5px] border-[var(--ink)]">
+      {/* BottomTabBar — mobile only */}
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 flex items-stretch bg-[var(--paper)] border-t-[1.5px] border-[var(--ink)]">
         <Tab to="/home"    icon={<IconHome />}    label={t.home} />
         <Tab to="/scan"    icon={<IconScan />}    label={t.scan} />
         <Tab to="/basket"  icon={<IconBasket />}  label={t.basket} badge={activeCount} />

@@ -1328,3 +1328,68 @@ This means the calendar read is always a simple `SELECT WHERE shop_id AND date` 
 |--------|---------|
 | `feature/calendar` | Calendar UI, booking modal, closure management |
 | `feature/ai-model-admin` | Training image upload, model versioning, auto-update |
+
+---
+
+## Section 19 — UI Quality Audit (May 2026)
+
+Audit conducted 14 May 2026. Branch: `feature/map-tree-routing`. All issues categorised by severity and assigned for immediate remediation.
+
+### 19.1 Issue Register
+
+| ID | Page / Component | Severity | Category | Issue | Status |
+|----|-----------------|----------|----------|-------|--------|
+| UIQ-01 | `UserLayout` | CRITICAL | Desktop | `BottomTabBar` renders on all screen sizes; no desktop left sidebar (PRD §5 requires 200–240px fixed sidebar for `≥ 768px`) | ✅ Fixed |
+| UIQ-02 | `EcoPointsPage` | HIGH | Dark mode | Tier badge and progress-bar `color`/`background` use hardcoded hex (`#CD7F32` Bronze, `#A0A0A0` Silver, `#D4AF37` Gold, `#9BA5B7` Platinum) — these are wrong/invisible in dark mode | ✅ Fixed |
+| UIQ-03 | `EcoPointsPage` | HIGH | Desktop | Single-column layout only; no `max-w-xl mx-auto` or desktop 2-col split for rewards + history | ✅ Fixed |
+| UIQ-04 | `ProfilePage` | HIGH | Desktop | All sub-cards `max-w-sm` — stays narrow strip on desktop; needs `max-w-2xl` + responsive 2-col grid | ✅ Fixed |
+| UIQ-05 | `ProfilePage` (Buyer) | MEDIUM | Data | `BUYER_ACCEPTED` constant is hardcoded; should read from `buyerSlice.acceptedMaterials` and dispatch `setAcceptedMaterials` on save | ✅ Fixed |
+| UIQ-06 | `MapPage` | MEDIUM | Responsive | Map container fixed `height: 420` (inline style) — should be `h-[55vw] max-h-[480px]` | ✅ Fixed |
+| UIQ-07 | `MapPage` | MEDIUM | Desktop | Filter pills in a single `flex-wrap` row on all sizes; desktop should get a sidebar layout (similar to `MarketplacePage`) | ✅ Fixed |
+| UIQ-08 | `MapPage` | LOW | Dark mode | Leaflet `TileLayer` always uses light OSM tiles; consider CartoDB dark tiles (`https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png`) when `darkMode === true` | ✅ Fixed |
+| UIQ-09 | `SettingsPage` | MEDIUM | Desktop | No container constraint — content stretches full viewport width on desktop; needs `max-w-xl mx-auto` | ✅ Fixed |
+| UIQ-10 | `AdminPage` | LOW | Dark mode | `heatColor()` returns `'var(--green-soft, #C8F5D8)'` — fallback hex `#C8F5D8` is a light-mode colour, wrong in dark mode; remove fallback and use `'var(--green-soft)'` only | ✅ Fixed |
+
+### 19.2 Remediation Plan
+
+| Agent | Issues Covered | Files |
+|-------|---------------|-------|
+| `agent-userlayout-desktop` | UIQ-01 | `src/layouts/UserLayout.jsx` |
+| `agent-ecopoints-fix` | UIQ-02, UIQ-03 | `src/pages/EcoPointsPage.jsx` |
+| `agent-profile-desktop` | UIQ-04, UIQ-05 | `src/pages/ProfilePage.jsx` |
+| `agent-map-responsive` | UIQ-06, UIQ-07, UIQ-08 | `src/pages/MapPage.jsx` |
+| `agent-settings-admin-fix` | UIQ-09, UIQ-10 | `src/pages/SettingsPage.jsx`, `src/pages/AdminPage.jsx` |
+
+### 19.3 Desktop Navigation Pattern (UIQ-01 Reference)
+
+`UserLayout` must match `BuyerLayout`'s desktop pattern:
+
+```
+≥ 768px (md:):
+┌──────────────────────────────────────────────────────┐
+│  [Sidebar 200px]  │  [Main content flex-1]           │
+│  Logo             │  <Outlet />                      │
+│  Nav links (flex  │                                  │
+│  col, full w)     │                                  │
+└──────────────────────────────────────────────────────┘
+
+< 768px:
+┌──────────────────────┐
+│  [TopBar sticky]     │
+│  <Outlet />          │
+│  [BottomTabBar fixed]│
+└──────────────────────┘
+```
+
+The sidebar should use the same `NavLink` items as the bottom tab bar, rendered vertically. `BottomTabBar` must be `md:hidden`. `main` padding-bottom (`pb-[68px]`) must be `md:pb-0`.
+
+### 19.4 EcoPoints Tier Token Map (UIQ-02 Reference)
+
+Replace hardcoded tier hex with CSS token aliases:
+
+| Tier | Old hex | Replacement token |
+|------|---------|-------------------|
+| Bronze | `#CD7F32` | `var(--orange)` |
+| Silver | `#A0A0A0` | `var(--ink-3)` |
+| Gold | `#D4AF37` | `var(--green)` |
+| Platinum | `#9BA5B7` | `var(--blue)` |

@@ -46,7 +46,7 @@ const MODEL_OPTIONS = [
 
 function heatColor(v) {
   if (v >= 80) return 'var(--orange)'
-  if (v >= 50) return 'var(--green-soft, #C8F5D8)'
+  if (v >= 50) return 'var(--green-soft)'
   return 'var(--paper-2)'
 }
 
@@ -282,7 +282,7 @@ export function AdminPage() {
             <div className="flex gap-3 pt-1 items-center">
               <span className="font-data text-[10px] text-[var(--ink-3)]">Low</span>
               <div className="w-6 h-3" style={{ background: 'var(--paper-2)', border: '1px solid var(--ink-4)' }} />
-              <div className="w-6 h-3" style={{ background: 'var(--green-soft, #C8F5D8)', border: '1px solid var(--ink-4)' }} />
+              <div className="w-6 h-3" style={{ background: 'var(--green-soft)', border: '1px solid var(--ink-4)' }} />
               <div className="w-6 h-3" style={{ background: 'var(--orange)', border: '1px solid var(--ink-4)' }} />
               <span className="font-data text-[10px] text-[var(--ink-3)]">High</span>
             </div>

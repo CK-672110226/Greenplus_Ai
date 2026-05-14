@@ -5,10 +5,10 @@ import { Card } from '../components/Card'
 import { Button } from '../components/Button'
 
 const TIERS = [
-  { name: 'Bronze',   min: 0,    max: 999,      mult: 1.00, color: '#CD7F32' },
-  { name: 'Silver',   min: 1000, max: 1999,     mult: 1.05, color: '#A0A0A0' },
-  { name: 'Gold',     min: 2000, max: 2999,     mult: 1.10, color: '#D4AF37' },
-  { name: 'Platinum', min: 3000, max: Infinity, mult: 1.15, color: '#9BA5B7' },
+  { name: 'Bronze',   min: 0,    max: 999,      mult: 1.00, color: 'var(--orange)' },
+  { name: 'Silver',   min: 1000, max: 1999,     mult: 1.05, color: 'var(--ink-3)'  },
+  { name: 'Gold',     min: 2000, max: 2999,     mult: 1.10, color: 'var(--green)'  },
+  { name: 'Platinum', min: 3000, max: Infinity, mult: 1.15, color: 'var(--blue)'   },
 ]
 
 const MOCK_HISTORY = [
@@ -43,14 +43,14 @@ export function EcoPointsPage() {
     : 100
 
   return (
-    <main className="flex flex-col px-4 py-6 gap-6">
-      {/* Header */}
+    <main className="flex flex-col px-4 py-6 gap-6 max-w-5xl mx-auto">
+      {/* Header — full width */}
       <div>
         <h1 className="font-brand text-[28px] text-[var(--ink)] m-0">{t.ecoPointsTitle ?? t.ecoPoints}</h1>
         <span className="font-data text-[11px] text-[var(--ink-3)] uppercase tracking-widest">loyalty & rewards</span>
       </div>
 
-      {/* Points + progress */}
+      {/* Points + progress — full width */}
       <div className="flex flex-col gap-3 p-4 border-[1.5px] border-[var(--ink)] shadow-[2px_2px_0_var(--ink)] bg-[var(--paper)]">
         <div className="flex items-center justify-between">
           <span className="font-data text-[11px] text-[var(--ink-3)] uppercase tracking-widest">{t.yourPoints}</span>
@@ -74,67 +74,70 @@ export function EcoPointsPage() {
         </div>
       </div>
 
-      {/* Tier table */}
-      <div className="flex flex-col border-[1.5px] border-[var(--ink)]">
-        <div className="grid grid-cols-3 px-3 py-1.5 bg-[var(--paper-2)] border-b-[1.5px] border-[var(--ink)]">
-          <span className="font-data text-[9px] text-[var(--ink-3)] uppercase tracking-widest">Tier</span>
-          <span className="font-data text-[9px] text-[var(--ink-3)] uppercase tracking-widest text-center">Range</span>
-          <span className="font-data text-[9px] text-[var(--ink-3)] uppercase tracking-widest text-right">Multiplier</span>
-        </div>
-        {TIERS.map((row, i) => {
-          const active = tier.name === row.name
-          return (
-            <div
-              key={row.name}
-              className={[
-                'grid grid-cols-3 items-center px-3 py-2.5',
-                i < TIERS.length - 1 ? 'border-b-[1px] border-[var(--ink-4)]' : '',
-                active ? 'bg-[var(--green-soft)]' : '',
-              ].join(' ')}
-            >
-              <div className="flex items-center gap-2">
-                {active
-                  ? <span className="w-2 h-2 rounded-full bg-[var(--green)] flex-shrink-0" />
-                  : <span className="w-2 h-2 flex-shrink-0" />
-                }
-                <span className="font-data text-[12px]" style={{ color: row.color, fontWeight: active ? 700 : 400 }}>
-                  {row.name}
+      {/* Desktop: side by side; Mobile: stacked */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+        {/* Left: Tier table */}
+        <div className="flex flex-col border-[1.5px] border-[var(--ink)]">
+          <div className="grid grid-cols-3 px-3 py-1.5 bg-[var(--paper-2)] border-b-[1.5px] border-[var(--ink)]">
+            <span className="font-data text-[9px] text-[var(--ink-3)] uppercase tracking-widest">Tier</span>
+            <span className="font-data text-[9px] text-[var(--ink-3)] uppercase tracking-widest text-center">Range</span>
+            <span className="font-data text-[9px] text-[var(--ink-3)] uppercase tracking-widest text-right">Multiplier</span>
+          </div>
+          {TIERS.map((row, i) => {
+            const active = tier.name === row.name
+            return (
+              <div
+                key={row.name}
+                className={[
+                  'grid grid-cols-3 items-center px-3 py-2.5',
+                  i < TIERS.length - 1 ? 'border-b-[1px] border-[var(--ink-4)]' : '',
+                  active ? 'bg-[var(--green-soft)]' : '',
+                ].join(' ')}
+              >
+                <div className="flex items-center gap-2">
+                  {active
+                    ? <span className="w-2 h-2 rounded-full bg-[var(--green)] flex-shrink-0" />
+                    : <span className="w-2 h-2 flex-shrink-0" />
+                  }
+                  <span className="font-data text-[12px]" style={{ color: row.color, fontWeight: active ? 700 : 400 }}>
+                    {row.name}
+                  </span>
+                </div>
+                <span className="font-data text-[11px] text-[var(--ink-3)] text-center">
+                  {row.max === Infinity
+                    ? `${row.min.toLocaleString()}+`
+                    : `${row.min.toLocaleString()}–${row.max.toLocaleString()}`}
+                </span>
+                <span className="font-data text-[12px] text-[var(--ink)] text-right font-bold">
+                  ×{row.mult.toFixed(2)}
                 </span>
               </div>
-              <span className="font-data text-[11px] text-[var(--ink-3)] text-center">
-                {row.max === Infinity
-                  ? `${row.min.toLocaleString()}+`
-                  : `${row.min.toLocaleString()}–${row.max.toLocaleString()}`}
-              </span>
-              <span className="font-data text-[12px] text-[var(--ink)] text-right font-bold">
-                ×{row.mult.toFixed(2)}
-              </span>
-            </div>
-          )
-        })}
+            )
+          })}
+        </div>
+
+        {/* Right: Rewards */}
+        <div className="flex flex-col gap-3">
+          <span className="font-data text-[12px] text-[var(--ink-2)] uppercase tracking-widest">{t.redeemPoints}</span>
+          {REWARDS.map(r => (
+            <Card key={r.id} className="flex items-center justify-between gap-3">
+              <div className="flex flex-col gap-0.5">
+                <span className="font-body text-[15px] text-[var(--ink)] font-semibold">{r.title}</span>
+                <span className="font-body text-[12px] text-[var(--ink-3)]">{r.desc}</span>
+                <span className="font-data text-[12px] text-[var(--green)]">{r.cost} pts</span>
+              </div>
+              <Button
+                variant={points >= r.cost ? 'primary' : 'secondary'}
+                onClick={() => toast.info('Feature coming in M10')}
+              >
+                {t.redeemPoints}
+              </Button>
+            </Card>
+          ))}
+        </div>
       </div>
 
-      {/* Rewards */}
-      <div className="flex flex-col gap-3">
-        <span className="font-data text-[12px] text-[var(--ink-2)] uppercase tracking-widest">{t.redeemPoints}</span>
-        {REWARDS.map(r => (
-          <Card key={r.id} className="flex items-center justify-between gap-3">
-            <div className="flex flex-col gap-0.5">
-              <span className="font-body text-[15px] text-[var(--ink)] font-semibold">{r.title}</span>
-              <span className="font-body text-[12px] text-[var(--ink-3)]">{r.desc}</span>
-              <span className="font-data text-[12px] text-[var(--green)]">{r.cost} pts</span>
-            </div>
-            <Button
-              variant={points >= r.cost ? 'primary' : 'secondary'}
-              onClick={() => toast.info('Feature coming in M10')}
-            >
-              {t.redeemPoints}
-            </Button>
-          </Card>
-        ))}
-      </div>
-
-      {/* Timeline history */}
+      {/* Timeline history — full width */}
       <div className="flex flex-col gap-3">
         <span className="font-data text-[12px] text-[var(--ink-2)] uppercase tracking-widest">{t.pointsHistory}</span>
         <div className="flex flex-col">

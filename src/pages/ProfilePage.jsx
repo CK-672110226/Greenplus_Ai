@@ -1,6 +1,6 @@
-import { useState } from 'react'
 import { toast } from 'sonner'
-import { useSelector } from 'react-redux'
+import { useSelector, useDispatch } from 'react-redux'
+import { setAcceptedMaterials } from '../store/buyerSlice'
 import { useT } from '../hooks/useT'
 import { Card } from '../components/Card'
 import { Button } from '../components/Button'
@@ -14,8 +14,6 @@ const MOCK_SCAN_HISTORY = [
   { id: 4, materialType: 'copper',            grade: 'A', date: '11 May 2026', value: 30.00, weight: 1.2 },
   { id: 5, materialType: 'mixed_plastic',     grade: 'C', date: '10 May 2026', value: 0.35,  weight: 0.8 },
 ]
-
-const BUYER_ACCEPTED = ['aluminum_can', 'pet_bottle_clear', 'cardboard', 'copper']
 
 const ADMIN_STATS = { shopsToApprove: 3, activeShops: 4, flaggedPosts: 1 }
 
@@ -34,9 +32,9 @@ function UserProfile({ profile, session, t, language }) {
   const totalCo2   = (totalKg * 0.37).toFixed(1)
 
   return (
-    <>
-      {/* Identity */}
-      <Card className="w-full max-w-sm flex flex-col gap-4">
+    <div className="w-full max-w-2xl grid grid-cols-1 md:grid-cols-[1fr_1.5fr] gap-5 items-start">
+      {/* Left: Identity card */}
+      <Card className="flex flex-col gap-4">
         <div className="flex items-center gap-4">
           <Avatar name={profile?.display_name ?? session?.user?.email} />
           <div>
@@ -66,8 +64,8 @@ function UserProfile({ profile, session, t, language }) {
         </div>
       </Card>
 
-      {/* Scan history */}
-      <div className="w-full max-w-sm flex flex-col gap-2">
+      {/* Right: Scan history */}
+      <div className="flex flex-col gap-2">
         <span className="font-data text-[12px] text-[var(--ink-2)] uppercase tracking-widest">{t.scanHistory}</span>
         {MOCK_SCAN_HISTORY.map(h => (
           <Card key={h.id} className="flex items-center justify-between">
@@ -82,15 +80,19 @@ function UserProfile({ profile, session, t, language }) {
           </Card>
         ))}
       </div>
-    </>
+    </div>
   )
 }
 
 function BuyerProfile({ profile, session, t, language }) {
-  const [accepted, setAccepted] = useState(BUYER_ACCEPTED)
+  const dispatch   = useDispatch()
+  const accepted   = useSelector(s => s.buyer?.acceptedMaterials ?? [])
 
   function toggle(mat) {
-    setAccepted(a => a.includes(mat) ? a.filter(m => m !== mat) : [...a, mat])
+    const next = accepted.includes(mat)
+      ? accepted.filter(m => m !== mat)
+      : [...accepted, mat]
+    dispatch(setAcceptedMaterials(next))
   }
 
   function handleSave() {
@@ -99,7 +101,7 @@ function BuyerProfile({ profile, session, t, language }) {
 
   return (
     <>
-      <Card className="w-full max-w-sm flex flex-col gap-4">
+      <Card className="w-full max-w-2xl flex flex-col gap-4">
         <div className="flex items-center gap-4">
           <Avatar name={profile?.display_name ?? 'B'} />
           <div>
@@ -114,7 +116,7 @@ function BuyerProfile({ profile, session, t, language }) {
         </div>
       </Card>
 
-      <Card className="w-full max-w-sm flex flex-col gap-3">
+      <Card className="w-full max-w-2xl flex flex-col gap-3">
         <span className="font-data text-[12px] text-[var(--ink-2)] uppercase tracking-widest">{t.acceptedMaterials}</span>
         <div className="flex flex-wrap gap-2">
           {Object.keys(WASTE_ITEMS).map(mat => (
@@ -140,7 +142,7 @@ function BuyerProfile({ profile, session, t, language }) {
 
 function AdminProfile({ profile, session, t }) {
   return (
-    <Card className="w-full max-w-sm flex flex-col gap-4">
+    <Card className="w-full max-w-2xl flex flex-col gap-4">
       <div className="flex items-center gap-4">
         <Avatar name={profile?.display_name ?? 'A'} />
         <div>
@@ -179,7 +181,7 @@ export function ProfilePage() {
 
   return (
     <main className="flex flex-col items-center px-4 py-10 gap-6">
-      <h1 className="font-brand text-[28px] text-[var(--ink)] m-0 self-start max-w-sm w-full">{t.profile}</h1>
+      <h1 className="font-brand text-[28px] text-[var(--ink)] m-0 self-start w-full max-w-2xl">{t.profile}</h1>
       {role === 'user'  && <UserProfile  profile={profile} session={session} t={t} language={language} />}
       {role === 'buyer' && <BuyerProfile profile={profile} session={session} t={t} language={language} />}
       {role === 'admin' && <AdminProfile profile={profile} session={session} t={t} />}
