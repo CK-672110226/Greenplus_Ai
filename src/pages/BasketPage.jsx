@@ -23,23 +23,64 @@ function computeRoutes(basket, userLat, userLng) {
   const active = basket.filter(i => !i.skipped)
   const materials = [...new Set(active.map(i => i.materialType))]
 
-  const shopsWithDist = SHOPS.map(s => ({ ...s, dist: distOf(s, userLat, userLng) }))
+  const currentDay = new Date().getDay()
+  
+  // 1. Filter open shops (Calendar feature)
+  const openShops = SHOPS.filter(s => {
+    const days = s.openDays || [1, 2, 3, 4, 5, 6] // default to Mon-Sat if missing
+    return days.includes(currentDay)
+  })
 
+  // Add baseline distance from user
+  const shopsWithDist = openShops.map(s => ({ ...s, dist: distOf(s, userLat, userLng) }))
+
+  // Single Shop mode
   const single = shopsWithDist
     .filter(s => materials.every(m => s.accepts.includes(m)))
     .sort((a, b) => a.dist - b.dist)
 
-  const stopsMap = new Map()
+  // Multi-Stop mode (Tree/Graph Traversal - Nearest Neighbor TSP heuristic)
+  const multi = []
   const unmatched = []
-  materials.forEach(mat => {
-    const shop = shopsWithDist
-      .filter(s => s.accepts.includes(mat))
-      .sort((a, b) => a.dist - b.dist)[0]
-    if (!shop) { unmatched.push(mat); return }
-    if (!stopsMap.has(shop.id)) stopsMap.set(shop.id, { shop, materials: [] })
-    stopsMap.get(shop.id).materials.push(mat)
-  })
-  const multi = [...stopsMap.values()].sort((a, b) => a.shop.dist - b.shop.dist)
+  let remainingMaterials = new Set(materials)
+  
+  // Node 0 = User's location
+  let currentLat = userLat ?? 18.7953 // Default to CMU if no GPS
+  let currentLng = userLng ?? 98.9528
+  let availableShops = [...openShops]
+
+  while (remainingMaterials.size > 0) {
+    // Recompute edges (distances) from the CURRENT node to all eligible shops
+    const candidates = availableShops.map(s => ({
+      shop: s,
+      distFromCurrent: distOf(s, currentLat, currentLng),
+      covering: s.accepts.filter(mat => remainingMaterials.has(mat))
+    })).filter(c => c.covering.length > 0)
+
+    if (candidates.length === 0) {
+      remainingMaterials.forEach(m => unmatched.push(m))
+      break
+    }
+
+    // Pick the shortest edge (Nearest Neighbor)
+    candidates.sort((a, b) => a.distFromCurrent - b.distFromCurrent)
+    const nextNode = candidates[0]
+
+    // Add to route sequence
+    multi.push({
+      shop: { ...nextNode.shop, dist: distOf(nextNode.shop, userLat, userLng) }, // keep dist from user for display
+      distFromLast: nextNode.distFromCurrent,
+      materials: nextNode.covering
+    })
+
+    // Mark materials as covered
+    nextNode.covering.forEach(m => remainingMaterials.delete(m))
+
+    // Traverse to next node
+    currentLat = nextNode.shop.lat
+    currentLng = nextNode.shop.lng
+    availableShops = availableShops.filter(s => s.id !== nextNode.shop.id)
+  }
 
   return { single, multi, unmatched, materials }
 }

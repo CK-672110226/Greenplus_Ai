@@ -45,6 +45,19 @@ export function DashboardPage() {
 
   const [tab, setTab]       = useState('orders')
   const [pricing, setPricing] = useState(initPricing)
+  const [openDays, setOpenDays] = useState([1, 2, 3, 4, 5, 6]) // Default Mon-Sat
+
+  function handleToggleDay(dayIndex) {
+    setOpenDays(prev => 
+      prev.includes(dayIndex) 
+        ? prev.filter(d => d !== dayIndex)
+        : [...prev, dayIndex].sort()
+    )
+  }
+
+  function handleSaveCalendar() {
+    toast.success(language === 'th' ? 'บันทึกวันเปิดทำการแล้ว' : 'Calendar saved successfully')
+  }
 
   function handleAccept(id) {
     dispatch(updateStatus({ id, status: 'accepted' }))
@@ -99,9 +112,10 @@ export function DashboardPage() {
       </Card>
 
       {/* Tabs */}
-      <div className="w-full max-w-xl flex gap-2">
+      <div className="w-full max-w-xl flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
         <TabBtn active={tab === 'orders'}  onClick={() => setTab('orders')}>{t.recentBookings}</TabBtn>
         <TabBtn active={tab === 'pricing'} onClick={() => setTab('pricing')}>{t.myPricing}</TabBtn>
+        <TabBtn active={tab === 'calendar'} onClick={() => setTab('calendar')}>{language === 'th' ? 'ปฏิทินร้าน' : 'Shop Calendar'}</TabBtn>
       </div>
 
       {/* Orders tab */}
@@ -163,6 +177,45 @@ export function DashboardPage() {
             </Card>
           ))}
           <Button variant="primary" onClick={handleSavePricing}>{t.savePricing}</Button>
+        </div>
+      )}
+
+      {/* Calendar Tab (B-04) */}
+      {tab === 'calendar' && (
+        <div className="w-full max-w-xl flex flex-col gap-4">
+          <Card className="flex flex-col gap-4">
+            <h2 className="font-brand text-[18px] text-[var(--ink)] m-0">
+              {language === 'th' ? 'วันเปิด-ปิดทำการ (Operating Days)' : 'Operating Days'}
+            </h2>
+            <p className="font-body text-[14px] text-[var(--ink-3)] m-0">
+              {language === 'th' 
+                ? 'เลือกวันที่ร้านเปิดรับซื้อ เพื่อให้ลูกค้าไม่ถูกนำทางมาในวันที่ร้านหยุด' 
+                : 'Select the days your shop is open so users do not route to you when closed.'}
+            </p>
+            <div className="flex flex-col gap-2 mt-2">
+              {['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'].map((dayName, index) => {
+                const isOpen = openDays.includes(index)
+                return (
+                  <div key={index} className="flex items-center justify-between border-[1.5px] border-[var(--ink-4)] p-3">
+                    <span className="font-body text-[15px] text-[var(--ink)]">{dayName}</span>
+                    <button
+                      onClick={() => handleToggleDay(index)}
+                      className={`font-data text-[11px] uppercase tracking-widest px-3 py-1.5 border-[1.5px] transition-colors ${
+                        isOpen 
+                          ? 'bg-[var(--green)] border-[var(--green-ink)] text-[var(--ink)]' 
+                          : 'bg-[var(--paper-2)] border-[var(--ink-4)] text-[var(--ink-3)]'
+                      }`}
+                    >
+                      {isOpen ? (language === 'th' ? 'เปิด' : 'OPEN') : (language === 'th' ? 'ปิด' : 'CLOSED')}
+                    </button>
+                  </div>
+                )
+              })}
+            </div>
+            <Button variant="primary" onClick={handleSaveCalendar} className="mt-2">
+              {language === 'th' ? 'บันทึกการตั้งค่า' : 'Save Calendar'}
+            </Button>
+          </Card>
         </div>
       )}
     </main>

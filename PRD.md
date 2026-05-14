@@ -39,43 +39,43 @@ The pilot zone (CMU rear / Tambon Suthep) has dense student housing, established
 
 ### 3.1 User (Seller)
 
-| ID | Story | Priority |
-|----|-------|----------|
-| U-01 | As a user, I can open the camera scanner so that I can identify my waste item | Must Have |
-| U-02 | As a user, I receive a Grade (A/B/C) and an estimated price in ฿ within 3 seconds | Must Have |
-| U-03 | As a user, I can swipe right on a scan result to add it to my basket | Must Have |
-| U-04 | As a user, I see a Smart Map with pulsing pins showing shops that accept my current item | Must Have |
-| U-05 | As a user, I can book a drop-off slot at a nearby shop | Should Have |
-| U-06 | As a user, I earn Eco-Points (Impact Points) after a verified drop-off | Should Have |
-| U-07 | As a user, I can switch the UI language between Thai and English | Must Have |
-| U-08 | As a user, if I point the camera at a person, I see a playful anti-troll message | Must Have |
-| U-09 | As a user, I can view all basket items with grade tag, weight input, and estimated value per item | Must Have |
-| U-10 | As a user, I can manually adjust the weight of each basket item | Must Have |
-| U-11 | As a user, I can see shops that accept every item in my basket (Single Shop mode), sorted nearest-first | Must Have |
-| U-12 | As a user, I can switch to Multi-Stop Route mode to get a stop-by-stop route when no single shop accepts all items | Must Have |
-| U-13 | As a user, if no shop accepts a specific item, I can skip that item and continue planning the rest | Must Have |
-| U-14 | As a user, I can view my profile showing Eco-Points, scan history summary, and account settings | Should Have |
-| U-15 | As a user, I can sign in with my Google account so that I don't need to create a separate password | Must Have |
+| ID | Story | Priority | Status |
+|----|-------|----------|--------|
+| U-01 | As a user, I can open the camera scanner so that I can identify my waste item | Must Have | ✅ Done |
+| U-02 | As a user, I receive a Grade (A/B/C) and an estimated price in ฿ within 3 seconds | Must Have | ✅ Done |
+| U-03 | As a user, I can swipe right on a scan result to add it to my basket | Must Have | ✅ Done |
+| U-04 | As a user, I see a Smart Map with pulsing pins showing shops that accept my current item | Must Have | ✅ Done |
+| U-05 | As a user, I can book a drop-off slot at a nearby shop | Should Have | Pending |
+| U-06 | As a user, I earn Eco-Points (Impact Points) after a verified drop-off | Should Have | Pending |
+| U-07 | As a user, I can switch the UI language between Thai and English | Must Have | ✅ Done |
+| U-08 | As a user, if I point the camera at a person, I see a playful anti-troll message | Must Have | ✅ Done |
+| U-09 | As a user, I can view all basket items with grade tag, weight input, and estimated value per item | Must Have | ✅ Done |
+| U-10 | As a user, I can manually adjust the weight of each basket item | Must Have | ✅ Done |
+| U-11 | As a user, I can see shops that accept every item in my basket (Single Shop mode), sorted nearest-first | Must Have | ✅ Done |
+| U-12 | As a user, I can switch to Multi-Stop Route mode to get a stop-by-stop route when no single shop accepts all items | Must Have | ✅ Done |
+| U-13 | As a user, if no shop accepts a specific item, I can skip that item and continue planning the rest | Must Have | ✅ Done |
+| U-14 | As a user, I can view my profile showing Eco-Points, scan history summary, and account settings | Should Have | ✅ Done |
+| U-15 | As a user, I can sign in with my Google account so that I don't need to create a separate password | Must Have | ✅ Done |
 
 ### 3.2 Buyer (Shop Operator)
 
-| ID | Story | Priority |
-|----|-------|----------|
-| B-01 | As a buyer, I see an industrial dashboard with today's booking queue and incoming material summary | Must Have |
-| B-02 | As a buyer, I can create, read, update, and delete my shop's pricing table (CRUD) | Must Have |
-| B-03 | As a buyer, I can browse the Marketplace to find waste posts created by users and offer to buy them | Must Have |
-| B-04 | As a buyer, I can manage my shop's Calendar to set Open/Closed days so users don't route to me when closed | Must Have |
-| B-05 | As a buyer, I have a shop profile showing name, address, operating hours (calendar), accepted materials, and contact info | Must Have |
-| B-06 | As a buyer, I can update my shop's accepted material types so only matching sellers appear in route plans | Must Have |
+| ID | Story | Priority | Status |
+|----|-------|----------|--------|
+| B-01 | As a buyer, I see an industrial dashboard with today's booking queue and incoming material summary | Must Have | ✅ Done |
+| B-02 | As a buyer, I can create, read, update, and delete my shop's pricing table (CRUD) | Must Have | ✅ Done |
+| B-03 | As a buyer, I can browse the Marketplace to find waste posts created by users and offer to buy them | Must Have | ✅ Done |
+| B-04 | As a buyer, I can manage my shop's Calendar to set Open/Closed days so users don't route to me when closed | Must Have | ✅ Done (local state; Supabase persist pending) |
+| B-05 | As a buyer, I have a shop profile showing name, address, operating hours (calendar), accepted materials, and contact info | Must Have | ✅ Done |
+| B-06 | As a buyer, I can update my shop's accepted material types so only matching sellers appear in route plans | Must Have | Pending |
 
 ### 3.3 Admin
 
-| ID | Story | Priority |
-|----|-------|----------|
-| A-01 | As an admin, I see a heatmap of waste drop points across Tambon Suthep | Must Have |
-| A-02 | As an admin, I can approve or reject new shop registrations | Must Have |
-| A-03 | As an admin, I can delete troll / abuse posts from the Marketplace | Must Have |
-| A-04 | As an admin, I have a profile showing my name, admin badge, and a summary of pending actions (shops to approve, flagged posts) | Should Have |
+| ID | Story | Priority | Status |
+|----|-------|----------|--------|
+| A-01 | As an admin, I see a heatmap of waste drop points across Tambon Suthep | Must Have | ✅ Done |
+| A-02 | As an admin, I can approve or reject new shop registrations | Must Have | ✅ Done |
+| A-03 | As an admin, I can delete troll / abuse posts from the Marketplace | Must Have | ✅ Done |
+| A-04 | As an admin, I have a profile showing my name, admin badge, and a summary of pending actions (shops to approve, flagged posts) | Should Have | ✅ Done |
 
 ---
 
@@ -539,19 +539,20 @@ Font loading: declared in `index.html` `<link rel="stylesheet">` with `<link rel
 
 ## 12. Milestones
 
-| Milestone | Deliverable |
-|-----------|-------------|
-| M1 — Design System | CSS tokens, component library, Storybook baseline |
-| M2 — Auth + Roles | Supabase auth + Google OAuth, role routing, language toggle |
-| M3 — AI Scanner MVP | Stage 1 detection + single-factor grade live; Basket page with shop matching + route planning |
-| M4 — Marketplace | Listing CRUD, grade filter, booking queue |
-| M5 — Smart Map | Shop pins, pulsing animation, material-match filter |
-| M6 — Buyer Dashboard | Pricing CRUD, queue management, stats |
-| M7 — Admin Panel | Heatmap, shop approval, post moderation |
-| M8 — Multi-Factor Grading | Full per-factor scoring, improvement hints, grading_criteria admin tuning |
-| M9 — Eco-Points | Points ledger, gamification, leaderboard |
-| M10 — Pilot Launch | Tambon Suthep go-live, user onboarding |
-| M3b — Profile Pages | Role-specific profile for User / Buyer / Admin |
+| Milestone | Deliverable | Status |
+|-----------|-------------|--------|
+| M1 — Design System | CSS tokens, component library, Storybook baseline | ✅ Done |
+| M2 — Auth + Roles | Supabase auth + Google OAuth, role routing, language toggle | ✅ Done |
+| M3 — AI Scanner MVP | Stage 1 detection + single-factor grade live; Basket page with shop matching + route planning | ✅ Done |
+| M3b — Profile Pages | Role-specific profile for User / Buyer / Admin | ✅ Done |
+| M4 — Marketplace | Listing CRUD, grade filter, booking queue | ✅ Done |
+| M5 — Smart Map | Shop pins, pulsing animation, material-match filter | ✅ Done |
+| M6 — Buyer Dashboard | Pricing CRUD, queue management, stats | ✅ Done |
+| M7 — Admin Panel | Heatmap, shop approval, post moderation | ✅ Done |
+| M8 — Multi-Factor Grading | Full per-factor scoring, improvement hints, grading_criteria admin tuning | ✅ Done |
+| M9 — Eco-Points | Points ledger, gamification, leaderboard | ✅ Done |
+| **MapTreeRouting** — Tree Routing | Nearest-neighbor TSP multi-stop routing; shop openDays calendar filtering; Buyer Calendar tab | ✅ Done |
+| M10 — Pilot Launch | Tambon Suthep go-live, user onboarding | Pending |
 
 ---
 
@@ -795,6 +796,7 @@ The Basket shop-matching and Buyer Profile features require a dedicated `shops` 
 | phone | text | contact number |
 | hours | text | e.g. "08:00–17:00 Mon–Sat" |
 | accepts | text[] | array of materialType keys |
+| open_days | smallint[] | days open (0=Sun … 6=Sat); routing engine filters on this |
 | verified | boolean | admin-approved flag |
 | status | text | active / pending / suspended |
 | created_at | timestamptz | |
@@ -844,6 +846,7 @@ shops (
   lng         numeric(10,7),
   phone       text,
   accepts     text[] DEFAULT '{}',
+  open_days   smallint[] DEFAULT '{1,2,3,4,5,6}',  -- 0=Sun…6=Sat; used by routing engine
   verified    boolean DEFAULT false,
   status      text DEFAULT 'pending',  -- pending | active | suspended
   created_at  timestamptz DEFAULT now()

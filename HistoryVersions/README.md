@@ -56,3 +56,4 @@ This folder stores canonical implementation history for the repository.
 - `Fix/DBPerformance/` (baseline: `Fix-DBPerformance.00.md`) — auth.uid() per-row fix (12 policies), missing FK indexes (shops.owner_id, marketplace_posts.user_id), GIN index for shops.accepts, composite bookings indexes, BRIN time-series indexes
 - `Feature/ParticleField/` (baseline: `Feature-ParticleField.00.md`) — ♻→฿ ambient particle animation on landing hero; Canvas 2D, gray→green→gold color shift, prefers-reduced-motion aware
 - `Feature/SecondBrain/` `.01` — Prompt rewrite: structured sections, 3 few-shot examples, calibrated confidence, JSON key validation; Vercel Speed Insights added
+- `Feature/MapTreeRouting/` (baseline: `Feature-MapTreeRouting.00.md`) — Nearest Neighbor TSP multi-stop routing, openDays calendar filtering on all shops, Buyer Calendar tab in DashboardPage
