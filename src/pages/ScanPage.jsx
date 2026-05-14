@@ -390,7 +390,7 @@ export function ScanPage() {
           </div>
         )}
       </div>
-      </Card>
+      </div>
 
       {/* Hidden file input */}
       <input

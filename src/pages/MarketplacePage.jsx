@@ -11,6 +11,42 @@ import { addPost, setGradeFilter } from '../store/marketplaceSlice'
 const GRADES = ['A', 'B', 'C']
 const MATERIAL_KEYS = Object.keys(WASTE_ITEMS)
 
+const PILL_BASE = 'font-data text-[12px] uppercase tracking-widest border-[1.5px] border-[var(--ink)] transition-colors'
+const PILL_ON   = 'bg-[var(--ink)] text-[var(--paper)]'
+const PILL_OFF  = 'bg-[var(--paper)] text-[var(--ink)] hover:text-[var(--green)]'
+
+function GradePills({ gradeFilter, onGrade, filters, vertical = false }) {
+  const cls = vertical ? `${PILL_BASE} w-full px-3 py-1.5 text-left` : `${PILL_BASE} px-3 py-1`
+  return (
+    <div className={vertical ? 'flex flex-col gap-1.5' : 'flex gap-2 flex-wrap'}>
+      {filters.map(f => (
+        <button key={f.key} onClick={() => onGrade(f.key)}
+          className={`${cls} ${gradeFilter === f.key ? PILL_ON : PILL_OFF}`}>
+          {f.label}
+        </button>
+      ))}
+    </div>
+  )
+}
+
+function MaterialPills({ materialFilter, onMaterial, language, allLabel, vertical = false }) {
+  const cls = vertical ? `${PILL_BASE} w-full px-3 py-1.5 text-left` : `${PILL_BASE} px-3 py-1`
+  return (
+    <div className={vertical ? 'flex flex-col gap-1.5' : 'flex gap-2 flex-wrap'}>
+      <button onClick={() => onMaterial('all')}
+        className={`${cls} ${materialFilter === 'all' ? PILL_ON : PILL_OFF}`}>
+        {allLabel}
+      </button>
+      {MATERIAL_KEYS.map(k => (
+        <button key={k} onClick={() => onMaterial(k)}
+          className={`${cls} ${materialFilter === k ? PILL_ON : PILL_OFF}`}>
+          {localName(k, language)}
+        </button>
+      ))}
+    </div>
+  )
+}
+
 function PostAdForm({ onClose }) {
   const t        = useT()
   const dispatch = useDispatch()
@@ -163,12 +199,16 @@ export function MarketplacePage() {
   const gradeFilter= useSelector(s => s.marketplace.gradeFilter ?? 'all')
 
   const [isPosting, setIsPosting] = useState(false)
+  const [filterOpen, setFilterOpen] = useState(false)
+  const [materialFilter, setMaterialFilter] = useState('all')
 
-  const visible = gradeFilter === 'all'
-    ? posts.filter(p => !p.flagged)
-    : posts.filter(p => !p.flagged && p.grade === gradeFilter.toUpperCase())
+  // Apply grade filter first, then material filter
+  const visible = posts
+    .filter(p => !p.flagged)
+    .filter(p => gradeFilter === 'all' || p.grade === gradeFilter.toUpperCase())
+    .filter(p => materialFilter === 'all' || p.materialType === materialFilter)
 
-  const FILTERS = [
+  const GRADE_FILTERS = [
     { key: 'all', label: t.filterAll },
     { key: 'a',   label: t.filterA },
     { key: 'b',   label: t.filterB },
@@ -177,7 +217,8 @@ export function MarketplacePage() {
 
   return (
     <div className="flex flex-col items-center px-4 py-8 gap-6">
-      <div className="w-full max-w-xl flex items-center justify-between">
+      {/* Page header */}
+      <div className="w-full max-w-5xl flex items-center justify-between">
         <h1 className="font-brand text-[28px] text-[var(--ink)] m-0">{t.marketplace}</h1>
         {(role === 'user' || role === 'buyer') && !isPosting && (
           <Button variant="secondary" onClick={() => setIsPosting(true)}>
@@ -186,78 +227,106 @@ export function MarketplacePage() {
         )}
       </div>
 
-      <div className="w-full max-w-xl flex flex-col gap-5">
-        {isPosting && <PostAdForm onClose={() => setIsPosting(false)} />}
+      {/* ── Mobile: filter toggle button ── */}
+      <div className="w-full max-w-5xl md:hidden flex flex-col gap-2">
+        <button
+          onClick={() => setFilterOpen(prev => !prev)}
+          className={[
+            'self-start px-4 py-1.5 font-data text-[12px] uppercase tracking-widest border-[1.5px] border-[var(--ink)] transition-colors shadow-[2px_2px_0_var(--ink)]',
+            filterOpen
+              ? 'bg-[var(--ink)] text-[var(--paper)]'
+              : 'bg-[var(--paper)] text-[var(--ink)]',
+          ].join(' ')}
+        >
+          {filterOpen ? '✕ Filters' : '⊞ Filters'}
+        </button>
 
-        {/* Filter bar */}
-        <div className="flex gap-2 flex-wrap">
-          {FILTERS.map(f => (
-            <button
-              key={f.key}
-              onClick={() => dispatch(setGradeFilter(f.key))}
-              className={[
-                'px-3 py-1 font-data text-[12px] uppercase tracking-widest border-[1.5px] border-[var(--ink)] transition-colors',
-                gradeFilter === f.key
-                  ? 'bg-[var(--ink)] text-[var(--paper)]'
-                  : 'bg-[var(--paper)] text-[var(--ink)] hover:text-[var(--green)]',
-              ].join(' ')}
-            >
-              {f.label}
-            </button>
-          ))}
-        </div>
-
-        {/* Listings */}
-        {visible.length === 0 ? (
-          <Card className="flex items-center justify-center py-10">
-            <p className="font-body text-[15px] text-[var(--ink-3)] m-0">{t.noListings}</p>
-          </Card>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {visible.map(item => (
-              <Card key={item.id} className="flex flex-col gap-3">
-                <div className="flex items-center gap-2">
-                  <GradeTag grade={item.grade} />
-                  <span className="font-body text-[15px] text-[var(--ink)] font-semibold">
-                    {localName(item.materialType, language)}
-                  </span>
-                </div>
-
-                <div className="grid grid-cols-2 gap-x-3 gap-y-0.5">
-                  <span className="font-data text-[11px] text-[var(--ink-3)] uppercase">Qty</span>
-                  <span className="font-data text-[13px] text-[var(--ink)]">{item.qty} kg</span>
-
-                  <span className="font-data text-[11px] text-[var(--ink-3)] uppercase">฿/kg</span>
-                  <span className="font-data text-[13px] text-[var(--green)] font-bold">฿{item.pricePerKg}</span>
-
-                  <span className="font-data text-[11px] text-[var(--ink-3)] uppercase">Shop</span>
-                  <span className="font-body text-[13px] text-[var(--ink)]">{item.shop}</span>
-
-                  {item.distanceKm > 0 && (
-                    <>
-                      <span className="font-data text-[11px] text-[var(--ink-3)] uppercase">Dist</span>
-                      <span className="font-data text-[13px] text-[var(--ink)]">{item.distanceKm} {t.kmAway}</span>
-                    </>
-                  )}
-                  {item.contact && (
-                    <>
-                      <span className="font-data text-[11px] text-[var(--ink-3)] uppercase">Tel</span>
-                      <span className="font-body text-[13px] text-[var(--ink)]">{item.contact}</span>
-                    </>
-                  )}
-                </div>
-
-                <Button
-                  variant="secondary"
-                  fullWidth
-                  onClick={() => toast.info(item.contact || t.contactSeller)}
-                >
-                  {t.contactSeller}
-                </Button>
-              </Card>
-            ))}
+        {/* Mobile filter drawer — inline card below the button */}
+        {filterOpen && (
+          <div className="border-[1.5px] border-[var(--ink)] bg-[var(--paper-2)] shadow-[2px_2px_0_var(--ink)] p-4 flex flex-col gap-4">
+            <div>
+              <p className="font-data text-[11px] text-[var(--ink-3)] uppercase tracking-widest m-0 mb-2">Grade</p>
+              <GradePills gradeFilter={gradeFilter} onGrade={k => dispatch(setGradeFilter(k))} filters={GRADE_FILTERS} vertical={false} />
+            </div>
+            <div>
+              <p className="font-data text-[11px] text-[var(--ink-3)] uppercase tracking-widest m-0 mb-2">Material</p>
+              <MaterialPills materialFilter={materialFilter} onMaterial={setMaterialFilter} language={language} allLabel={t.filterAll} vertical={false} />
+            </div>
           </div>
         )}
+      </div>
+
+      {/* ── Desktop: sidebar + main two-column grid ── */}
+      <div className="w-full max-w-5xl md:grid md:grid-cols-[180px_1fr] md:gap-6 md:items-start flex flex-col gap-5">
+
+        {/* Desktop sidebar — hidden on mobile */}
+        <aside className="hidden md:flex md:flex-col gap-2 sticky top-4 self-start">
+          <p className="font-data text-[11px] text-[var(--ink-3)] uppercase tracking-widest m-0">Filters</p>
+          <GradePills gradeFilter={gradeFilter} onGrade={k => dispatch(setGradeFilter(k))} filters={GRADE_FILTERS} vertical={true} />
+
+          {/* Divider */}
+          <hr className="h-px bg-[var(--ink-4)] border-none my-3" />
+
+          <p className="font-data text-[11px] text-[var(--ink-3)] uppercase tracking-widest m-0">Material</p>
+          <MaterialPills materialFilter={materialFilter} onMaterial={setMaterialFilter} language={language} allLabel={t.filterAll} vertical={true} />
+        </aside>
+
+        {/* Main content */}
+        <div className="flex flex-col gap-5">
+          {isPosting && <PostAdForm onClose={() => setIsPosting(false)} />}
+
+          {/* Listings */}
+          {visible.length === 0 ? (
+            <Card className="flex items-center justify-center py-10">
+              <p className="font-body text-[15px] text-[var(--ink-3)] m-0">{t.noListings}</p>
+            </Card>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {visible.map(item => (
+                <Card key={item.id} className="flex flex-col gap-3">
+                  <div className="flex items-center gap-2">
+                    <GradeTag grade={item.grade} />
+                    <span className="font-body text-[15px] text-[var(--ink)] font-semibold">
+                      {localName(item.materialType, language)}
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-x-3 gap-y-0.5">
+                    <span className="font-data text-[11px] text-[var(--ink-3)] uppercase">Qty</span>
+                    <span className="font-data text-[13px] text-[var(--ink)]">{item.qty} kg</span>
+
+                    <span className="font-data text-[11px] text-[var(--ink-3)] uppercase">฿/kg</span>
+                    <span className="font-data text-[13px] text-[var(--green)] font-bold">฿{item.pricePerKg}</span>
+
+                    <span className="font-data text-[11px] text-[var(--ink-3)] uppercase">Shop</span>
+                    <span className="font-body text-[13px] text-[var(--ink)]">{item.shop}</span>
+
+                    {item.distanceKm > 0 && (
+                      <>
+                        <span className="font-data text-[11px] text-[var(--ink-3)] uppercase">Dist</span>
+                        <span className="font-data text-[13px] text-[var(--ink)]">{item.distanceKm} {t.kmAway}</span>
+                      </>
+                    )}
+                    {item.contact && (
+                      <>
+                        <span className="font-data text-[11px] text-[var(--ink-3)] uppercase">Tel</span>
+                        <span className="font-body text-[13px] text-[var(--ink)]">{item.contact}</span>
+                      </>
+                    )}
+                  </div>
+
+                  <Button
+                    variant="secondary"
+                    fullWidth
+                    onClick={() => toast.info(item.contact || t.contactSeller)}
+                  >
+                    {t.contactSeller}
+                  </Button>
+                </Card>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   )

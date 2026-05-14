@@ -7,6 +7,7 @@ import { Button } from '../components/Button'
 import { useSelector, useDispatch } from 'react-redux'
 import { localName, WASTE_ITEMS, pricePerKg } from '../data/wasteItems'
 import { updateStatus } from '../store/bookingSlice'
+import { toggleMaterial, setOpenDays } from '../store/buyerSlice'
 
 const WEEKLY = [42, 65, 38, 90, 55, 72, 48]
 const DAYS   = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
@@ -43,19 +44,23 @@ export function DashboardPage() {
   const language = useSelector(s => s.user.language)
   const bookings = useSelector(s => s.bookings.bookings)
 
-  const [tab, setTab]       = useState('orders')
-  const [pricing, setPricing] = useState(initPricing)
-  const [openDays, setOpenDays] = useState([1, 2, 3, 4, 5, 6]) // Default Mon-Sat
+  const savedOpenDays      = useSelector(s => s.buyer?.openDays ?? [1, 2, 3, 4, 5, 6])
+  const acceptedMaterials  = useSelector(s => s.buyer?.acceptedMaterials ?? Object.keys(WASTE_ITEMS))
+
+  const [tab, setTab]            = useState('orders')
+  const [pricing, setPricing]    = useState(initPricing)
+  const [openDays, setOpenDays_local] = useState(savedOpenDays)
 
   function handleToggleDay(dayIndex) {
-    setOpenDays(prev => 
-      prev.includes(dayIndex) 
+    setOpenDays_local(prev =>
+      prev.includes(dayIndex)
         ? prev.filter(d => d !== dayIndex)
         : [...prev, dayIndex].sort()
     )
   }
 
   function handleSaveCalendar() {
+    dispatch(setOpenDays(openDays))
     toast.success(language === 'th' ? 'บันทึกวันเปิดทำการแล้ว' : 'Calendar saved successfully')
   }
 
@@ -116,6 +121,7 @@ export function DashboardPage() {
         <TabBtn active={tab === 'orders'}  onClick={() => setTab('orders')}>{t.recentBookings}</TabBtn>
         <TabBtn active={tab === 'pricing'} onClick={() => setTab('pricing')}>{t.myPricing}</TabBtn>
         <TabBtn active={tab === 'calendar'} onClick={() => setTab('calendar')}>{language === 'th' ? 'ปฏิทินร้าน' : 'Shop Calendar'}</TabBtn>
+        <TabBtn active={tab === 'materials'} onClick={() => setTab('materials')}>{language === 'th' ? 'วัสดุที่รับ' : 'Materials'}</TabBtn>
       </div>
 
       {/* Orders tab */}
@@ -153,15 +159,15 @@ export function DashboardPage() {
 
       {/* Pricing CRUD tab (B-02) */}
       {tab === 'pricing' && (
-        <div className="w-full max-w-xl flex flex-col gap-3">
-          <div className="grid grid-cols-4 gap-2 font-data text-[11px] text-[var(--ink-3)] uppercase tracking-widest px-3">
+        <div className="w-full max-w-xl flex flex-col gap-3 overflow-x-auto">
+          <div className="grid grid-cols-4 gap-2 font-data text-[11px] text-[var(--ink-3)] uppercase tracking-widest px-3 min-w-[400px]">
             <span>Material</span>
             <span>{t.gradeA}</span>
             <span>{t.gradeB}</span>
             <span>{t.gradeC}</span>
           </div>
           {Object.keys(WASTE_ITEMS).map(mat => (
-            <Card key={mat} className="grid grid-cols-4 gap-2 items-center">
+            <Card key={mat} className="grid grid-cols-4 gap-2 items-center min-w-[400px]">
               <span className="font-body text-[13px] text-[var(--ink)]">{localName(mat, language)}</span>
               {['A', 'B', 'C'].map(grade => (
                 <input
@@ -214,6 +220,45 @@ export function DashboardPage() {
             </div>
             <Button variant="primary" onClick={handleSaveCalendar} className="mt-2">
               {language === 'th' ? 'บันทึกการตั้งค่า' : 'Save Calendar'}
+            </Button>
+          </Card>
+        </div>
+      )}
+      {/* Materials tab (B-06) */}
+      {tab === 'materials' && (
+        <div className="w-full max-w-xl flex flex-col gap-4">
+          <Card className="flex flex-col gap-4">
+            <h2 className="font-brand text-[18px] text-[var(--ink)] m-0">
+              {language === 'th' ? 'วัสดุที่รับซื้อ' : 'Accepted Materials'}
+            </h2>
+            <p className="font-body text-[14px] text-[var(--ink-3)] m-0">
+              {language === 'th'
+                ? 'เลือกประเภทวัสดุที่ร้านของคุณรับซื้อ ระบบจะแสดงเฉพาะร้านที่รับวัสดุที่ผู้ใช้ต้องการขาย'
+                : 'Select the material types your shop accepts. Only shops that accept the user\'s materials will be shown in routing.'}
+            </p>
+            <div className="grid grid-cols-2 gap-2">
+              {Object.keys(WASTE_ITEMS).map(key => {
+                const isOn = acceptedMaterials.includes(key)
+                return (
+                  <button
+                    key={key}
+                    onClick={() => dispatch(toggleMaterial(key))}
+                    className={`py-3 px-4 font-body text-[14px] border-[1.5px] text-left transition-colors ${
+                      isOn
+                        ? 'bg-[var(--green)] border-[var(--ink)] text-[var(--ink)]'
+                        : 'bg-[var(--paper-2)] border-[var(--ink-4)] text-[var(--ink-3)]'
+                    }`}
+                  >
+                    {localName(key, language)}
+                  </button>
+                )
+              })}
+            </div>
+            <Button
+              variant="primary"
+              onClick={() => toast.success(language === 'th' ? 'บันทึกแล้ว' : 'Saved')}
+            >
+              {language === 'th' ? 'บันทึก' : 'Save'}
             </Button>
           </Card>
         </div>
