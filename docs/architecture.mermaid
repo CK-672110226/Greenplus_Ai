@@ -1,0 +1,35 @@
+%% GreenPlus AI — Master Architecture Diagrams
+%% Auto-loaded by CLAUDE.md AI-Native Engineering Principles
+%% Last updated: 14 May 2026
+
+%% ─────────────────────────────────────────────────────────────────────────────
+%% DIAGRAM 1 — C4 System Context
+%% Who uses the system and which external services it depends on
+%% ─────────────────────────────────────────────────────────────────────────────
+
+C4Context
+  title GreenPlus AI — System Context
+
+  Person(user,    "Seller / User",  "สแกนขยะ รับราคา AI")
+  Person(buyer,   "Shop / Buyer",   "จัดการราคา คิวการจอง")
+  Person(admin,   "Admin",          "อนุมัติร้าน ดู Heatmap")
+
+  System(spa,     "GreenPlus AI",   "React 19 SPA (Vite 8)")
+
+  System_Ext(supabase,  "Supabase",            "Auth · PostgreSQL · Storage · RLS")
+  System_Ext(vertex,    "Vertex AI AutoML",    "Two-stage waste classifier (GCP)")
+  System_Ext(onnx,      "ONNX Runtime Web",    "Local inference in browser (WASM)")
+  System_Ext(osm,       "OpenStreetMap",       "Tile server — no API key required")
+  System_Ext(gmaps,     "Google Maps",         "Directions deep-link only")
+  System_Ext(vercel,    "Vercel",              "Hosting, CI/CD, Edge CDN")
+
+  Rel(user,   spa, "Scan · Basket · Booking · Map")
+  Rel(buyer,  spa, "Dashboard · Pricing · Schedule")
+  Rel(admin,  spa, "Shop approval · Heatmap · AI Studio")
+
+  Rel(spa, supabase, "Auth + CRUD + Storage (REST/realtime)")
+  Rel(spa, vertex,   "Stage 1 classify + Stage 2 cleanliness")
+  Rel(spa, onnx,     "Offline inference (WASM)")
+  Rel(spa, osm,      "Map tiles (react-leaflet)")
+  Rel(spa, gmaps,    "Directions link")
+  Rel(spa, vercel,   "Deployed to")
