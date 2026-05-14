@@ -43,7 +43,7 @@ function UserProfile({ profile, session, t }) {
             <span className="font-data text-[9px] text-[var(--ink-3)] uppercase tracking-widest leading-tight">kg recycled</span>
           </div>
           <div className="flex flex-col gap-0.5 border-r border-[var(--ink-4)] px-3">
-            <span className="font-brand text-[22px] text-[var(--green)] leading-none">฿{totalValue.toFixed(0)}</span>
+            <span className="font-data text-[22px] text-[var(--green)] leading-none">฿{totalValue.toFixed(0)}</span>
             <span className="font-data text-[9px] text-[var(--ink-3)] uppercase tracking-widest leading-tight">earned</span>
           </div>
           <div className="flex flex-col gap-0.5 pl-3">

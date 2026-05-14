@@ -134,7 +134,7 @@ export function HomePage() {
             Earnings
           </span>
           <div className="flex items-baseline gap-2">
-            <span className="font-brand text-[40px] text-[var(--ink)] leading-none">฿{totalValue.toFixed(0)}</span>
+            <span className="font-data text-[40px] text-[var(--ink)] leading-none">฿{totalValue.toFixed(0)}</span>
             <span className="font-data text-[12px] text-[var(--ink-3)]">thb</span>
           </div>
           {totalValue > 0 && (

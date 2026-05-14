@@ -75,7 +75,7 @@ function BookingModal({ shop, estValue, onConfirm, onCancel }) {
           <h2 className="font-brand text-[22px] text-[var(--ink)] m-0">{shop.name}</h2>
           <div className="flex items-center gap-2 mt-1">
             <span className="font-data text-[12px] text-[var(--ink-3)] uppercase tracking-widest">Est. Value</span>
-            <span className="font-brand text-[20px] text-[var(--green)]">฿{estValue.toFixed(2)}</span>
+            <span className="font-data text-[20px] text-[var(--green)]">฿{estValue.toFixed(2)}</span>
           </div>
           <p className="font-body text-[13px] text-[var(--ink-3)] m-0 mt-1">
             {shop.area} · {shop.dist} km away
@@ -308,7 +308,7 @@ export function BasketPage() {
               <Card className="flex flex-col gap-3">
                 <div className="flex items-center justify-between">
                   <span className="font-data text-[12px] text-[var(--ink-3)] uppercase tracking-widest">{t.basketTotal}</span>
-                  <span className="font-brand text-[22px] text-[var(--green)]">฿{total.toFixed(2)}</span>
+                  <span className="font-data text-[22px] text-[var(--green)]">฿{total.toFixed(2)}</span>
                 </div>
                 <div className="flex gap-2">
                   <Button variant="primary" fullWidth className="md:hidden" onClick={() => setShowRoute(r => !r)}>
@@ -364,7 +364,7 @@ export function BasketPage() {
                               <p className="font-data text-[10px] text-[var(--green)] m-0">{t.acceptsAll}</p>
                             </div>
                             <div className="text-right">
-                              <span className="font-brand text-[18px] text-[var(--green)]">฿{shopTotal.toFixed(0)}</span>
+                              <span className="font-data text-[18px] text-[var(--green)]">฿{shopTotal.toFixed(0)}</span>
                               {diff !== 0 && (
                                 <p className={`font-data text-[10px] m-0 ${diff > 0 ? 'text-[var(--green)]' : 'text-[var(--orange)]'}`}>
                                   {diff > 0 ? '+' : ''}{diff.toFixed(0)} vs avg
@@ -402,7 +402,7 @@ export function BasketPage() {
                                 {stop.materials.map(m => localName(m, language)).join(', ')}
                               </p>
                             </div>
-                            <span className="font-brand text-[16px] text-[var(--green)]">฿{stopTotal.toFixed(0)}</span>
+                            <span className="font-data text-[16px] text-[var(--green)]">฿{stopTotal.toFixed(0)}</span>
                           </div>
                           <div className="flex gap-2 mt-1">
                             <Button variant="secondary" onClick={() => openMaps(stop.shop)}>{t.openInMaps}</Button>
