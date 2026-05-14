@@ -219,6 +219,7 @@ export function ScanPage() {
       setDirtyAlert(true)
       return
     }
+    // eslint-disable-next-line react-hooks/purity
     const id = `${result.materialType}_${Date.now()}`
     dispatch(addToBasket({ id, materialType: result.materialType, grade: result.grade, weight: result.weight, pricePerKg: pricePerKg(result.materialType, result.grade) }))
     insertScan(result)
@@ -228,6 +229,7 @@ export function ScanPage() {
 
   function handleConfirmClean() {
     setDirtyAlert(false)
+    // eslint-disable-next-line react-hooks/purity
     const id = `${result.materialType}_${Date.now()}`
     dispatch(addToBasket({ id, materialType: result.materialType, grade: result.grade, weight: result.weight, pricePerKg: pricePerKg(result.materialType, result.grade) }))
     insertScan(result)
