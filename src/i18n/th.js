@@ -180,4 +180,42 @@ export const th = {
   // Login
   emailNotVerified:     'กรุณายืนยันอีเมลก่อนเข้าสู่ระบบ — เช็กกล่องจดหมายของคุณ',
   resendVerification:   'ส่งอีเมลยืนยันอีกครั้ง',
+
+  // Schedule
+  schedule:          'ตารางนัด',
+  scheduleTitle:     'ตารางวันนี้',
+  scheduleMorning:   'เช้า',
+  scheduleAfternoon: 'บ่าย',
+  scheduleEvening:   'เย็น',
+  noSchedule:        'ไม่มีการนัดรับวันนี้',
+  confirmPickup:     'ยืนยัน',
+  completePickup:    'รับแล้ว',
+  cancelPickup:      'ยกเลิก',
+  estValueLabel:     'มูลค่าประมาณ',
+  sellerAddress:     'ที่อยู่',
+
+  // Pricing page
+  pricing:           'ราคารับซื้อ',
+  pricingTitle:      'ราคารับซื้อของฉัน',
+  pricingHint:       'ตั้งราคารับซื้อต่อกิโลกรัมสำหรับวัสดุและเกรดแต่ละประเภท',
+  marketRate:        'ราคาตลาด',
+  resetToMarket:     'รีเซ็ตตามราคาตลาด',
+  saveChanges:       'บันทึก',
+  pricingSaved:      'บันทึกราคาแล้ว!',
+  pricingReset:      'รีเซ็ตตามราคาตลาดแล้ว',
+  priceAbove:        '↑ สูงกว่าตลาด',
+  priceBelow:        '↓ ต่ำกว่าตลาด',
+
+  // Notifications
+  notifications:      'แจ้งเตือน',
+  notificationsTitle: 'การแจ้งเตือน',
+  markAllRead:        'อ่านทั้งหมด',
+  noNotifications:    'ยังไม่มีการแจ้งเตือน',
+  notifToday:         'วันนี้',
+  notifEarlier:       'ก่อนหน้านี้',
+  unread:             'ยังไม่อ่าน',
+
+  // Nav section labels
+  navMain:           'หลัก',
+  navAccount:        'บัญชี',
 }
