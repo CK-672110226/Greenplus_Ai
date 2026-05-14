@@ -1,5 +1,9 @@
 name: PR Preview
 
+# Branch plan: PR to main only
+# Deploys a Vercel preview URL and posts it as a PR comment.
+# Runs in parallel with CI (ci.yml) — both triggered by pull_request.
+
 on:
   pull_request:
     branches: [main]
@@ -8,31 +12,51 @@ permissions:
   pull-requests: write
   contents: read
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
-  build-preview:
+  preview:
+    name: Deploy Preview
     runs-on: ubuntu-latest
+    environment: preview
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
           cache: npm
+
       - run: npm ci
-      - run: npm run build
-      - name: Upload preview artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: preview-pr-${{ github.event.number }}
-          path: dist/
-          retention-days: 3
-      - name: Comment artifact link
+
+      - name: Build
+        run: npm run build
+        env:
+          VITE_SUPABASE_URL:      ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+
+      - name: Deploy Vercel Preview
+        id: deploy
+        run: |
+          PREVIEW_URL=$(npx vercel --token=${{ secrets.VERCEL_TOKEN }} --yes 2>&1 | grep -E '^https://' | tail -1)
+          echo "url=$PREVIEW_URL" >> $GITHUB_OUTPUT
+        env:
+          VERCEL_ORG_ID:     ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+      - name: Comment preview URL on PR
         uses: actions/github-script@v7
         with:
           script: |
-            const run_url = `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`
-            return await github.rest.issues.createComment({
+            const previewUrl = '${{ steps.deploy.outputs.url }}'
+            const runUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`
+            const body = previewUrl
+              ? `## 🚀 Preview Deployed\n\n**URL:** ${previewUrl}\n\n> Auto-deployed from PR #${context.issue.number}`
+              : `## 🔨 Build Complete\n\n[View run](${runUrl})`
+            await github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: `✅ Build preview artifact uploaded. [View run](${run_url})`
+              body,
             })

@@ -61,3 +61,14 @@ WORKPLAN.md
 Greenplus/
 docs/
 
+# Playwright
+playwright-report/
+test-results/
+
+# Ruflo / claude-flow runtime (auto-generated, not source)
+.swarm/
+ruvector.db
+.claude-flow/agents/
+.claude-flow/swarm/
+.claude-flow/tasks/
+
