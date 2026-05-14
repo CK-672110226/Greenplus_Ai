@@ -261,4 +261,14 @@ export const th = {
   // Nav section labels
   navMain:           'หลัก',
   navAccount:        'บัญชี',
+
+  // Basket manual entry & pricing
+  addManually:       'เพิ่มเอง',
+  marketAvg:         'ราคาเฉลี่ย',
+  shopOffers:        'ร้านเสนอ',
+  filterBasket:      'กรอง',
+  allItems:          'ทั้งหมด',
+  selectMaterial:    'เลือกวัสดุ',
+  selectGrade:       'เกรด',
+  addItem:           'เพิ่ม',
 }
