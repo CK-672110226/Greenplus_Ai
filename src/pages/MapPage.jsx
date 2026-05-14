@@ -29,6 +29,38 @@ const userIcon = new L.Icon({
   className:     'leaflet-user-icon',
 })
 
+/* ── Custom shop pin using L.divIcon ─────────────────────────── */
+function makeShopIcon(matches) {
+  if (matches) {
+    return L.divIcon({
+      className: '',
+      iconSize:   [22, 22],
+      iconAnchor: [11, 11],
+      popupAnchor:[0, -13],
+      html: `<span style="position:relative;display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px">
+               <span class="map-ping" style="position:absolute;inset:0;border-radius:50%;background:#22C55E"></span>
+               <span style="position:relative;width:13px;height:13px;border-radius:50%;background:#22C55E;border:1.5px solid #1A1A1A"></span>
+             </span>`,
+    })
+  }
+  return L.divIcon({
+    className: '',
+    iconSize:   [13, 13],
+    iconAnchor: [6, 6],
+    popupAnchor:[0, -9],
+    html: `<span style="display:inline-block;width:13px;height:13px;border-radius:50%;background:#B8B8B8;border:1.5px solid #1A1A1A"></span>`,
+  })
+}
+
+/* ── Open/closed from shop.opens_at / shop.closes_at (HH:MM UTC+7) */
+function isShopOpen(shop) {
+  if (!shop.opens_at || !shop.closes_at) return null
+  const now  = new Date()
+  const utc7 = new Date(now.getTime() + 7 * 3600 * 1000)
+  const hhmm = utc7.toISOString().slice(11, 16)
+  return hhmm >= shop.opens_at && hhmm < shop.closes_at
+}
+
 const MATERIAL_FILTERS = ['all', ...Object.keys(WASTE_ITEMS)]
 const DEFAULT_CENTER   = [18.7883, 98.9853]
 
@@ -45,12 +77,15 @@ const pillActive   = 'bg-[var(--ink)] text-[var(--paper)]'
 const pillInactive = 'bg-[var(--paper)] text-[var(--ink)] hover:bg-[var(--paper-2)]'
 
 export function MapPage() {
-  const t        = useT()
-  const language = useSelector(s => s.user.language)
-  const darkMode = useSelector(s => s.user.darkMode)
+  const t          = useT()
+  const language   = useSelector(s => s.user.language)
+  const darkMode   = useSelector(s => s.user.darkMode)
+  const basket     = useSelector(s => s.waste?.basket ?? [])
   const [filter, setFilter] = useState('all')
   const { shops, loading }  = useShops()
   const gps = useGPS()
+
+  const basketMaterials = new Set(basket.filter(i => !i.skipped).map(i => i.materialType))
 
   useEffect(() => {
     gps.request()
@@ -146,12 +181,10 @@ export function MapPage() {
             >
               <ChangeView center={userCenter} zoom={15} />
               <TileLayer
-                attribution={darkMode
-                  ? '&copy; <a href="https://carto.com/">CARTO</a>'
-                  : '&copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a>'}
+                attribution='&copy; <a href="https://carto.com/">CARTO</a>'
                 url={darkMode
                   ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
-                  : 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'}
+                  : 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png'}
               />
 
               {userCenter && (
@@ -164,32 +197,53 @@ export function MapPage() {
                 </Marker>
               )}
 
-              {visible.map(shop => (
-                <Marker key={shop.id} position={[shop.lat, shop.lng]}>
-                  <Popup>
-                    <div style={{ fontFamily: 'monospace', minWidth: 180 }}>
-                      <strong style={{ fontSize: 14 }}>{shop.name}</strong>
-                      {shop.distanceKm != null && (
-                        <div style={{ fontSize: 12, marginTop: 4, color: '#555' }}>
-                          {shop.distanceKm} {t.kmAway}
+              {visible.map(shop => {
+                const matches = (shop.accepts ?? []).some(a => basketMaterials.has(a))
+                const openStatus = isShopOpen(shop)
+                return (
+                  <Marker key={shop.id} position={[shop.lat, shop.lng]} icon={makeShopIcon(matches)}>
+                    <Popup>
+                      <div style={{ fontFamily: 'monospace', minWidth: 180 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                          <strong style={{ fontSize: 14 }}>{shop.name}</strong>
+                          {openStatus !== null && (
+                            <span style={{ fontSize: 10, padding: '1px 5px', background: openStatus ? '#22C55E' : '#E53E3E', color: '#fff', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+                              {openStatus ? 'open' : 'closed'}
+                            </span>
+                          )}
                         </div>
-                      )}
-                      <div style={{ fontSize: 12, marginTop: 4 }}>
-                        <em>{t.shopAccepts}:</em>{' '}
-                        {(shop.accepts ?? []).map(a => localName(a, language)).join(', ')}
+                        {shop.opens_at && shop.closes_at && (
+                          <div style={{ fontSize: 11, marginTop: 3, color: '#7A7A7A' }}>
+                            {shop.opens_at} – {shop.closes_at}
+                          </div>
+                        )}
+                        {shop.distanceKm != null && (
+                          <div style={{ fontSize: 12, marginTop: 4, color: '#555' }}>
+                            {shop.distanceKm} {t.kmAway}
+                          </div>
+                        )}
+                        {matches && basketMaterials.size > 0 && (
+                          <div style={{ fontSize: 11, marginTop: 4, color: '#0F7A3A', fontWeight: 600 }}>
+                            {language === 'th' ? 'รับวัสดุในตะกร้าของคุณ' : 'Accepts your basket items'}
+                          </div>
+                        )}
+                        <div style={{ fontSize: 12, marginTop: 4 }}>
+                          <em>{t.shopAccepts}:</em>{' '}
+                          {(shop.accepts ?? []).map(a => localName(a, language)).join(', ')}
+                        </div>
+                        <a
+                          href={`https://www.google.com/maps/dir/?api=1&destination=${shop.lat},${shop.lng}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style={{ fontSize: 12, color: '#22C55E', display: 'block', marginTop: 6 }}
+                        >
+                          {t.directions}
+                        </a>
                       </div>
-                      <a
-                        href={`https://www.google.com/maps/dir/?api=1&destination=${shop.lat},${shop.lng}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        style={{ fontSize: 12, color: 'var(--green)', display: 'block', marginTop: 6 }}
-                      >
-                        {t.directions}
-                      </a>
-                    </div>
-                  </Popup>
-                </Marker>
-              ))}
+                    </Popup>
+                  </Marker>
+                )
+              })}
             </MapContainer>
           </div>
 
