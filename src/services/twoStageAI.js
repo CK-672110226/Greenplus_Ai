@@ -31,7 +31,7 @@ function mockStage2(materialType) {
   }
 
   // Weightings vary by material, simplified mock logic:
-  let weightedScore = 0
+  let weightedScore
   if (materialType === 'pet_bottle_clear') {
     weightedScore = (factors.cleanliness * 0.3) + (factors.color * 0.25) + (factors.preparation * 0.25) + (factors.moisture * 0.2)
   } else if (materialType === 'cardboard') {
@@ -63,7 +63,8 @@ async function onnxStage1(imageSource, modelUrl) {
   return { pass: true, materialType, confidence, sizeKg }
 }
 
-async function onnxStage2(imageSource, modelUrl, materialType) {
+// eslint-disable-next-line no-unused-vars
+async function onnxStage2(imageSource, modelUrl, _materialType) {
   const logits = await runOnnx(modelUrl, imageSource)
   if (!logits || logits.length < 1) return null
 

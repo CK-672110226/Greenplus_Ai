@@ -6,7 +6,6 @@ import { Card } from '../components/Card'
 import { Button } from '../components/Button'
 import { GradeTag } from '../components/GradeTag'
 import { pricePerKg, localName } from '../data/wasteItems'
-import { getRulesFor, SEVERITY_COLOR } from '../data/wasteRules'
 import { addToBasket, setLastScan } from '../store/wasteSlice'
 import { twoStageInfer } from '../services/twoStageAI'
 import { useScanInsert } from '../hooks/useScanInsert'
@@ -41,6 +40,7 @@ export function ScanPage() {
   const [result, setResult]       = useState(null)
   const [uploadSrc, setUploadSrc] = useState(null)         // object URL for preview
   const [inputMode, setInputMode] = useState('camera')     // 'camera' | 'upload'
+  const [hasStream, setHasStream] = useState(false)
   const [dirtyAlert, setDirtyAlert] = useState(false)
   const insertScan = useScanInsert()
 
@@ -95,6 +95,7 @@ export function ScanPage() {
         video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } },
       })
       streamRef.current = stream
+      setHasStream(true)
       if (videoRef.current) {
         videoRef.current.srcObject = stream
         await videoRef.current.play()
@@ -143,6 +144,7 @@ export function ScanPage() {
     // Stop camera
     streamRef.current?.getTracks().forEach(t => t.stop())
     streamRef.current = null
+    setHasStream(false)
 
     const url = URL.createObjectURL(file)
     setUploadSrc(url)
@@ -156,6 +158,7 @@ export function ScanPage() {
 
   function handleAdd() {
     if (!result) return
+    // eslint-disable-next-line react-hooks/purity
     const id = `${result.materialType}_${Date.now()}`
     dispatch(addToBasket({
       id,
@@ -256,7 +259,7 @@ export function ScanPage() {
         {/* Idle / scanning controls */}
         {(phase === 'idle' || phase === 'analyzing') && (
           <div className="flex flex-col gap-2">
-            {inputMode === 'camera' && streamRef.current && (
+            {inputMode === 'camera' && hasStream && (
               <Button
                 variant="primary"
                 fullWidth
