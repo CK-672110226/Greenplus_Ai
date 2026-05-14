@@ -34,7 +34,7 @@ function ShopCard({ shop, language, t, marketPrice }) {
           )}
         </div>
         {bestPrice != null && (
-          <span className="font-brand text-[18px] text-[var(--green-ink)] shrink-0">
+          <span className="font-data text-[18px] text-[var(--green-ink)] shrink-0">
             ฿ {bestPrice.toFixed(1)}/kg
           </span>
         )}
@@ -136,7 +136,7 @@ export function MarketplacePage() {
 
   const { posts, addPost: supabaseAddPost } = useSupabaseMarketplace()
   const { shops } = useShops()
-  const { pricing, loading: pricingLoading, marketPrice } = useMarketPricing()
+  const { shopPricing, loading: pricingLoading, marketPrice } = useMarketPricing()
 
   useEffect(() => {
     if (posts.length > 0) dispatch(setPosts(posts))
@@ -158,8 +158,7 @@ export function MarketplacePage() {
     (s.accepts ?? []).some(m => categoryMaterials.has(m))
   ).slice(0, 6)
 
-  // Count distinct shops contributing to pricing data
-  const sourceCount = new Set(pricing.map(p => p.shop_id)).size
+  const sourceCount = new Set(shopPricing.map(p => p.shop_id)).size
 
   const CAT_TABS = [
     { key: 'all',     label: 'All materials' },
@@ -267,7 +266,7 @@ export function MarketplacePage() {
 
                     {/* Price */}
                     <div className="flex flex-col items-end gap-0.5">
-                      <span className="font-brand text-[22px] text-[var(--ink)] leading-none">
+                      <span className="font-data text-[22px] text-[var(--ink)] leading-none">
                         ฿ {price != null ? price.toFixed(2) : '—'}
                       </span>
                       <span className="font-data text-[10px] text-[var(--ink-4)]">฿/kg</span>

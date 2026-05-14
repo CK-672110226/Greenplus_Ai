@@ -84,12 +84,13 @@ export function MapPage() {
   const [filter, setFilter] = useState('all')
   const { shops, loading }  = useShops()
   const gps = useGPS()
+  const { request: requestGPS } = gps
 
   const basketMaterials = new Set(basket.filter(i => !i.skipped).map(i => i.materialType))
 
   useEffect(() => {
-    gps.request()
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+    requestGPS()
+  }, [requestGPS])
 
   const userCenter = gps.lat && gps.lng ? [gps.lat, gps.lng] : null
   const mapCenter  = userCenter ?? DEFAULT_CENTER

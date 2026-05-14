@@ -56,5 +56,5 @@ export function useMarketPricing() {
     return row[key] != null ? Number(row[key]) : null
   }
 
-  return { pricing, loading, marketPrice, shopPrice }
+  return { pricing, shopPricing, loading, marketPrice, shopPrice }
 }
