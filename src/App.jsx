@@ -69,11 +69,12 @@ function App() {
         <SpeedInsights />
         <Suspense fallback={<PageFallback />}>
           <Routes>
+            {/* Full-page routes — manage their own layout */}
+            <Route path="/"        element={<LandingPage />} />
+            <Route path="/login"   element={<LoginPage />} />
+            <Route path="/x/admin" element={<AdminLoginPage />} />
+
             <Route element={<SmartLayout />}>
-              {/* Public — no lazy (needed on first render) */}
-              <Route path="/"        element={<LandingPage />} />
-              <Route path="/login"   element={<LoginPage />} />
-              <Route path="/x/admin" element={<AdminLoginPage />} />
 
               {/* User portal */}
               <Route path="/home"       element={<ProtectedRoute requiredRole="user"><HomePage /></ProtectedRoute>} />

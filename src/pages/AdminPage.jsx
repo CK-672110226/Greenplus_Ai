@@ -12,26 +12,6 @@ import { useUserReports } from '../hooks/useUserReports'
 import { useShops } from '../hooks/useShops'
 import { setAiConfig } from '../store/aiConfigSlice'
 
-const HEATMAP_DATA = [
-  [80, 60, 40, 20, 10, 15, 30, 50, 70, 85],
-  [65, 90, 55, 35, 25, 20, 40, 60, 75, 60],
-  [45, 70, 95, 80, 60, 45, 55, 70, 50, 40],
-  [30, 50, 75, 100, 85, 70, 60, 45, 35, 25],
-  [20, 35, 55, 80, 90, 75, 55, 40, 30, 20],
-  [15, 25, 40, 60, 70, 65, 50, 35, 25, 15],
-  [25, 40, 55, 70, 65, 55, 45, 30, 20, 15],
-  [35, 50, 65, 75, 60, 50, 40, 30, 25, 20],
-  [45, 60, 70, 65, 55, 45, 35, 25, 20, 15],
-  [55, 65, 60, 50, 40, 35, 30, 25, 15, 10],
-]
-
-const DISTRICTS = ['นิมมาน', 'ช้างเผือก', 'สุเทพ', 'ป่าตัน', 'หางดง', 'สันทราย', 'แม่ริม', 'สันกำแพง', 'ดอยสะเก็ด', 'สารภี']
-
-function heatColor(v) {
-  if (v >= 80) return 'var(--orange)'
-  if (v >= 50) return 'var(--green-soft, #C8F5D8)'
-  return 'var(--paper-2)'
-}
 
 function TabBtn({ active, onClick, children }) {
   return (
@@ -401,33 +381,11 @@ export function AdminPage() {
       {tab === 'heatmap' && (
         <div className="w-full max-w-2xl flex flex-col gap-4">
           <span className="font-data text-[11px] text-[var(--ink-3)] uppercase tracking-widest">Scan Density by District — Chiang Mai</span>
-          <Card className="flex flex-col gap-2 overflow-x-auto">
-            <div className="flex gap-1">
-              {DISTRICTS.map(d => (
-                <span key={d} className="font-data text-[8px] text-[var(--ink-3)] flex-1 text-center truncate">{d}</span>
-              ))}
-            </div>
-            {HEATMAP_DATA.map((row, ri) => (
-              <div key={ri} className="flex gap-1">
-                {row.map((v, ci) => (
-                  <div
-                    key={ci}
-                    className="flex-1 h-6 border-[1px] border-[var(--ink-4)] flex items-center justify-center"
-                    style={{ background: heatColor(v) }}
-                    title={`${DISTRICTS[ci]}: ${v}`}
-                  >
-                    <span className="font-data text-[8px] text-[var(--ink-2)]">{v}</span>
-                  </div>
-                ))}
-              </div>
-            ))}
-            <div className="flex gap-3 pt-1 items-center">
-              <span className="font-data text-[10px] text-[var(--ink-3)]">Low</span>
-              <div className="w-6 h-3" style={{ background: 'var(--paper-2)', border: '1px solid var(--ink-4)' }} />
-              <div className="w-6 h-3" style={{ background: 'var(--green-soft, #C8F5D8)', border: '1px solid var(--ink-4)' }} />
-              <div className="w-6 h-3" style={{ background: 'var(--orange)', border: '1px solid var(--ink-4)' }} />
-              <span className="font-data text-[10px] text-[var(--ink-3)]">High</span>
-            </div>
+          <Card className="flex flex-col items-center gap-3 py-12">
+            <span className="font-data text-[13px] text-[var(--ink-3)] uppercase tracking-widest">No scan data yet</span>
+            <span className="font-data text-[11px] text-[var(--ink-4)]">
+              Heatmap requires aggregate scan_history data (milestone A-05)
+            </span>
           </Card>
         </div>
       )}
