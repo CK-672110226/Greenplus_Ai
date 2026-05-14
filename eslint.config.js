@@ -5,9 +5,11 @@ import reactRefresh from 'eslint-plugin-react-refresh'
 import { defineConfig, globalIgnores } from 'eslint/config'
 
 export default defineConfig([
-  globalIgnores(['dist', 'Greenplus/', 'docs/']),
+  globalIgnores(['dist', 'Greenplus/', 'docs/', '.claude/', '.claude-flow/']),
+
+  // React app source (browser environment)
   {
-    files: ['**/*.{js,jsx}'],
+    files: ['src/**/*.{js,jsx}'],
     extends: [
       js.configs.recommended,
       reactHooks.configs.flat.recommended,
@@ -16,6 +18,15 @@ export default defineConfig([
     languageOptions: {
       globals: globals.browser,
       parserOptions: { ecmaFeatures: { jsx: true } },
+    },
+  },
+
+  // Node.js config files & E2E tests (Node environment)
+  {
+    files: ['playwright.config.js', 'vite.config.*', 'e2e/**/*.{js,cjs}'],
+    extends: [js.configs.recommended],
+    languageOptions: {
+      globals: { ...globals.node, ...globals.browser },
     },
   },
 ])

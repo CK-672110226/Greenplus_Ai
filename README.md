@@ -23,12 +23,29 @@ GreenPlus Ai is a **bilingual (Thai / English) waste-to-value platform** built f
 - **Edge AI Processing** — All image analysis runs in the browser; no user photos are uploaded to any server (Privacy First)
 - **Real-time Valuation** — Formula-based pricing engine using Chiang Mai market reference rates (May 2026)
 - **Smart Basket** — Accumulate scan results, adjust weights, then find the nearest shop that accepts everything — or get a multi-stop route plan sorted by distance
+- **Multi-Stop Tree Routing** — Nearest-neighbor TSP graph traversal: advances the current node to each visited shop, minimising total travel distance across all drops
+- **Shop Calendar Filtering** — Shops declare open days (`openDays`); routing engine filters closed shops before building any route so users never navigate to a closed shop
 - **Smart Map** — Pulsing map pins show shops that accept the material currently in hand
 - **Marketplace** — High-density list view for buying / selling recyclables with grade filtering
 - **Role Profiles** — Per-role profile pages: User (scan history + Eco-Points), Buyer (shop info + accepted materials), Admin (pending actions + platform stats)
+- **Buyer Calendar Dashboard** — Buyers toggle Open/Closed for each day of the week to manage routing availability
 - **Eco-Points (Impact Points)** — Gamification layer rewarding verified recycling activity
 - **Anti-Troll System** — Detects humans / living things in the scanner and responds with a playful message
 - **Dark Mode** — Full token-based dark-mode support
+
+---
+
+## Responsive Layout — Desktop vs Mobile
+
+The application fully supports both viewports. Layout rules differ by page and role:
+
+| Page / Feature | Mobile (`< 768px`) | Desktop (`≥ 768px`) |
+|---|---|---|
+| **Navigation** | Fixed Bottom Tab Bar (User) · Horizontal strip (Buyer/Admin) | Fixed Left Sidebar (200–240 px) · main content fills remaining width |
+| **Scanner** | Full-screen camera · Bottom Sheet popup (swipe up/down) | Left: camera viewport · Right: fixed result panel with factor breakdown · keyboard/drag replaces swipe |
+| **Basket & Routing** | Stacked cards · route map behind toggle | 2-column split: left basket items · right Smart Map + route steps |
+| **Marketplace** | Single-column feed · filters in drawer | 2–3-column grid · filters in persistent sidebar |
+| **Buyer Dashboard** | Stacked metrics · horizontal-scroll tables | Grid metrics (3–4 per row) · full-width booking queue + pricing CRUD |
 
 ---
 
@@ -75,9 +92,13 @@ GreenPlus Ai is a **bilingual (Thai / English) waste-to-value platform** built f
 | Table | Key Columns |
 |-------|-------------|
 | `waste_items` | `id`, `name`, `unit`, `base_weight`, `price_grade_a/b/c` |
+| `shops` | `id`, `owner_id`, `name`, `lat`, `lng`, `accepts[]`, `openDays[]`, `verified`, `status` |
 | `marketplace_posts` | `id`, `user_id`, `title`, `material_type`, `status` |
 | `user_profiles` | `id`, `role`, `language_pref`, `eco_points` |
 | `scan_history` | `id`, `user_id`, `item_type`, `grade`, `calculated_value` |
+| `bookings` | `id`, `user_id`, `shop_id`, `slot_id`, `materials`, `status` |
+| `shop_hours` | `shop_id`, `day_of_week`, `open_time`, `close_time`, `is_open` |
+| `time_slots` | `shop_id`, `date`, `start_time`, `capacity`, `booked_count` |
 
 ---
 
@@ -219,6 +240,9 @@ src/
   hooks/
     useAuth.js      — Supabase auth listener → Redux
     useT.js         — Translation hook (returns key map, syncs i18next)
+    useGPS.js       — Geolocation hook (request, lat, lng, loading)
+  utils/
+    haversine.js    — Haversine great-circle distance (km)
   i18n/
     index.js        — i18next initialisation
     en.js           — English strings

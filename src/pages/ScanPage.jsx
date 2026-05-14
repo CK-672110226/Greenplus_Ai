@@ -24,10 +24,7 @@ function ContaminationMeter({ score }) {
       <span className="font-data text-[9px] uppercase tracking-[0.15em] text-[var(--ink-4)]">Contamination</span>
       <div className="flex gap-1">
         {segments.map((seg, i) => (
-          <div
-            key={seg.label}
-            className="flex-1 flex flex-col items-center gap-1"
-          >
+          <div key={seg.label} className="flex-1 flex flex-col items-center gap-1">
             <div
               className="w-full h-2 border-[1.5px]"
               style={{
@@ -35,10 +32,7 @@ function ContaminationMeter({ score }) {
                 background:  i === level ? seg.bg : 'transparent',
               }}
             />
-            <span
-              className="font-data text-[9px] uppercase tracking-wide"
-              style={{ color: i === level ? seg.color : 'var(--ink-4)' }}
-            >
+            <span className="font-data text-[9px] uppercase tracking-wide" style={{ color: i === level ? seg.color : 'var(--ink-4)' }}>
               {seg.label}
             </span>
           </div>
@@ -88,28 +82,31 @@ export function ScanPage() {
   const fileRef   = useRef(null)
   const insertScan = useScanInsert()
 
-  const [phase, setPhase]         = useState('starting')
-  const [result, setResult]       = useState(null)
-  const [uploadSrc, setUploadSrc] = useState(null)
-  const [inputMode, setInputMode] = useState('camera')
-  const [batchMode, setBatchMode] = useState(false)
-  const [batchQueue, setBatchQueue] = useState([])
+  const [phase, setPhase]                   = useState('starting')
+  const [result, setResult]                 = useState(null)
+  const [uploadSrc, setUploadSrc]           = useState(null)
+  const [inputMode, setInputMode]           = useState('camera')
+  const [, setHasStream]                    = useState(false)
+  const [dirtyAlert, setDirtyAlert]         = useState(false)
+  const [batchMode, setBatchMode]           = useState(false)
+  const [batchQueue, setBatchQueue]         = useState([])
   const [showReport, setShowReport]         = useState(false)
   const [reportMaterial, setReportMaterial] = useState(Object.keys(WASTE_ITEMS)[0])
 
-  const isMockMode = !aiConfig.onnxStage1Url
+  const isMockMode   = !aiConfig.onnxStage1Url
   const activeBasket = basket.filter(i => !i.skipped)
   const basketTotal  = activeBasket.reduce((s, i) => s + pricePerKg(i.materialType, i.grade) * (i.weight ?? 0), 0)
   const queueTotal   = batchQueue.reduce((s, i) => s + pricePerKg(i.materialType, i.grade) * (i.weight ?? 0), 0)
   const queueKg      = batchQueue.reduce((s, i) => s + (i.weight ?? 0), 0)
 
-  /* ── Camera lifecycle ─────────────────────────────────── */
+  /* ── Camera lifecycle ─────────────────────────────────────── */
   const startCamera = useCallback(async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } },
       })
       streamRef.current = stream
+      setHasStream(true)
       if (videoRef.current) {
         videoRef.current.srcObject = stream
         await videoRef.current.play()
@@ -124,7 +121,7 @@ export function ScanPage() {
   // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { startCamera(); return () => { streamRef.current?.getTracks().forEach(t => t.stop()) } }, [startCamera])
 
-  /* ── Inference ────────────────────────────────────────── */
+  /* ── Inference ────────────────────────────────────────────── */
   async function runInference(source) {
     setPhase('analyzing')
     try {
@@ -139,7 +136,6 @@ export function ScanPage() {
       dispatch(setLastScan(infer))
 
       if (batchMode) {
-        // Batch: push to queue, stay ready for next scan
         setBatchQueue(q => [...q, { ...infer, id: `${infer.materialType}_${Date.now()}` }])
         setPhase('idle')
       } else {
@@ -161,6 +157,7 @@ export function ScanPage() {
     e.target.value = ''
     streamRef.current?.getTracks().forEach(t => t.stop())
     streamRef.current = null
+    setHasStream(false)
     const url = URL.createObjectURL(file)
     setUploadSrc(url)
     setInputMode('upload')
@@ -170,7 +167,7 @@ export function ScanPage() {
     img.src = url
   }
 
-  /* ── Report misidentification ─────────────────────────── */
+  /* ── Report misidentification ─────────────────────────────── */
   async function handleSubmitReport() {
     try {
       await supabase.from('user_reports').insert({
@@ -184,13 +181,32 @@ export function ScanPage() {
     setShowReport(false)
   }
 
-  /* ── Add to basket ────────────────────────────────────── */
+  /* ── Add to basket ────────────────────────────────────────── */
   function handleAddSingle() {
     if (!result) return
+    if (result?.factorScores?.cleanliness != null && result.factorScores.cleanliness < 5) {
+      setDirtyAlert(true)
+      return
+    }
     const id = `${result.materialType}_${Date.now()}`
     dispatch(addToBasket({ id, materialType: result.materialType, grade: result.grade, weight: result.weight, pricePerKg: pricePerKg(result.materialType, result.grade) }))
     insertScan(result)
     toast.success(`${localName(result.materialType, language)} added`)
+    handleReset()
+  }
+
+  function handleConfirmClean() {
+    setDirtyAlert(false)
+    const id = `${result.materialType}_${Date.now()}`
+    dispatch(addToBasket({ id, materialType: result.materialType, grade: result.grade, weight: result.weight, pricePerKg: pricePerKg(result.materialType, result.grade) }))
+    insertScan(result)
+    toast.success(`${localName(result.materialType, language)} added`)
+    handleReset()
+  }
+
+  function handleRejectClean() {
+    setDirtyAlert(false)
+    toast.error(language === 'th' ? 'กรุณาทำความสะอาดก่อนนำมาขาย' : 'Please wash it before selling')
     handleReset()
   }
 
@@ -211,6 +227,7 @@ export function ScanPage() {
     if (uploadSrc) URL.revokeObjectURL(uploadSrc)
     setUploadSrc(null)
     setResult(null)
+    setDirtyAlert(false)
     setPhase('starting')
     startCamera()
   }
@@ -249,17 +266,14 @@ export function ScanPage() {
 
           {/* Camera controls */}
           <div className="flex items-center gap-3 px-6 lg:px-8 py-3 border-b-[1.5px] border-[var(--ink)] bg-[var(--paper-2)]">
-            {/* Flash placeholder */}
             <button className="font-data text-[11px] text-[var(--ink-3)] border-[1.5px] border-[var(--ink-4)] px-2.5 py-1 bg-transparent cursor-not-allowed flex items-center gap-1.5">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
               flash ▾
             </button>
-            {/* Camera select placeholder */}
             <button className="font-data text-[11px] text-[var(--ink-3)] border-[1.5px] border-[var(--ink-4)] px-2.5 py-1 bg-transparent cursor-not-allowed">
               camera 1 ▾
             </button>
 
-            {/* Batch toggle */}
             <button
               onClick={() => { setBatchMode(b => !b); setBatchQueue([]); setResult(null) }}
               className={`flex items-center gap-2 px-3 py-1 border-[1.5px] font-data text-[11px] uppercase tracking-widest cursor-pointer transition-colors ${
@@ -271,7 +285,6 @@ export function ScanPage() {
               batch {batchMode ? 'ON' : 'OFF'}
             </button>
 
-            {/* Model + live indicator */}
             <div className="ml-auto flex items-center gap-3">
               <span className={`flex items-center gap-1.5 font-data text-[10px] ${phase === 'idle' || phase === 'analyzing' ? 'text-[var(--green)]' : 'text-[var(--ink-4)]'}`}>
                 <span className={`w-1.5 h-1.5 rounded-full ${phase === 'idle' || phase === 'analyzing' ? 'bg-[var(--green)]' : 'bg-[var(--ink-4)]'}`} />
@@ -291,7 +304,6 @@ export function ScanPage() {
                 : uploadSrc && <img src={uploadSrc} alt="scan" className="w-full h-full object-contain bg-[var(--paper-2)]" />
               }
 
-              {/* Corner brackets */}
               {inputMode === 'camera' && (phase === 'idle' || phase === 'analyzing') && (
                 <>
                   <span className="absolute top-3 left-3 w-6 h-6 border-t-2 border-l-2 border-[var(--green)]" />
@@ -301,24 +313,19 @@ export function ScanPage() {
                 </>
               )}
 
-              {/* Starting */}
               {phase === 'starting' && (
                 <div className="absolute inset-0 flex items-center justify-center bg-[var(--paper-2)]">
                   <span className="font-data text-[11px] text-[var(--ink-4)] uppercase tracking-widest">Starting camera…</span>
                 </div>
               )}
 
-              {/* Analyzing overlay */}
               {phase === 'analyzing' && (
                 <div className="absolute inset-0 bg-[#062040cc] flex flex-col items-center justify-center gap-3">
                   <span className="font-data text-[13px] text-[var(--green)] uppercase tracking-widest animate-pulse">{t.analyzing}</span>
-                  <span className="font-data text-[9px] text-[var(--green-soft)] uppercase tracking-widest opacity-60">
-                    gp-vision-2.1
-                  </span>
+                  <span className="font-data text-[9px] text-[var(--green-soft)] uppercase tracking-widest opacity-60">gp-vision-2.1</span>
                 </div>
               )}
 
-              {/* Batch result overlay */}
               {batchMode && batchQueue.length > 0 && phase === 'idle' && (
                 <div className="absolute bottom-0 left-0 right-0 bg-[#062040cc] px-4 py-2 flex items-center justify-between">
                   <span className="font-data text-[11px] text-[var(--paper)]">
@@ -330,7 +337,6 @@ export function ScanPage() {
                 </div>
               )}
 
-              {/* Error */}
               {phase === 'error' && (
                 <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-[var(--paper-2)] p-4">
                   <p className="font-body text-[14px] text-[var(--orange)] m-0 text-center">{t.cameraError}</p>
@@ -344,7 +350,6 @@ export function ScanPage() {
               )}
             </div>
 
-            {/* Troll rejection */}
             {phase === 'troll' && (
               <div className="flex flex-col items-center gap-3 py-4 px-4 bg-[var(--orange)] border-[1.5px] border-[var(--ink)]">
                 <span className="font-data text-[12px] text-[var(--ink)] uppercase tracking-widest">{t.antiTroll}</span>
@@ -353,20 +358,22 @@ export function ScanPage() {
               </div>
             )}
 
+            {phase === 'lowConfidence' && (
+              <div className="flex flex-col items-center gap-3 py-4 px-4 border-[1.5px] border-[var(--ink-3)]">
+                <span className="font-data text-[12px] text-[var(--ink-2)] uppercase tracking-widest">{t.lowConfidenceTitle ?? 'Low confidence'}</span>
+                <p className="font-body text-[14px] text-[var(--ink-3)] m-0 text-center">{t.lowConfidenceHint ?? "AI couldn't identify the item clearly. Try better lighting or a clearer angle."}</p>
+                <Button variant="secondary" onClick={handleReset}>{t.scanAgain}</Button>
+              </div>
+            )}
+
             {/* Scan controls */}
             <div className="flex flex-col gap-2">
               {(phase === 'idle' || phase === 'analyzing') && (
-                <Button
-                  variant="primary"
-                  fullWidth
-                  onClick={handleScan}
-                  disabled={phase === 'analyzing'}
-                >
+                <Button variant="primary" fullWidth onClick={handleScan} disabled={phase === 'analyzing'}>
                   {phase === 'analyzing' ? t.analyzing : t.scanBtn}
                 </Button>
               )}
 
-              {/* Single mode result buttons */}
               {!batchMode && phase === 'result' && liveResult && (
                 <>
                   <div className="flex gap-3">
@@ -396,11 +403,7 @@ export function ScanPage() {
                       </select>
                       <div className="flex gap-2">
                         <Button variant="secondary" onClick={handleSubmitReport}>{t.reportSubmit ?? 'Submit Report'}</Button>
-                        <button
-                          type="button"
-                          onClick={() => setShowReport(false)}
-                          className="font-data text-[11px] uppercase tracking-widest text-[var(--ink-3)] bg-transparent border-none cursor-pointer hover:text-[var(--ink)] transition-colors"
-                        >
+                        <button type="button" onClick={() => setShowReport(false)} className="font-data text-[11px] uppercase tracking-widest text-[var(--ink-3)] bg-transparent border-none cursor-pointer hover:text-[var(--ink)] transition-colors">
                           {t.reportCancel ?? 'Cancel'}
                         </button>
                       </div>
@@ -442,12 +445,7 @@ export function ScanPage() {
           <div className="flex flex-col flex-1 px-5 py-4 min-h-0 overflow-y-auto">
             {batchQueue.length > 0 ? (
               batchQueue.map(item => (
-                <QueueRow
-                  key={item.id}
-                  item={item}
-                  language={language}
-                  onRemove={handleRemoveFromQueue}
-                />
+                <QueueRow key={item.id} item={item} language={language} onRemove={handleRemoveFromQueue} />
               ))
             ) : (
               <div className="flex flex-col items-center gap-2 py-10 text-center">
@@ -463,9 +461,7 @@ export function ScanPage() {
             )}
           </div>
 
-          {/* Queue footer */}
           <div className="flex flex-col gap-3 px-5 py-4 border-t-[1.5px] border-[var(--ink)] bg-[var(--paper-2)]">
-            {/* Basket summary */}
             <div className="flex items-center justify-between">
               <span className="font-data text-[10px] text-[var(--ink-3)] uppercase tracking-widest">
                 basket · {activeBasket.length} items
@@ -473,21 +469,17 @@ export function ScanPage() {
               <span className="font-data text-[13px] text-[var(--ink)]">฿{basketTotal.toFixed(0)}</span>
             </div>
 
-            {/* Queue total */}
             {batchQueue.length > 0 && (
               <div className="flex items-center justify-between border-t-[1px] border-[var(--ink-4)] pt-2">
-                <span className="font-data text-[10px] text-[var(--ink-3)] uppercase tracking-widest">
-                  queue total
-                </span>
+                <span className="font-data text-[10px] text-[var(--ink-3)] uppercase tracking-widest">queue total</span>
                 <span className="font-data text-[13px] text-[var(--green-ink)]">฿{queueTotal.toFixed(0)}</span>
               </div>
             )}
 
-            {/* Add all CTA */}
             <button
               onClick={handleAddBatch}
               disabled={batchQueue.length === 0}
-              className="flex items-center justify-center gap-2 w-full py-2.5 bg-[var(--green)] border-[1.5px] border-[var(--ink)] shadow-[3px_3px_0_var(--ink)] active:shadow-none active:translate-x-[3px] active:translate-y-[3px] transition-all font-data text-[11px] uppercase tracking-widest text-[var(--paper)] cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-[3px_3px_0_var(--ink)]"
+              className="flex items-center justify-center gap-2 w-full py-2.5 bg-[var(--green)] border-[1.5px] border-[var(--ink)] shadow-[3px_3px_0_var(--ink)] active:shadow-none active:translate-x-[3px] active:translate-y-[3px] transition-all font-data text-[11px] uppercase tracking-widest text-[var(--paper)] cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
             >
               ✓ Add to basket · keep scanning
             </button>
@@ -497,9 +489,7 @@ export function ScanPage() {
         {/* ══ PANEL 3: Live Analysis ════════════════════════════ */}
         <div className="flex flex-col w-full lg:w-[260px] shrink-0 border-t-[1.5px] lg:border-t-0 border-[var(--ink)]">
           <div className="px-5 py-4 border-b-[1.5px] border-[var(--ink)] bg-[var(--paper-2)] flex items-center justify-between">
-            <span className="font-data text-[9px] text-[var(--ink-4)] uppercase tracking-[0.15em]">
-              Live analysis
-            </span>
+            <span className="font-data text-[9px] text-[var(--ink-4)] uppercase tracking-[0.15em]">Live analysis</span>
             {liveResult && (
               <span className="font-data text-[9px] border-[1.5px] border-[var(--green)] text-[var(--green)] px-1.5 py-0.5 uppercase tracking-widest">
                 STAGE 2 / 2
@@ -509,8 +499,6 @@ export function ScanPage() {
 
           {liveResult ? (
             <div className="flex flex-col gap-5 px-5 py-5">
-
-              {/* Detected material */}
               <div className="flex flex-col gap-1">
                 <span className="font-data text-[9px] text-[var(--ink-4)] uppercase tracking-[0.15em]">Detected</span>
                 <div className="flex items-center gap-2">
@@ -524,40 +512,27 @@ export function ScanPage() {
                 </div>
               </div>
 
-              {/* Contamination meter */}
               <ContaminationMeter score={liveResult.score} />
 
-              {/* Value breakdown */}
               <div className="flex flex-col gap-2">
-                <span className="font-data text-[9px] text-[var(--ink-4)] uppercase tracking-[0.15em]">
-                  Estimated value
-                </span>
+                <span className="font-data text-[9px] text-[var(--ink-4)] uppercase tracking-[0.15em]">Estimated value</span>
                 <div className="border-[1.5px] border-[var(--ink)] p-3 flex flex-col gap-2 bg-[var(--paper-2)]">
                   <div className="font-data text-[11px] text-[var(--ink-3)]">
                     {liveResult.weight}kg
                     <span className="text-[var(--ink-4)] mx-1">×</span>
                     ฿{pricePerKg(liveResult.materialType, liveResult.grade).toFixed(0)}/kg
-                    <span className="text-[var(--ink-4)] mx-1">×</span>
-                    <span className="text-[var(--ink)]">×1.00</span>
                   </div>
                   <div className="font-brand text-[28px] text-[var(--ink)] leading-none">
                     ฿ {liveValue.toFixed(2)}
                   </div>
                 </div>
-
-                {/* Impact line */}
                 <div className="flex items-center gap-2 flex-wrap">
-                  <span className="font-data text-[10px] text-[var(--green-ink)]">
-                    +{liveImpact} impact pts
-                  </span>
+                  <span className="font-data text-[10px] text-[var(--green-ink)]">+{liveImpact} impact pts</span>
                   <span className="text-[var(--ink-4)] font-data text-[10px]">·</span>
-                  <span className="font-data text-[10px] text-[var(--ink-3)]">
-                    CO₂ saved {liveCO2}kg
-                  </span>
+                  <span className="font-data text-[10px] text-[var(--ink-3)]">CO₂ saved {liveCO2}kg</span>
                 </div>
               </div>
 
-              {/* Rules */}
               {getRulesFor(liveResult.materialType).length > 0 && (
                 <div className="flex flex-col gap-1.5 border-t-[1px] border-[var(--ink-4)] pt-3">
                   {getRulesFor(liveResult.materialType).map((rule, i) => (
@@ -569,19 +544,9 @@ export function ScanPage() {
                 </div>
               )}
 
-              {/* Override hint */}
-              <p className="font-data text-[9px] text-[var(--ink-4)] m-0 leading-relaxed">
-                Tap any value above to override the AI estimate.
-              </p>
-
-              {/* Confidence */}
               <div className="flex items-center justify-between border-t-[1px] border-[var(--ink-4)] pt-3">
-                <span className="font-data text-[10px] text-[var(--ink-3)] uppercase tracking-widest">
-                  {t.confidence}
-                </span>
-                <span className="font-data text-[13px] text-[var(--ink)]">
-                  {(liveResult.confidence * 100).toFixed(0)}%
-                </span>
+                <span className="font-data text-[10px] text-[var(--ink-3)] uppercase tracking-widest">{t.confidence}</span>
+                <span className="font-data text-[13px] text-[var(--ink)]">{(liveResult.confidence * 100).toFixed(0)}%</span>
               </div>
             </div>
           ) : (
@@ -595,7 +560,32 @@ export function ScanPage() {
             </div>
           )}
         </div>
+
       </div>
+
+      {/* Dirty-item overlay */}
+      {dirtyAlert && (
+        <div className="fixed inset-0 bg-[#1A1A1Ae6] flex items-center justify-center z-50 px-4">
+          <div className="w-full max-w-sm bg-[var(--paper)] border-[2px] border-[var(--orange)] shadow-[4px_4px_0_var(--orange)] p-6 flex flex-col gap-4">
+            <h2 className="font-brand text-[20px] text-[var(--orange)] m-0">
+              {language === 'th' ? 'พบความสกปรก!' : 'Contamination Detected!'}
+            </h2>
+            <p className="font-body text-[14px] text-[var(--ink)] m-0 leading-relaxed">
+              {language === 'th'
+                ? 'สิ่งนี้มีคราบสกปรก คุณได้ทำความสะอาดแล้วใช่ไหม?'
+                : 'This item is dirty. Have you washed it?'}
+            </p>
+            <div className="flex flex-col gap-2 mt-2">
+              <Button variant="primary" onClick={handleConfirmClean}>
+                {language === 'th' ? 'ใช่ (ทำความสะอาดแล้ว)' : 'Yes, I washed it'}
+              </Button>
+              <Button variant="secondary" onClick={handleRejectClean}>
+                {language === 'th' ? 'ไม่ (ยังไม่ได้ทำ)' : 'No, not yet'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Hidden file input */}
       <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
