@@ -24,10 +24,11 @@ export function LogoWordmark({ fontSize = 22, inverse = false }) {
   )
 }
 
-export function Logo({ height = 28, showWordmark = true, className = '' }) {
+export function Logo({ height = 28, showWordmark = true, className = '', invertColor = false }) {
   const darkMode = useSelector(s => s.user.darkMode)
   const gap      = Math.max(6, Math.round(height * 0.28))
   const fontSize = Math.max(11, Math.round(height * 0.6))
+  const inverse  = invertColor ? !darkMode : darkMode
 
   return (
     <span
@@ -36,13 +37,13 @@ export function Logo({ height = 28, showWordmark = true, className = '' }) {
       aria-label="GreenPlus.Ai"
     >
       <img
-        src={darkMode ? '/Darkmode.png' : '/Lightmode.png'}
+        src={inverse ? '/Darkmode.png' : '/Lightmode.png'}
         alt=""
         height={height}
         style={{ height, width: 'auto', display: 'block', flexShrink: 0 }}
         draggable={false}
       />
-      {showWordmark && <LogoWordmark fontSize={fontSize} inverse={darkMode} />}
+      {showWordmark && <LogoWordmark fontSize={fontSize} inverse={inverse} />}
     </span>
   )
 }

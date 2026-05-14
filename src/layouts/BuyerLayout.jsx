@@ -5,50 +5,64 @@ import { clearUser, setLanguage } from '../store/userSlice'
 import { useT } from '../hooks/useT'
 import { Logo } from '../components/Logo'
 
-const NAV = [
+const NAV_MAIN = [
   { to: '/dashboard',   key: 'dashboard' },
+  { to: '/schedule',    key: 'schedule' },
   { to: '/marketplace', key: 'marketplace' },
-  { to: '/profile',     key: 'profile' },
-  { to: '/settings',    key: 'settings' },
+  { to: '/pricing',     key: 'pricing' },
 ]
 
-function SideNavLink({ to, label }) {
+const NAV_ACCOUNT = [
+  { to: '/notifications', key: 'notifications', badge: true },
+  { to: '/profile',       key: 'profile' },
+  { to: '/settings',      key: 'settings' },
+]
+
+function SideNavLink({ to, label, badge }) {
   return (
     <NavLink
       to={to}
       className={({ isActive }) =>
-        'block px-5 py-3 font-body text-[15px] no-underline border-l-[3px] transition-colors ' +
+        'flex items-center justify-between px-5 py-3 font-body text-[15px] no-underline border-l-[3px] transition-colors ' +
         (isActive
           ? 'border-[var(--green)] bg-[var(--ink)] text-[var(--paper)]'
           : 'border-transparent text-[var(--ink)] hover:border-[var(--ink-4)] hover:text-[var(--green)]')
       }
     >
-      {label}
+      <span>{label}</span>
+      {badge}
     </NavLink>
   )
 }
 
-function TopNavLink({ to, label }) {
+function TopNavLink({ to, label, dot }) {
   return (
     <NavLink
       to={to}
       className={({ isActive }) =>
-        'shrink-0 px-4 py-2.5 font-data text-[11px] uppercase tracking-widest no-underline whitespace-nowrap border-r-[1.5px] border-[var(--ink)] transition-colors ' +
+        'relative shrink-0 px-4 py-2.5 font-data text-[11px] uppercase tracking-widest no-underline whitespace-nowrap border-r-[1.5px] border-[var(--ink)] transition-colors ' +
         (isActive
           ? 'bg-[var(--ink)] text-[var(--paper)]'
           : 'text-[var(--ink-3)] hover:text-[var(--ink)]')
       }
     >
       {label}
+      {dot && (
+        <span
+          className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full"
+          style={{ background: '#E53E3E' }}
+        />
+      )}
     </NavLink>
   )
 }
 
 export function BuyerLayout() {
-  const navigate = useNavigate()
-  const dispatch = useDispatch()
+  const navigate  = useNavigate()
+  const dispatch  = useDispatch()
   const { language } = useSelector(s => s.user)
-  const t = useT()
+  const t         = useT()
+  const unread    = useSelector(s => s.notifications.items.filter(n => !n.read).length)
 
   async function handleLogout() {
     await supabase.auth.signOut()
@@ -59,6 +73,17 @@ export function BuyerLayout() {
   function toggleLang() {
     dispatch(setLanguage(language === 'th' ? 'en' : 'th'))
   }
+
+  const unreadBadge = unread > 0
+    ? (
+      <span
+        className="font-data text-[10px] px-1.5 py-0.5 rounded-full leading-none"
+        style={{ background: 'var(--orange)', color: '#fff' }}
+      >
+        {unread}
+      </span>
+    )
+    : null
 
   return (
     <div className="min-h-screen bg-[var(--paper)] flex">
@@ -71,8 +96,25 @@ export function BuyerLayout() {
           <Logo height={22} />
         </div>
 
-        <nav className="flex flex-col flex-1 py-2">
-          {NAV.map(n => <SideNavLink key={n.to} to={n.to} label={t[n.key]} />)}
+        <nav className="flex flex-col flex-1 py-2 overflow-y-auto">
+          <span className="font-data text-[9px] text-[var(--ink-4)] uppercase tracking-widest px-5 pt-4 pb-1">
+            {t.navMain}
+          </span>
+          {NAV_MAIN.map(n => (
+            <SideNavLink key={n.to} to={n.to} label={t[n.key]} />
+          ))}
+
+          <span className="font-data text-[9px] text-[var(--ink-4)] uppercase tracking-widest px-5 pt-4 pb-1">
+            {t.navAccount}
+          </span>
+          {NAV_ACCOUNT.map(n => (
+            <SideNavLink
+              key={n.to}
+              to={n.to}
+              label={t[n.key]}
+              badge={n.badge ? unreadBadge : null}
+            />
+          ))}
         </nav>
 
         <div className="px-5 py-4 border-t-[1.5px] border-[var(--ink)] flex flex-col gap-2">
@@ -114,7 +156,17 @@ export function BuyerLayout() {
 
         {/* Mobile horizontal nav strip */}
         <div className="md:hidden flex overflow-x-auto border-b-[1.5px] border-[var(--ink)]">
-          {NAV.map(n => <TopNavLink key={n.to} to={n.to} label={t[n.key]} />)}
+          {NAV_MAIN.map(n => (
+            <TopNavLink key={n.to} to={n.to} label={t[n.key]} />
+          ))}
+          {NAV_ACCOUNT.map(n => (
+            <TopNavLink
+              key={n.to}
+              to={n.to}
+              label={t[n.key]}
+              dot={n.badge && unread > 0}
+            />
+          ))}
         </div>
 
         <main className="flex-1">

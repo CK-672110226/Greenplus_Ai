@@ -20,8 +20,11 @@ const BasketPage     = lazy(() => import('./pages/BasketPage').then(m => ({ defa
 const MapPage        = lazy(() => import('./pages/MapPage').then(m => ({ default: m.MapPage })))
 const EcoPointsPage  = lazy(() => import('./pages/EcoPointsPage').then(m => ({ default: m.EcoPointsPage })))
 const MarketplacePage= lazy(() => import('./pages/MarketplacePage').then(m => ({ default: m.MarketplacePage })))
-const DashboardPage  = lazy(() => import('./pages/DashboardPage').then(m => ({ default: m.DashboardPage })))
-const AdminPage      = lazy(() => import('./pages/AdminPage').then(m => ({ default: m.AdminPage })))
+const DashboardPage     = lazy(() => import('./pages/DashboardPage').then(m => ({ default: m.DashboardPage })))
+const SchedulePage      = lazy(() => import('./pages/SchedulePage').then(m => ({ default: m.SchedulePage })))
+const PricingPage       = lazy(() => import('./pages/PricingPage').then(m => ({ default: m.PricingPage })))
+const NotificationsPage = lazy(() => import('./pages/NotificationsPage').then(m => ({ default: m.NotificationsPage })))
+const AdminPage         = lazy(() => import('./pages/AdminPage').then(m => ({ default: m.AdminPage })))
 const SettingsPage   = lazy(() => import('./pages/SettingsPage').then(m => ({ default: m.SettingsPage })))
 const ProfilePage    = lazy(() => import('./pages/ProfilePage').then(m => ({ default: m.ProfilePage })))
 
@@ -66,11 +69,12 @@ function App() {
         <SpeedInsights />
         <Suspense fallback={<PageFallback />}>
           <Routes>
+            {/* Full-page routes — manage their own layout */}
+            <Route path="/"        element={<LandingPage />} />
+            <Route path="/login"   element={<LoginPage />} />
+            <Route path="/x/admin" element={<AdminLoginPage />} />
+
             <Route element={<SmartLayout />}>
-              {/* Public — no lazy (needed on first render) */}
-              <Route path="/"        element={<LandingPage />} />
-              <Route path="/login"   element={<LoginPage />} />
-              <Route path="/x/admin" element={<AdminLoginPage />} />
 
               {/* User portal */}
               <Route path="/home"       element={<ProtectedRoute requiredRole="user"><HomePage /></ProtectedRoute>} />
@@ -80,7 +84,10 @@ function App() {
               <Route path="/eco-points" element={<ProtectedRoute requiredRole="user"><EcoPointsPage /></ProtectedRoute>} />
 
               {/* Buyer portal */}
-              <Route path="/dashboard" element={<ProtectedRoute requiredRole="buyer"><DashboardPage /></ProtectedRoute>} />
+              <Route path="/dashboard"     element={<ProtectedRoute requiredRole="buyer"><DashboardPage /></ProtectedRoute>} />
+              <Route path="/schedule"      element={<ProtectedRoute requiredRole="buyer"><SchedulePage /></ProtectedRoute>} />
+              <Route path="/pricing"       element={<ProtectedRoute requiredRole="buyer"><PricingPage /></ProtectedRoute>} />
+              <Route path="/notifications" element={<ProtectedRoute requiredRole="buyer"><NotificationsPage /></ProtectedRoute>} />
 
               {/* Admin */}
               <Route path="/admin" element={<ProtectedRoute requiredRole="admin"><AdminPage /></ProtectedRoute>} />

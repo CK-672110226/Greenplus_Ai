@@ -1,0 +1,142 @@
+{
+  "agents": {
+    "agent-desktop-layout": {
+      "agentId": "agent-desktop-layout",
+      "agentType": "frontend-dev",
+      "status": "idle",
+      "health": 1,
+      "taskCount": 0,
+      "config": {
+        "taskId": "task-1778745244335-vrlot0",
+        "focus": "desktop-2col-split",
+        "files": [
+          "src/pages/ScanPage.jsx",
+          "src/pages/BasketPage.jsx"
+        ],
+        "breakpoint": "md:768px",
+        "pattern": "grid-cols-2 sticky sidebar",
+        "model": "sonnet"
+      },
+      "createdAt": "2026-05-14T07:55:00.195Z",
+      "domain": "ui-layout",
+      "model": "sonnet",
+      "modelRoutedBy": "explicit"
+    },
+    "agent-mobile-layout": {
+      "agentId": "agent-mobile-layout",
+      "agentType": "frontend-dev",
+      "status": "idle",
+      "health": 1,
+      "taskCount": 0,
+      "config": {
+        "taskId": "task-1778745247552-sz2t8m",
+        "focus": "mobile-375px",
+        "files": [
+          "src/pages/MarketplacePage.jsx",
+          "src/pages/DashboardPage.jsx",
+          "src/pages/ScanPage.jsx"
+        ],
+        "pattern": "drawer filter, horizontal-scroll table, bottom-sheet",
+        "model": "sonnet"
+      },
+      "createdAt": "2026-05-14T07:55:47.786Z",
+      "domain": "ui-layout",
+      "model": "sonnet",
+      "modelRoutedBy": "explicit"
+    },
+    "agent-buyer-materials": {
+      "agentId": "agent-buyer-materials",
+      "agentType": "backend-dev",
+      "status": "idle",
+      "health": 1,
+      "taskCount": 0,
+      "config": {
+        "taskId": "task-1778745249884-ij0qqj",
+        "focus": "B-06",
+        "files": [
+          "src/pages/DashboardPage.jsx",
+          "src/store/",
+          "src/data/wasteItems.js"
+        ],
+        "pattern": "material chip toggle, Redux persist",
+        "model": "sonnet"
+      },
+      "createdAt": "2026-05-14T07:56:32.533Z",
+      "domain": "buyer-features",
+      "model": "sonnet",
+      "modelRoutedBy": "explicit"
+    },
+    "agent-calendar-persist": {
+      "agentId": "agent-calendar-persist",
+      "agentType": "backend-dev",
+      "status": "idle",
+      "health": 1,
+      "taskCount": 0,
+      "config": {
+        "taskId": "task-1778745251642-pdwlvk",
+        "focus": "B-04-persist",
+        "files": [
+          "src/pages/DashboardPage.jsx",
+          "src/store/"
+        ],
+        "pattern": "Redux slice, localStorage, dispatch on Save",
+        "model": "sonnet"
+      },
+      "createdAt": "2026-05-14T07:57:23.642Z",
+      "domain": "buyer-features",
+      "model": "sonnet",
+      "modelRoutedBy": "explicit"
+    },
+    "agent-booking-modal": {
+      "agentId": "agent-booking-modal",
+      "agentType": "frontend-dev",
+      "status": "idle",
+      "health": 1,
+      "taskCount": 0,
+      "config": {
+        "taskId": "task-1778745254706-8pzjdd",
+        "focus": "U-05",
+        "files": [
+          "src/pages/BasketPage.jsx",
+          "src/store/bookingSlice.js",
+          "src/components/"
+        ],
+        "pattern": "BookingModal, date picker, slot selection, bottom-sheet mobile / centered modal desktop",
+        "model": "sonnet"
+      },
+      "createdAt": "2026-05-14T07:58:01.690Z",
+      "domain": "user-features",
+      "model": "sonnet",
+      "modelRoutedBy": "explicit"
+    },
+    "agent-history-docs": {
+      "agentId": "agent-history-docs",
+      "agentType": "analyst",
+      "status": "idle",
+      "health": 1,
+      "taskCount": 0,
+      "config": {
+        "taskId": "task-1778745257257-t62kkn",
+        "focus": "history-docs",
+        "files": [
+          "HistoryVersions/",
+          "PRD.md",
+          "README.md"
+        ],
+        "waitFor": [
+          "agent-desktop-layout",
+          "agent-mobile-layout",
+          "agent-buyer-materials",
+          "agent-calendar-persist",
+          "agent-booking-modal"
+        ],
+        "model": "haiku"
+      },
+      "createdAt": "2026-05-14T07:58:02.951Z",
+      "domain": "documentation",
+      "model": "haiku",
+      "modelRoutedBy": "explicit"
+    }
+  },
+  "version": "3.0.0"
+}

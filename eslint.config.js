@@ -6,6 +6,8 @@ import { defineConfig, globalIgnores } from 'eslint/config'
 
 export default defineConfig([
   globalIgnores(['dist', 'Greenplus/', 'docs/', '.claude/', '.claude-flow/']),
+
+  // React app source (browser environment)
   {
     files: ['src/**/*.{js,jsx}'],
     extends: [
@@ -18,6 +20,8 @@ export default defineConfig([
       parserOptions: { ecmaFeatures: { jsx: true } },
     },
   },
+
+  // Node.js config files & E2E tests (Node environment)
   {
     files: ['playwright.config.js', 'vite.config.*', 'e2e/**/*.{js,cjs}'],
     extends: [js.configs.recommended],
