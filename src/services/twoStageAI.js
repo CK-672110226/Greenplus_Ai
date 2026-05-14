@@ -22,7 +22,6 @@ function mockStage1() {
 }
 
 function mockStage2(materialType) {
-  // Generate random factor scores 0-10
   const factors = {
     cleanliness: 3 + Math.random() * 7,
     moisture:    5 + Math.random() * 5,
@@ -31,18 +30,16 @@ function mockStage2(materialType) {
     purity:      6 + Math.random() * 4,
   }
 
-  // Weightings vary by material, simplified mock logic:
   let weightedScore
   if (materialType === 'pet_bottle_clear') {
     weightedScore = (factors.cleanliness * 0.3) + (factors.color * 0.25) + (factors.preparation * 0.25) + (factors.moisture * 0.2)
   } else if (materialType === 'cardboard') {
     weightedScore = (factors.moisture * 0.4) + (factors.preparation * 0.25) + (factors.purity * 0.2) + (factors.cleanliness * 0.15)
   } else {
-    // generic fallback
     weightedScore = (factors.cleanliness * 0.4) + (factors.purity * 0.6)
   }
 
-  weightedScore = Math.round(weightedScore * 10) // 0-100 scale
+  weightedScore = Math.round(weightedScore * 10)
 
   const grade = weightedScore >= 80 ? 'A' : weightedScore >= 50 ? 'B' : 'C'
   const failReasons = weightedScore < 50 ? ['Item appears contaminated or damaged'] : []
@@ -70,7 +67,6 @@ async function onnxStage2(imageSource, modelUrl, _materialType) {
 
   const probs = softmax(Array.from(logits.slice(0, 5)))
 
-  // Mapping logits to generic factors for now
   const factorScores = {
     cleanliness: probs[0] * 10,
     moisture:    probs[1] * 10,
@@ -79,7 +75,7 @@ async function onnxStage2(imageSource, modelUrl, _materialType) {
     purity:      probs[4] * 10,
   }
 
-  const weightedScore = Math.round(probs[0] * 100) // simplified for ONNX MVP
+  const weightedScore = Math.round(probs[0] * 100)
   const grade = weightedScore >= 80 ? 'A' : weightedScore >= 50 ? 'B' : 'C'
   return { pass: factorScores.cleanliness >= 3, weightedScore, factorScores, grade, failReasons: [] }
 }

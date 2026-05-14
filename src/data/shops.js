@@ -5,7 +5,6 @@ export const SHOPS = [
     lat: 18.7955, lng: 98.9963,
     area: 'นิมมานเหมินท์',
     accepts: ['aluminum_can', 'pet_bottle_clear', 'mixed_plastic'],
-    openDays: [1, 2, 3, 4, 5, 6],
     distanceKm: 1.2,
   },
   {
@@ -14,7 +13,6 @@ export const SHOPS = [
     lat: 18.7810, lng: 98.9880,
     area: 'ช้างเผือก',
     accepts: ['copper', 'glass', 'aluminum_can'],
-    openDays: [1, 2, 3, 4, 5],
     distanceKm: 2.5,
   },
   {
@@ -23,7 +21,6 @@ export const SHOPS = [
     lat: 18.7920, lng: 98.9780,
     area: 'สุเทพ',
     accepts: ['cardboard', 'newspaper', 'mixed_plastic'],
-    openDays: [1, 2, 3, 4, 5, 6],
     distanceKm: 0.8,
   },
   {
@@ -32,7 +29,6 @@ export const SHOPS = [
     lat: 18.8040, lng: 98.9950,
     area: 'ป่าตัน',
     accepts: ['pet_bottle_clear', 'aluminum_can', 'cardboard', 'newspaper', 'copper'],
-    openDays: [1, 2, 3, 4, 5, 6],
     distanceKm: 3.1,
   },
   {
@@ -41,7 +37,6 @@ export const SHOPS = [
     lat: 18.7991, lng: 98.9528,
     area: 'CMU',
     accepts: ['cooking_oil'],
-    openDays: [2, 4],
     distanceKm: 5.6,
   },
   {
@@ -50,7 +45,6 @@ export const SHOPS = [
     lat: 18.7870, lng: 98.9720,
     area: 'สันกำแพง',
     accepts: ['newspaper', 'cardboard', 'glass', 'cooking_oil'],
-    openDays: [1, 2, 3, 4, 5, 6],
     distanceKm: 4.0,
   },
 ]

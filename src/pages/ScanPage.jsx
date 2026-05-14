@@ -93,6 +93,37 @@ export function ScanPage() {
   const [showReport, setShowReport]         = useState(false)
   const [reportMaterial, setReportMaterial] = useState(Object.keys(WASTE_ITEMS)[0])
 
+  const [touchStart, setTouchStart] = useState(null)
+  const [touchEnd, setTouchEnd]     = useState(null)
+  const minSwipeDistance = 50
+
+  const onTouchStart = (e) => {
+    setTouchEnd(null)
+    setTouchStart(e.targetTouches[0].clientX)
+  }
+  const onTouchMove = (e) => setTouchEnd(e.targetTouches[0].clientX)
+  const onTouchEndEvent = () => {
+    if (!touchStart || !touchEnd) return
+    const distance = touchStart - touchEnd
+    const isLeftSwipe  = distance > minSwipeDistance
+    const isRightSwipe = distance < -minSwipeDistance
+    if (isRightSwipe) handleSwipeRight()
+    if (isLeftSwipe)  handleSwipeLeft()
+  }
+
+  function handleSwipeRight() {
+    if (result?.factorScores?.cleanliness < 5) {
+      setDirtyAlert(true)
+    } else {
+      handleAddSingle()
+    }
+  }
+
+  function handleSwipeLeft() {
+    toast('Discarded item')
+    handleReset()
+  }
+
   const isMockMode   = !aiConfig.onnxStage1Url
   const activeBasket = basket.filter(i => !i.skipped)
   const basketTotal  = activeBasket.reduce((s, i) => s + pricePerKg(i.materialType, i.grade) * (i.weight ?? 0), 0)
@@ -188,6 +219,7 @@ export function ScanPage() {
       setDirtyAlert(true)
       return
     }
+    // eslint-disable-next-line react-hooks/purity
     const id = `${result.materialType}_${Date.now()}`
     dispatch(addToBasket({ id, materialType: result.materialType, grade: result.grade, weight: result.weight, pricePerKg: pricePerKg(result.materialType, result.grade) }))
     insertScan(result)
@@ -197,6 +229,7 @@ export function ScanPage() {
 
   function handleConfirmClean() {
     setDirtyAlert(false)
+    // eslint-disable-next-line react-hooks/purity
     const id = `${result.materialType}_${Date.now()}`
     dispatch(addToBasket({ id, materialType: result.materialType, grade: result.grade, weight: result.weight, pricePerKg: pricePerKg(result.materialType, result.grade) }))
     insertScan(result)
@@ -563,7 +596,7 @@ export function ScanPage() {
 
       </div>
 
-      {/* Dirty-item overlay */}
+      {/* ── Dirty-item overlay ────────────────────────────────── */}
       {dirtyAlert && (
         <div className="fixed inset-0 bg-[#1A1A1Ae6] flex items-center justify-center z-50 px-4">
           <div className="w-full max-w-sm bg-[var(--paper)] border-[2px] border-[var(--orange)] shadow-[4px_4px_0_var(--orange)] p-6 flex flex-col gap-4">
@@ -587,7 +620,92 @@ export function ScanPage() {
         </div>
       )}
 
-      {/* Hidden file input */}
+      {/* ── Result bottom sheet — mobile swipe UX (lg:hidden) ─── */}
+      {phase === 'result' && result && !dirtyAlert && (
+        <div
+          className="lg:hidden border-t-[1.5px] border-[var(--ink)] flex flex-col gap-3 pt-2 pb-3 px-4 bg-[var(--paper)]"
+          onTouchStart={onTouchStart}
+          onTouchMove={onTouchMove}
+          onTouchEnd={onTouchEndEvent}
+        >
+          <div className="w-12 h-1 bg-[var(--ink-4)] mx-auto rounded-full mb-1" />
+          <p className="text-center font-data text-[10px] text-[var(--ink-3)] uppercase tracking-widest m-0 mb-2">
+            {language === 'th' ? '▽ ปัดหน้าจอเพื่อเลือก' : '▽ Swipe to decide'}
+          </p>
+
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <GradeTag grade={result.grade} />
+              <span className="font-body text-[17px] text-[var(--ink)] font-semibold">
+                {localName(result.materialType, language)}
+              </span>
+            </div>
+            {(result.source === 'mock' || result.source === 'mock-fallback') && (
+              <span className="font-data text-[9px] text-[var(--ink-4)] border border-[var(--ink-4)] px-1.5 py-0.5 uppercase">demo</span>
+            )}
+          </div>
+
+          <div className="flex flex-col gap-1">
+            <span className="font-data text-[11px] text-[var(--ink-3)] uppercase tracking-widest">{t.scoreLabel}</span>
+            <ContaminationMeter score={result.score} />
+          </div>
+
+          {result.factorScores && (
+            <div className="flex flex-col gap-1 mt-1 p-2 bg-[var(--paper-2)] border-[1px] border-[var(--ink-4)]">
+              <span className="font-data text-[10px] text-[var(--ink-3)] uppercase mb-1">Factor Breakdown</span>
+              {Object.entries(result.factorScores).map(([factor, fscore]) => (
+                <div key={factor} className="flex items-center justify-between">
+                  <span className="font-data text-[10px] text-[var(--ink-2)] capitalize">{factor}</span>
+                  <div className="flex items-center gap-2 w-1/2">
+                    <div className="w-full h-1.5 bg-[var(--paper)] border-[1px] border-[var(--ink)]">
+                      <div style={{ width: `${fscore * 10}%`, background: fscore >= 5 ? 'var(--green)' : 'var(--orange)', height: '100%' }} />
+                    </div>
+                    <span className="font-data text-[9px] w-6 text-right">{fscore.toFixed(1)}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 border-[1px] border-[var(--ink-4)] p-3">
+            <span className="font-data text-[11px] text-[var(--ink-3)] uppercase">{t.estWeight}</span>
+            <span className="font-data text-[13px] text-[var(--ink)] text-right">{result.weight} kg</span>
+            <span className="font-data text-[11px] text-[var(--ink-3)] uppercase">฿/kg</span>
+            <span className="font-data text-[13px] text-[var(--ink)] text-right">
+              ฿{pricePerKg(result.materialType, result.grade).toFixed(2)}
+            </span>
+            <span className="font-data text-[11px] text-[var(--ink-3)] uppercase">Total</span>
+            <span className="font-data text-[14px] text-[var(--green)] font-bold text-right">
+              ฿{(pricePerKg(result.materialType, result.grade) * result.weight).toFixed(2)}
+            </span>
+          </div>
+
+          <div className="flex items-center justify-between pt-4 pb-2 px-2 border-t-[1.5px] border-[var(--ink-4)]">
+            <div
+              className="flex flex-col items-center flex-1 cursor-pointer hover:bg-[var(--paper-2)] py-2 transition-colors"
+              onClick={handleSwipeLeft}
+            >
+              <span className="font-brand text-[20px] text-[#E53E3E]">⟵</span>
+              <span className="font-data text-[10px] text-[var(--ink-2)] uppercase">
+                {language === 'th' ? 'ทิ้ง (Discard)' : 'Discard'}
+              </span>
+            </div>
+            <div className="w-px h-8 bg-[var(--ink-4)]" />
+            <div
+              className="flex flex-col items-center flex-1 cursor-pointer hover:bg-[var(--paper-2)] py-2 transition-colors"
+              onClick={handleSwipeRight}
+            >
+              <span className="font-brand text-[20px] text-[var(--green-ink)]">⟶</span>
+              <span className="font-data text-[10px] text-[var(--ink-2)] uppercase">
+                {language === 'th' ? 'ขาย (Sell)' : 'Sell'}
+              </span>
+            </div>
+          </div>
+
+          <Button variant="secondary" onClick={handleReset}>{t.scanAgain}</Button>
+        </div>
+      )}
+
       <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
     </div>
   )
