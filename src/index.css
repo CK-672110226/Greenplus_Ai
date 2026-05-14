@@ -82,3 +82,13 @@ body {
   animation: map-ping 1.4s cubic-bezier(0, 0, 0.2, 1) infinite;
 }
 
+/* ── Flagged notification pulse ──────────────────────── */
+@keyframes flagged-pulse {
+  0%, 100% { box-shadow: 2px 2px 0 var(--ink), 0 0 0 2px var(--orange); }
+  50%       { box-shadow: 2px 2px 0 var(--ink), 0 0 0 2px transparent; }
+}
+.flagged-pulse {
+  animation: flagged-pulse 1.3s ease-in-out infinite;
+  border-color: var(--orange);
+}
+

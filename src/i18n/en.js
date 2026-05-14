@@ -39,9 +39,9 @@ export const en = {
   scoreLabel:    'Quality Score',
   confidence:    'Confidence',
   cameraError:   'Camera access denied. Please allow camera permission.',
-  antiTroll:     'Anti-Troll Filter Active',
-  rejected:      'Item Rejected',
-  rejectedHint:  'This item does not meet recycling standards.',
+  antiTroll:     'Nice try, but no.',
+  rejected:      'Not Recyclable Here',
+  rejectedHint:  "That's not recyclable (or it's your hand again). Point the camera at actual waste.",
 
   // Basket
   basketEmpty:   'Your basket is empty. Scan some items first.',
