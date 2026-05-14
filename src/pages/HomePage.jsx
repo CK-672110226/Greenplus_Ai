@@ -6,7 +6,7 @@ import { Button } from '../components/Button'
 import { GradeTag } from '../components/GradeTag'
 import { KpiCard } from '../components/KpiCard'
 import { SectionDivider } from '../components/SectionDivider'
-import { localName } from '../data/wasteItems'
+import { localName, pricePerKg } from '../data/wasteItems'
 
 const MOCK_WEEKLY = [
   { label: 'M', val: 1.2 },
@@ -59,7 +59,7 @@ export function HomePage() {
   const lastScan  = useSelector(s => s.waste?.lastScan)
 
   const activeItems = basket.filter(i => !i.skipped)
-  const totalValue  = activeItems.reduce((sum, i) => sum + (i.estValue ?? 0), 0)
+  const totalValue  = activeItems.reduce((sum, i) => sum + pricePerKg(i.materialType, i.grade) * (i.weight ?? 0), 0)
   const weeklyKg    = MOCK_WEEKLY.reduce((s, d) => s + d.val, 0).toFixed(1)
   const ecoPoints   = profile?.eco_points ?? 0
 
@@ -135,7 +135,7 @@ export function HomePage() {
                 <div className="flex items-center gap-2">
                   <GradeTag grade={item.grade} />
                   <span className="font-data text-[12px] text-[var(--ink-2)]">
-                    ฿{(item.estValue ?? 0).toFixed(0)}
+                    ฿{(pricePerKg(item.materialType, item.grade) * (item.weight ?? 0)).toFixed(0)}
                   </span>
                 </div>
               </div>
