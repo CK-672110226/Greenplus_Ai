@@ -37,8 +37,6 @@ test.describe('Login Page', () => {
     // Wait briefly for async Supabase response
     await page.waitForTimeout(1500)
     // Error text appears somewhere in the form area
-    const errorLocator = page.locator('[role="alert"], .error, [data-testid="auth-error"]')
-      .or(page.getByText(/invalid|incorrect|wrong|error|ไม่ถูกต้อง/i).first())
     // We only assert URL stays on login — UI error text varies by Supabase response
     await expect(page).toHaveURL(/\/login/)
   })
@@ -83,8 +81,6 @@ test.describe('Login Page', () => {
     const toggleBtn = page.locator('button[aria-label*="password"], button svg').first()
     if (await toggleBtn.count() > 0) {
       await toggleBtn.click()
-      // After toggle the input type may change to "text"
-      const inputType = await page.locator('input[name="password"], input[type="text"]').first().getAttribute('type')
       // Just verify the click didn't break anything
       await expect(page).toHaveURL(/\/login/)
     }

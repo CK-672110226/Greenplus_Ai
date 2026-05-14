@@ -33,7 +33,6 @@ test.describe('UserLayout — responsive navigation', () => {
     await expect(page.locator('body')).toBeVisible()
     // On mobile the bottom tab bar carries md:hidden — it IS rendered but only
     // hidden at desktop breakpoints. Verify it exists in DOM on mobile viewport.
-    const nav = page.locator('nav[class*="md:hidden"]')
     // Landing page uses its own header nav, not the UserLayout tab bar.
     // Just confirm the viewport and page loaded correctly.
     const scrollWidth = await page.evaluate(() => document.documentElement.scrollWidth)
