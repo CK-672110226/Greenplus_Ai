@@ -261,4 +261,14 @@ export const en = {
   // Nav section labels
   navMain:           'Main',
   navAccount:        'Account',
+
+  // Basket manual entry & pricing
+  addManually:       'Add manually',
+  marketAvg:         'Market avg',
+  shopOffers:        'Offers',
+  filterBasket:      'Filter',
+  allItems:          'All',
+  selectMaterial:    'Select material',
+  selectGrade:       'Grade',
+  addItem:           'Add',
 }
