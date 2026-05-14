@@ -204,4 +204,42 @@ export const en = {
   cleanImages:         'Clean Images',
   dirtyImages:         'Dirty Images',
   uploading:           'Uploading...',
+
+  // Schedule
+  schedule:          'Schedule',
+  scheduleTitle:     "Today's Schedule",
+  scheduleMorning:   'Morning',
+  scheduleAfternoon: 'Afternoon',
+  scheduleEvening:   'Evening',
+  noSchedule:        'No pickups scheduled for today.',
+  confirmPickup:     'Confirm',
+  completePickup:    'Complete',
+  cancelPickup:      'Cancel',
+  estValueLabel:     'Est. Value',
+  sellerAddress:     'Address',
+
+  // Pricing page
+  pricing:           'Pricing',
+  pricingTitle:      'My Pricing',
+  pricingHint:       'Set your buy price per kg for each material and grade.',
+  marketRate:        'Market',
+  resetToMarket:     'Reset to Market Rate',
+  saveChanges:       'Save Changes',
+  pricingSaved:      'Pricing saved!',
+  pricingReset:      'Reset to market rates.',
+  priceAbove:        '↑ above market',
+  priceBelow:        '↓ below market',
+
+  // Notifications
+  notifications:      'Notifications',
+  notificationsTitle: 'Notifications',
+  markAllRead:        'Mark all read',
+  noNotifications:    'No notifications yet.',
+  notifToday:         'Today',
+  notifEarlier:       'Earlier',
+  unread:             'unread',
+
+  // Nav section labels
+  navMain:           'Main',
+  navAccount:        'Account',
 }

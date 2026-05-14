@@ -6,6 +6,7 @@ import aiConfigReducer from './aiConfigSlice'
 import bookingReducer from './bookingSlice'
 import notificationReducer from './notificationSlice'
 import scheduleReducer from './scheduleSlice'
+import pricingReducer from './pricingSlice'
 
 export const store = configureStore({
   reducer: {
@@ -16,5 +17,6 @@ export const store = configureStore({
     bookings:      bookingReducer,
     notifications: notificationReducer,
     schedule:      scheduleReducer,
+    pricing:       pricingReducer,
   },
 })

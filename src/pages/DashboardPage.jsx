@@ -1,42 +1,16 @@
-import { useState, useEffect } from 'react'
+import { useEffect } from 'react'
 import { toast } from 'sonner'
 import { useT } from '../hooks/useT'
 import { Card } from '../components/Card'
 import { Button } from '../components/Button'
 
 import { useSelector, useDispatch } from 'react-redux'
-import { localName, WASTE_ITEMS, pricePerKg } from '../data/wasteItems'
+import { localName } from '../data/wasteItems'
 import { setBookings } from '../store/bookingSlice'
 import { useSupabaseBookings } from '../hooks/useSupabaseBookings'
 
 const WEEKLY = [42, 65, 38, 90, 55, 72, 48]
 const DAYS   = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
-
-function initPricing() {
-  const p = {}
-  Object.keys(WASTE_ITEMS).forEach(mat => {
-    p[mat] = {
-      A: pricePerKg(mat, 'A'),
-      B: pricePerKg(mat, 'B'),
-      C: pricePerKg(mat, 'C'),
-    }
-  })
-  return p
-}
-
-function TabBtn({ active, onClick, children }) {
-  return (
-    <button
-      onClick={onClick}
-      className={[
-        'px-4 py-2 font-data text-[11px] uppercase tracking-widest border-[1.5px] border-[var(--ink)]',
-        active ? 'bg-[var(--ink)] text-[var(--paper)]' : 'bg-[var(--paper)] text-[var(--ink)] hover:bg-[var(--paper-2)]',
-      ].join(' ')}
-    >
-      {children}
-    </button>
-  )
-}
 
 export function DashboardPage() {
   const t        = useT()
@@ -49,9 +23,6 @@ export function DashboardPage() {
     dispatch(setBookings(bookings))
   }, [bookings, dispatch])
 
-  const [tab, setTab]       = useState('orders')
-  const [pricing, setPricing] = useState(initPricing)
-
   function handleAccept(id) {
     acceptBooking(id)
     toast.success('Order accepted')
@@ -59,12 +30,6 @@ export function DashboardPage() {
   function handleReject(id) {
     rejectBooking(id)
     toast.error('Order rejected')
-  }
-  function handlePriceChange(mat, grade, val) {
-    setPricing(p => ({ ...p, [mat]: { ...p[mat], [grade]: parseFloat(val) || 0 } }))
-  }
-  function handleSavePricing() {
-    toast.success(t.savePricing)
   }
 
   const pending   = bookings.filter(b => b.status === 'pending').length
@@ -102,80 +67,46 @@ export function DashboardPage() {
         </div>
       </Card>
 
-      <div className="w-full max-w-xl flex gap-2">
-        <TabBtn active={tab === 'orders'}  onClick={() => setTab('orders')}>{t.recentBookings}</TabBtn>
-        <TabBtn active={tab === 'pricing'} onClick={() => setTab('pricing')}>{t.myPricing}</TabBtn>
-      </div>
-
-      {tab === 'orders' && (
-        <div className="w-full max-w-xl flex flex-col gap-3">
-          {loading && (
-            <span className="font-data text-[11px] text-[var(--ink-3)] uppercase tracking-widest animate-pulse self-center">
-              Loading...
-            </span>
-          )}
-          {!loading && bookings.length === 0 && (
-            <Card className="flex items-center justify-center py-8">
-              <p className="font-body text-[15px] text-[var(--ink-3)] m-0">No bookings yet.</p>
-            </Card>
-          )}
-          {bookings.map(b => (
-            <Card key={b.id} className="flex flex-col gap-2">
-              <div className="flex items-center justify-between flex-wrap gap-2">
-                <div className="flex flex-col gap-0.5">
-                  <span className="font-body text-[15px] text-[var(--ink)]">
-                    {(b.materials ?? [b.materialType]).map(m => localName(m, language)).join(', ')}
-                  </span>
-                  <span className="font-data text-[12px] text-[var(--ink-3)]">
-                    {b.totalKg ?? b.weight}kg · ฿{b.estValue ?? 0}
-                  </span>
-                </div>
-                <span
-                  className="font-data text-[11px] uppercase tracking-widest"
-                  style={b.status === 'pending' ? { color: 'var(--orange)' } : b.status === 'accepted' ? { color: 'var(--green)' } : { color: '#E53E3E' }}
-                >
-                  {b.status}
+      <div className="w-full max-w-xl flex flex-col gap-3">
+        <span className="font-data text-[11px] text-[var(--ink-3)] uppercase tracking-widest">{t.recentBookings}</span>
+        {loading && (
+          <span className="font-data text-[11px] text-[var(--ink-3)] uppercase tracking-widest animate-pulse self-center">
+            Loading...
+          </span>
+        )}
+        {!loading && bookings.length === 0 && (
+          <Card className="flex items-center justify-center py-8">
+            <p className="font-body text-[15px] text-[var(--ink-3)] m-0">No bookings yet.</p>
+          </Card>
+        )}
+        {bookings.map(b => (
+          <Card key={b.id} className="flex flex-col gap-2">
+            <div className="flex items-center justify-between flex-wrap gap-2">
+              <div className="flex flex-col gap-0.5">
+                <span className="font-body text-[15px] text-[var(--ink)]">
+                  {(b.materials ?? [b.materialType]).map(m => localName(m, language)).join(', ')}
+                </span>
+                <span className="font-data text-[12px] text-[var(--ink-3)]">
+                  {b.totalKg ?? b.weight}kg · ฿{b.estValue ?? 0}
                 </span>
               </div>
-              <span className="font-body text-[13px] text-[var(--ink-3)]">{b.seller ?? b.shopName}</span>
-              {b.status === 'pending' && (
-                <div className="flex gap-2 pt-1">
-                  <Button variant="primary"   onClick={() => handleAccept(b.id)}>{t.acceptOrder}</Button>
-                  <Button variant="secondary" onClick={() => handleReject(b.id)}>{t.rejectOrder}</Button>
-                </div>
-              )}
-            </Card>
-          ))}
-        </div>
-      )}
-
-      {tab === 'pricing' && (
-        <div className="w-full max-w-xl flex flex-col gap-3">
-          <div className="grid grid-cols-4 gap-2 font-data text-[11px] text-[var(--ink-3)] uppercase tracking-widest px-3">
-            <span>Material</span>
-            <span>{t.gradeA}</span>
-            <span>{t.gradeB}</span>
-            <span>{t.gradeC}</span>
-          </div>
-          {Object.keys(WASTE_ITEMS).map(mat => (
-            <Card key={mat} className="grid grid-cols-4 gap-2 items-center">
-              <span className="font-body text-[13px] text-[var(--ink)]">{localName(mat, language)}</span>
-              {['A', 'B', 'C'].map(grade => (
-                <input
-                  key={grade}
-                  type="number"
-                  min="0"
-                  step="0.5"
-                  value={pricing[mat]?.[grade] ?? 0}
-                  onChange={e => handlePriceChange(mat, grade, e.target.value)}
-                  className="w-full px-2 py-1 border-[1.5px] border-[var(--ink)] bg-[var(--paper)] font-data text-[13px] outline-none focus:border-[var(--green)]"
-                />
-              ))}
-            </Card>
-          ))}
-          <Button variant="primary" onClick={handleSavePricing}>{t.savePricing}</Button>
-        </div>
-      )}
+              <span
+                className="font-data text-[11px] uppercase tracking-widest"
+                style={b.status === 'pending' ? { color: 'var(--orange)' } : b.status === 'accepted' ? { color: 'var(--green)' } : { color: '#E53E3E' }}
+              >
+                {b.status}
+              </span>
+            </div>
+            <span className="font-body text-[13px] text-[var(--ink-3)]">{b.seller ?? b.shopName}</span>
+            {b.status === 'pending' && (
+              <div className="flex gap-2 pt-1">
+                <Button variant="primary"   onClick={() => handleAccept(b.id)}>{t.acceptOrder}</Button>
+                <Button variant="secondary" onClick={() => handleReject(b.id)}>{t.rejectOrder}</Button>
+              </div>
+            )}
+          </Card>
+        ))}
+      </div>
     </main>
   )
 }
