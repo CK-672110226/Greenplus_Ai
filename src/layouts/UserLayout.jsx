@@ -99,7 +99,7 @@ export function UserLayout() {
           className="bg-transparent border-none cursor-pointer p-0 hover:opacity-75 transition-opacity"
           aria-label="GreenPlus.Ai home"
         >
-          <Logo height={30} />
+          <Logo height={30} showWordmark />
         </button>
 
         <div className="flex items-center gap-3">

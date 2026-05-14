@@ -45,3 +45,4 @@ This folder stores canonical implementation history for the repository.
 - `Fix/CICD/` (baseline: `Fix-CICD.00.md`) — PR Preview 403 fix (permissions block + return await), CI artifact name dedup
 - `Feature/PageDesign/` (baseline: `Feature-PageDesign.00.md`) — Wireframe design applied: HomePage hatch chart + KPIs, EcoPoints 4-tier table + timeline, ProfilePage impact grid, SettingsPage sections, LoginPage smart auth + Google moved below form
 - `Feature/PageDesign/` `.01` — Font loading fix (HTML link vs CSS @import), SectionDivider label-left alignment, KpiCard 32px, PRD Section 5 expanded
+- `Feature/PageDesign/` `.02` — Logo wordmark (GreenPlus + Ai superscript), LandingPage hero redesign, LoginPage wireframe order (OAuth first, eye icon, remember me), AdminLoginPage dark restricted style
