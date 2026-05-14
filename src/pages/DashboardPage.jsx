@@ -82,7 +82,7 @@ export function DashboardPage() {
         </Card>
         <Card className="flex flex-col gap-1 items-center">
           <span className="font-data text-[11px] text-[var(--ink-3)] uppercase tracking-widest text-center">{t.totalRevenue}</span>
-          <span className="font-brand text-[22px] text-[var(--ink)]">฿{revenue}</span>
+          <span className="font-data text-[22px] text-[var(--ink)]">฿{revenue}</span>
         </Card>
       </div>
 
