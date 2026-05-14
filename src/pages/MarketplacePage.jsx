@@ -1,11 +1,12 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { toast } from 'sonner'
 import { useT } from '../hooks/useT'
 import { Button } from '../components/Button'
 import { GradeTag } from '../components/GradeTag'
 import { useSelector, useDispatch } from 'react-redux'
 import { localName, WASTE_ITEMS, pricePerKg } from '../data/wasteItems'
-import { addPost } from '../store/marketplaceSlice'
+import { addPost, setPosts } from '../store/marketplaceSlice'
+import { useSupabaseMarketplace } from '../hooks/useSupabaseMarketplace'
 
 /* ── Static data ─────────────────────────────────────────────── */
 const MATERIAL_KEYS = Object.keys(WASTE_ITEMS)
@@ -130,7 +131,7 @@ function RequestCard({ req, language }) {
 }
 
 /* ── Post Ad Form ────────────────────────────────────────────── */
-function PostAdForm({ onClose }) {
+function PostAdForm({ onClose, onAdd }) {
   const t        = useT()
   const dispatch = useDispatch()
   const language = useSelector(s => s.user.language)
@@ -138,10 +139,12 @@ function PostAdForm({ onClose }) {
   const [form, setForm] = useState({ materialType: MATERIAL_KEYS[0], grade: 'A', qty: '', pricePerKg: '', contact: '', shop: '' })
   function set(k, v) { setForm(prev => ({ ...prev, [k]: v })) }
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault()
     if (!form.qty || !form.pricePerKg || !form.shop) { toast.error(t.requiredFields); return }
-    dispatch(addPost({ ...form, qty: Number(form.qty), pricePerKg: Number(form.pricePerKg), distanceKm: 0 }))
+    const payload = { ...form, qty: Number(form.qty), pricePerKg: Number(form.pricePerKg), distanceKm: 0 }
+    if (onAdd) await onAdd(payload)
+    else dispatch(addPost(payload))
     toast.success(t.postSuccess)
     onClose()
   }
@@ -196,8 +199,15 @@ function PostAdForm({ onClose }) {
 /* ── MarketplacePage ─────────────────────────────────────────── */
 export function MarketplacePage() {
   const t        = useT()
+  const dispatch = useDispatch()
   const language = useSelector(s => s.user.language)
   const basket   = useSelector(s => s.waste?.basket ?? [])
+
+  const { posts, addPost: supabaseAddPost } = useSupabaseMarketplace()
+
+  useEffect(() => {
+    if (posts.length > 0) dispatch(setPosts(posts))
+  }, [posts, dispatch])
 
   const [catFilter, setCatFilter]   = useState('all')
   const [isPosting, setIsPosting]   = useState(false)
@@ -385,7 +395,7 @@ export function MarketplacePage() {
           {/* Post Ad section */}
           <div className="px-5 pb-5 border-t-[1.5px] border-[var(--ink)] pt-4">
             {isPosting ? (
-              <PostAdForm onClose={() => setIsPosting(false)} />
+              <PostAdForm onClose={() => setIsPosting(false)} onAdd={supabaseAddPost} />
             ) : (
               <button
                 onClick={() => setIsPosting(true)}

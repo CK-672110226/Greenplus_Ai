@@ -4,11 +4,12 @@ import { toast } from 'sonner'
 import { useT } from '../hooks/useT'
 import { Button } from '../components/Button'
 import { GradeTag } from '../components/GradeTag'
-import { pricePerKg, localName } from '../data/wasteItems'
+import { pricePerKg, localName, WASTE_ITEMS } from '../data/wasteItems'
 import { getRulesFor, SEVERITY_COLOR } from '../data/wasteRules'
 import { addToBasket, setLastScan } from '../store/wasteSlice'
 import { twoStageInfer } from '../services/twoStageAI'
 import { useScanInsert } from '../hooks/useScanInsert'
+import { supabase } from '../lib/supabase'
 
 /* ── Contamination meter ─────────────────────────────────────── */
 function ContaminationMeter({ score }) {
@@ -93,6 +94,8 @@ export function ScanPage() {
   const [inputMode, setInputMode] = useState('camera')
   const [batchMode, setBatchMode] = useState(false)
   const [batchQueue, setBatchQueue] = useState([])
+  const [showReport, setShowReport]         = useState(false)
+  const [reportMaterial, setReportMaterial] = useState(Object.keys(WASTE_ITEMS)[0])
 
   const isMockMode = !aiConfig.onnxStage1Url
   const activeBasket = basket.filter(i => !i.skipped)
@@ -165,6 +168,20 @@ export function ScanPage() {
     img.onload  = () => runInference(img)
     img.onerror = () => { toast.error('Could not load image'); setPhase('idle') }
     img.src = url
+  }
+
+  /* ── Report misidentification ─────────────────────────── */
+  async function handleSubmitReport() {
+    try {
+      await supabase.from('user_reports').insert({
+        reporter_id:      null,
+        claimed_material: reportMaterial,
+        ai_material:      result?.materialType ?? null,
+        ai_grade:         result?.grade ?? null,
+      })
+    } catch { /* silent */ }
+    toast.success(t.reportSuccess ?? 'Report submitted. Thank you!')
+    setShowReport(false)
   }
 
   /* ── Add to basket ────────────────────────────────────── */
@@ -351,10 +368,45 @@ export function ScanPage() {
 
               {/* Single mode result buttons */}
               {!batchMode && phase === 'result' && liveResult && (
-                <div className="flex gap-3">
-                  <Button variant="primary" fullWidth onClick={handleAddSingle}>{t.addToBasket}</Button>
-                  <Button variant="secondary" onClick={handleReset}>{t.scanAgain}</Button>
-                </div>
+                <>
+                  <div className="flex gap-3">
+                    <Button variant="primary" fullWidth onClick={handleAddSingle}>{t.addToBasket}</Button>
+                    <Button variant="secondary" onClick={handleReset}>{t.scanAgain}</Button>
+                  </div>
+                  {!showReport ? (
+                    <button
+                      type="button"
+                      onClick={() => setShowReport(true)}
+                      className="font-data text-[10px] uppercase tracking-widest text-[var(--ink-4)] hover:text-[var(--orange)] bg-transparent border-none cursor-pointer py-1 self-start transition-colors"
+                    >
+                      {t.reportIssue ?? 'Report Issue'}
+                    </button>
+                  ) : (
+                    <div className="flex flex-col gap-2 border-[1.5px] border-[var(--orange)] p-3">
+                      <span className="font-data text-[11px] text-[var(--orange)] uppercase tracking-widest">{t.reportTitle ?? 'Report Misidentification'}</span>
+                      <span className="font-body text-[13px] text-[var(--ink-3)]">{t.reportHint ?? 'What type of waste is this actually?'}</span>
+                      <select
+                        value={reportMaterial}
+                        onChange={e => setReportMaterial(e.target.value)}
+                        className="w-full px-3 py-2 border-[1.5px] border-[var(--ink)] bg-[var(--paper)] font-body text-[14px] outline-none"
+                      >
+                        {Object.keys(WASTE_ITEMS).map(k => (
+                          <option key={k} value={k}>{localName(k, language)}</option>
+                        ))}
+                      </select>
+                      <div className="flex gap-2">
+                        <Button variant="secondary" onClick={handleSubmitReport}>{t.reportSubmit ?? 'Submit Report'}</Button>
+                        <button
+                          type="button"
+                          onClick={() => setShowReport(false)}
+                          className="font-data text-[11px] uppercase tracking-widest text-[var(--ink-3)] bg-transparent border-none cursor-pointer hover:text-[var(--ink)] transition-colors"
+                        >
+                          {t.reportCancel ?? 'Cancel'}
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </>
               )}
 
               <div className="flex items-center gap-4">

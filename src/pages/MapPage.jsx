@@ -3,7 +3,7 @@ import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet'
 import L from 'leaflet'
 import { useT } from '../hooks/useT'
 import { WASTE_ITEMS, localName } from '../data/wasteItems'
-import { SHOPS } from '../data/shops'
+import { useShops } from '../hooks/useShops'
 import { useSelector } from 'react-redux'
 import 'leaflet/dist/leaflet.css'
 
@@ -19,16 +19,16 @@ export function MapPage() {
   const t           = useT()
   const language    = useSelector(s => s.user.language)
   const [filter, setFilter] = useState('all')
+  const { shops, loading }  = useShops()
 
   const visible = filter === 'all'
-    ? SHOPS
-    : SHOPS.filter(s => s.accepts.includes(filter))
+    ? shops
+    : shops.filter(s => s.accepts.includes(filter))
 
   return (
     <main className="flex flex-col items-center px-4 py-10 gap-6">
       <h1 className="font-brand text-[28px] text-[var(--ink)] m-0">{t.mapTitle ?? t.map}</h1>
 
-      {/* Filter bar */}
       <div className="w-full max-w-2xl flex gap-2 flex-wrap">
         {MATERIAL_FILTERS.map(f => (
           <button
@@ -46,7 +46,12 @@ export function MapPage() {
         ))}
       </div>
 
-      {/* Map */}
+      {loading && (
+        <span className="font-data text-[11px] text-[var(--ink-3)] uppercase tracking-widest animate-pulse">
+          Loading...
+        </span>
+      )}
+
       <div className="w-full max-w-2xl" style={{ height: 420, border: '1.5px solid var(--ink)' }}>
         <MapContainer
           center={[18.7883, 98.9853]}
@@ -62,9 +67,11 @@ export function MapPage() {
               <Popup>
                 <div style={{ fontFamily: 'var(--font-data, monospace)', minWidth: 180 }}>
                   <strong style={{ fontSize: 14 }}>{shop.name}</strong>
-                  <div style={{ fontSize: 12, marginTop: 4, color: '#555' }}>
-                    {shop.distanceKm} {t.kmAway}
-                  </div>
+                  {shop.distanceKm && (
+                    <div style={{ fontSize: 12, marginTop: 4, color: '#555' }}>
+                      {shop.distanceKm} {t.kmAway}
+                    </div>
+                  )}
                   <div style={{ fontSize: 12, marginTop: 4 }}>
                     <em>{t.shopAccepts}:</em>{' '}
                     {shop.accepts.map(a => localName(a, language)).join(', ')}
@@ -84,7 +91,7 @@ export function MapPage() {
         </MapContainer>
       </div>
 
-      {visible.length === 0 && (
+      {!loading && visible.length === 0 && (
         <p className="font-body text-[15px] text-[var(--ink-3)]">{t.noShopsNear}</p>
       )}
     </main>

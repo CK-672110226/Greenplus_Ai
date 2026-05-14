@@ -6,11 +6,11 @@ import { Card } from '../components/Card'
 import { Button } from '../components/Button'
 import { GradeTag } from '../components/GradeTag'
 import { localName, pricePerKg } from '../data/wasteItems'
-import { SHOPS } from '../data/shops'
 import { removeFromBasket, updateWeight, toggleSkip, clearBasket } from '../store/wasteSlice'
 import { useGPS } from '../hooks/useGPS'
 import { haversineKm } from '../utils/haversine'
 import { addBooking } from '../store/bookingSlice'
+import { useShops } from '../hooks/useShops'
 
 function distOf(shop, userLat, userLng) {
   if (userLat != null && userLng != null) {
@@ -19,11 +19,9 @@ function distOf(shop, userLat, userLng) {
   return shop.distanceKm
 }
 
-function computeRoutes(basket, userLat, userLng) {
-  const active = basket.filter(i => !i.skipped)
+function computeRoutes(basket, shopsWithDist) {
+  const active    = basket.filter(i => !i.skipped)
   const materials = [...new Set(active.map(i => i.materialType))]
-
-  const shopsWithDist = SHOPS.map(s => ({ ...s, dist: distOf(s, userLat, userLng) }))
 
   const single = shopsWithDist
     .filter(s => materials.every(m => s.accepts.includes(m)))
@@ -53,6 +51,10 @@ export function BasketPage() {
   const [routeMode, setRouteMode] = useState('single')
   const [showRoute, setShowRoute] = useState(false)
   const gps = useGPS()
+  const { shops } = useShops()
+
+  const shopsWithDist = shops.map(s => ({ ...s, dist: distOf(s, gps.lat, gps.lng) }))
+  const { single, multi, unmatched, materials } = computeRoutes(basket, shopsWithDist)
 
   function handleBook(shop) {
     const active = basket.filter(i => !i.skipped)
@@ -70,8 +72,6 @@ export function BasketPage() {
   const total = basket
     .filter(i => !i.skipped)
     .reduce((sum, i) => sum + pricePerKg(i.materialType, i.grade) * (i.weight ?? 0), 0)
-
-  const { single, multi, unmatched, materials } = computeRoutes(basket, gps.lat, gps.lng)
 
   function openMaps(shop) {
     window.open(`https://www.google.com/maps/search/?api=1&query=${shop.lat},${shop.lng}`, '_blank')
@@ -140,7 +140,6 @@ export function BasketPage() {
             </Card>
           ))}
 
-          {/* Total + clear */}
           <Card className="flex flex-col gap-3">
             <div className="flex items-center justify-between">
               <span className="font-data text-[12px] text-[var(--ink-3)] uppercase tracking-widest">{t.basketTotal}</span>
@@ -154,7 +153,6 @@ export function BasketPage() {
                 {t.clearBasket}
               </Button>
             </div>
-            {/* GPS locate */}
             <button
               onClick={gps.request}
               disabled={gps.loading}
@@ -164,10 +162,8 @@ export function BasketPage() {
             </button>
           </Card>
 
-          {/* Route planner */}
           {showRoute && materials.length > 0 && (
             <Card className="flex flex-col gap-4">
-              {/* Mode toggle */}
               <div className="flex gap-2">
                 <button
                   onClick={() => setRouteMode('single')}
@@ -183,7 +179,6 @@ export function BasketPage() {
                 </button>
               </div>
 
-              {/* Single shop results */}
               {routeMode === 'single' && (
                 single.length === 0 ? (
                   <p className="font-body text-[13px] text-[var(--orange)] m-0">{t.noShopWarning}</p>
@@ -206,7 +201,6 @@ export function BasketPage() {
                 )
               )}
 
-              {/* Multi-stop results */}
               {routeMode === 'multi' && (
                 <div className="flex flex-col gap-3">
                   {multi.map((stop, i) => (

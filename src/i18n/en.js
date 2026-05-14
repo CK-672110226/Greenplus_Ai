@@ -180,4 +180,28 @@ export const en = {
   // Login
   emailNotVerified:     'Please verify your email before signing in — check your inbox.',
   resendVerification:   'Resend verification email',
+
+  // Report / Vertex / Stage2
+  reportIssue:         'Report Issue',
+  reportTitle:         'Report Misidentification',
+  reportHint:          'What type of waste is this actually?',
+  reportSubmit:        'Submit Report',
+  reportSuccess:       'Report submitted. Thank you!',
+  reportCancel:        'Cancel',
+  adminReports:        'Reports',
+  pendingReports:      'Pending Reports',
+  approveAsLabel:      'Approve as',
+  noReports:           'No pending reports.',
+  vertexConfig:        'Vertex AI Config',
+  vertexProjectId:     'Project ID',
+  vertexLocation:      'Location',
+  vertexToken:         'Access Token',
+  vertexS1Endpoint:    'Stage 1 Endpoint ID',
+  vertexS2Endpoint:    'Stage 2 Endpoint ID',
+  saveVertexConfig:    'Save Vertex Config',
+  exportManifest:      'Export Dataset Manifest',
+  stage2Dataset:       'Stage 2 — Cleanliness Dataset',
+  cleanImages:         'Clean Images',
+  dirtyImages:         'Dirty Images',
+  uploading:           'Uploading...',
 }
