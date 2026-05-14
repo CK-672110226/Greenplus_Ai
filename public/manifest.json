@@ -1,0 +1,19 @@
+{
+  "name": "GreenPlus.Ai",
+  "short_name": "GreenPlus",
+  "description": "AI-powered recycling marketplace — scan waste, earn cash, find buyers",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f5f0e8",
+  "theme_color": "#16a34a",
+  "lang": "th",
+  "icons": [
+    {
+      "src": "/Lightmode.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["utilities", "shopping", "lifestyle"]
+}

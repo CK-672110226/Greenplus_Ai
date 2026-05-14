@@ -45,10 +45,9 @@ function HatchBarChart({ data }) {
   )
 }
 
-function greetingMsg(name) {
+function greetingKey() {
   const h = new Date().getHours()
-  const part = h < 12 ? 'MORNING' : h < 17 ? 'AFTERNOON' : 'EVENING'
-  return `GOOD ${part}, ${(name ?? 'YOU').toUpperCase()}`
+  return h < 12 ? 'goodMorning' : h < 17 ? 'goodAfternoon' : 'goodEvening'
 }
 
 export function HomePage() {
@@ -68,22 +67,22 @@ export function HomePage() {
       {/* Greeting */}
       <div className="flex flex-col gap-0.5">
         <h1 className="font-brand text-[26px] text-[var(--ink)] m-0 leading-tight">
-          {greetingMsg(profile?.display_name)}
+          {t[greetingKey()]}, {profile?.display_name ?? '—'}
         </h1>
         <span className="font-data text-[11px] text-[var(--ink-3)] uppercase tracking-widest">
-          {weeklyKg} kg this week
+          {weeklyKg} kg {t.weeklyVolume ? `· ${t.weeklyVolume}` : 'this week'}
         </span>
       </div>
 
       {/* KPI row */}
       <div className="grid grid-cols-2 gap-3">
         <KpiCard
-          label="Weekly earnings"
+          label={t.weeklyEarnings ?? 'Weekly earnings'}
           value={`฿${totalValue.toFixed(0)}`}
           trend={totalValue > 0 ? { dir: 'up', value: `฿${totalValue.toFixed(0)}`, note: 'this week' } : undefined}
         />
         <KpiCard
-          label="Eco points"
+          label={t.ecoPoints ?? 'Eco points'}
           value={ecoPoints}
           unit="pts"
         />
@@ -91,7 +90,7 @@ export function HomePage() {
 
       {/* Weekly hatch chart */}
       <div className="flex flex-col gap-1.5">
-        <span className="font-data text-[10px] text-[var(--ink-3)] uppercase tracking-widest">Weekly scan volume (kg)</span>
+        <span className="font-data text-[10px] text-[var(--ink-3)] uppercase tracking-widest">{t.weeklyVolume ?? 'Weekly scan volume (kg)'}</span>
         <div className="border-[1.5px] border-[var(--ink)] px-3 pt-3 pb-1 bg-[var(--paper)]">
           <HatchBarChart data={MOCK_WEEKLY} />
         </div>
@@ -130,7 +129,7 @@ export function HomePage() {
                 className="flex items-center justify-between border-[1.5px] border-[var(--ink-4)] px-3 py-2"
               >
                 <span className="font-body text-[15px] text-[var(--ink)]">
-                  {localName(item.material, language)}
+                  {localName(item.materialType, language)}
                 </span>
                 <div className="flex items-center gap-2">
                   <GradeTag grade={item.grade} />
@@ -162,7 +161,7 @@ export function HomePage() {
           <Card className="flex items-center justify-between">
             <div className="flex flex-col gap-0.5">
               <span className="font-body text-[15px] text-[var(--ink)]">
-                {localName(lastScan.material, language)}
+                {localName(lastScan.materialType, language)}
               </span>
               <span className="font-data text-[11px] text-[var(--ink-3)]">
                 {t.confidence} {lastScan.confidence}%
@@ -175,13 +174,13 @@ export function HomePage() {
 
       {/* Quick links */}
       <div className="flex flex-col gap-2">
-        <SectionDivider label="quick access" />
+        <SectionDivider label={t.quickAccess ?? 'Quick access'} />
         <div className="grid grid-cols-2 gap-3">
           {[
-            { path: '/map',        sub: t.nearbyShops, title: t.map },
-            { path: '/eco-points', sub: t.yourPoints,  title: t.ecoPoints },
-            { path: '/prices',     sub: "today's rates", title: 'Prices' },
-            { path: '/profile',    sub: 'your account',  title: 'Profile' },
+            { path: '/map',        sub: t.nearbyShops ?? 'Nearby shops', title: t.map },
+            { path: '/eco-points', sub: t.yourPoints  ?? 'Your points',  title: t.ecoPoints },
+            { path: '/marketplace',sub: t.todayRates  ?? "Today's rates", title: t.marketplace ?? 'Prices' },
+            { path: '/profile',    sub: t.yourAccount ?? 'Your account',  title: t.profile ?? 'Profile' },
           ].map(({ path, sub, title }) => (
             <button
               key={path}

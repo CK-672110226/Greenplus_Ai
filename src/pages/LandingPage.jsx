@@ -3,6 +3,7 @@ import { Navigate, useNavigate } from 'react-router-dom'
 import { setLanguage } from '../store/userSlice'
 import { Logo } from '../components/Logo'
 import { Button } from '../components/Button'
+import { ParticleField } from '../components/ParticleField'
 
 const ROLE_DEST = { user: '/home', buyer: '/dashboard', admin: '/admin' }
 
@@ -62,10 +63,11 @@ export function LandingPage() {
       </header>
 
       {/* ── Hero — two-column on md+ ── */}
-      <main className="flex-1 grid md:grid-cols-2">
+      <main className="relative flex-1 grid md:grid-cols-2 overflow-hidden">
+        <ParticleField />
 
         {/* Left — copy + stats */}
-        <div className="flex flex-col gap-6 px-6 md:px-12 py-10 md:py-16 border-b-[1.5px] md:border-b-0 md:border-r-[1.5px] border-[var(--ink)]">
+        <div className="relative z-10 flex flex-col gap-6 px-6 md:px-12 py-10 md:py-16 border-b-[1.5px] md:border-b-0 md:border-r-[1.5px] border-[var(--ink)]">
 
           {/* Pilot chip */}
           <span className="inline-flex items-center gap-2 font-data text-[11px] text-[var(--green-ink)] border-[1.5px] border-[var(--green)] bg-[var(--green-soft)] px-3 py-1 w-fit uppercase tracking-widest">
@@ -115,7 +117,7 @@ export function LandingPage() {
         </div>
 
         {/* Right — role chooser */}
-        <div className="flex flex-col gap-5 px-6 md:px-10 py-10 md:py-16">
+        <div className="relative z-10 flex flex-col gap-5 px-6 md:px-10 py-10 md:py-16">
           <div>
             <h2 className="font-brand text-[26px] text-[var(--ink)] m-0">Pick your side</h2>
             <p className="font-data text-[11px] text-[var(--ink-3)] uppercase tracking-widest m-0 mt-1">

@@ -180,4 +180,23 @@ export const en = {
   // Login
   emailNotVerified:     'Please verify your email before signing in — check your inbox.',
   resendVerification:   'Resend verification email',
+  invalidCredentials:   'Invalid email or password',
+
+  // Home page
+  goodMorning:    'Good morning',
+  goodAfternoon:  'Good afternoon',
+  goodEvening:    'Good evening',
+  weeklyEarnings: 'Weekly earnings',
+  weeklyVolume:   'Weekly scan volume (kg)',
+  quickAccess:    'Quick access',
+  todayRates:     "Today's rates",
+  yourAccount:    'Your account',
+  prices:         'Prices',
+
+  // Scan page
+  uploadImage:        'Upload image',
+  uploadInstead:      'Upload image instead',
+  startingCamera:     'Starting camera…',
+  lowConfidenceTitle: 'Low confidence',
+  lowConfidenceHint:  "AI couldn't identify the item clearly. Try better lighting or a clearer angle.",
 }

@@ -37,7 +37,7 @@ export function ScanPage() {
   const fileRef  = useRef(null)
 
   // Start as 'starting' so the effect never needs to call setPhase synchronously
-  const [phase, setPhase]         = useState('starting')   // starting | idle | analyzing | result | troll | error
+  const [phase, setPhase]         = useState('starting')   // starting | idle | analyzing | result | troll | lowConfidence | error
   const [result, setResult]       = useState(null)
   const [uploadSrc, setUploadSrc] = useState(null)         // object URL for preview
   const [inputMode, setInputMode] = useState('camera')     // 'camera' | 'upload'
@@ -74,7 +74,8 @@ export function ScanPage() {
         onnxStage1Url:       aiConfig.onnxStage1Url || null,
         onnxStage2Url:       aiConfig.onnxStage2Url || null,
       })
-      if (infer.troll || infer.lowConfidence) { setPhase('troll'); return }
+      if (infer.troll)         { setPhase('troll');         return }
+      if (infer.lowConfidence) { setPhase('lowConfidence'); return }
       setResult(infer)
       dispatch(setLastScan(infer))
       setPhase('result')
@@ -163,7 +164,7 @@ export function ScanPage() {
           {/* Starting / no stream placeholder */}
           {phase === 'starting' && (
             <div className="absolute inset-0 flex items-center justify-center bg-[var(--paper-2)]">
-              <span className="font-data text-[11px] text-[var(--ink-4)] uppercase tracking-widest">Starting camera…</span>
+              <span className="font-data text-[11px] text-[var(--ink-4)] uppercase tracking-widest">{t.startingCamera ?? 'Starting camera…'}</span>
             </div>
           )}
 
@@ -178,11 +179,19 @@ export function ScanPage() {
           )}
         </div>
 
-        {/* Troll / low confidence */}
+        {/* Troll detection */}
         {phase === 'troll' && (
           <div className="flex flex-col items-center gap-3 py-4 px-4 bg-[var(--orange)] border-[1.5px] border-[var(--ink)]">
             <span className="font-data text-[12px] text-[var(--ink)] uppercase tracking-widest">{t.antiTroll}</span>
             <p className="font-body text-[14px] text-[var(--ink)] m-0 text-center">{t.rejectedHint}</p>
+            <Button variant="secondary" onClick={handleReset}>{t.scanAgain}</Button>
+          </div>
+        )}
+        {/* Low confidence — different from troll: not rejected, just unclear */}
+        {phase === 'lowConfidence' && (
+          <div className="flex flex-col items-center gap-3 py-4 px-4 border-[1.5px] border-[var(--ink-3)]">
+            <span className="font-data text-[12px] text-[var(--ink-2)] uppercase tracking-widest">{t.lowConfidenceTitle ?? 'Low confidence'}</span>
+            <p className="font-body text-[14px] text-[var(--ink-3)] m-0 text-center">{t.lowConfidenceHint ?? "AI couldn't identify the item clearly. Try better lighting or a clearer angle."}</p>
             <Button variant="secondary" onClick={handleReset}>{t.scanAgain}</Button>
           </div>
         )}
@@ -192,7 +201,7 @@ export function ScanPage() {
           <div className="flex flex-col items-center gap-3 py-4 px-4 border-[1.5px] border-[var(--orange)]">
             <p className="font-body text-[14px] text-[var(--orange)] m-0 text-center">{t.cameraError}</p>
             <Button variant="secondary" fullWidth onClick={() => fileRef.current?.click()}>
-              Upload image instead
+              {t.uploadInstead ?? 'Upload image instead'}
             </Button>
           </div>
         )}
@@ -207,7 +216,7 @@ export function ScanPage() {
                   {localName(result.materialType, language)}
                 </span>
               </div>
-              {result.source === 'mock' && (
+              {(result.source === 'mock' || result.source === 'mock-fallback') && (
                 <span className="font-data text-[9px] text-[var(--ink-4)] border border-[var(--ink-4)] px-1.5 py-0.5 uppercase">demo</span>
               )}
             </div>
@@ -271,7 +280,7 @@ export function ScanPage() {
               onClick={() => fileRef.current?.click()}
               className="font-data text-[11px] uppercase tracking-widest text-[var(--ink-3)] hover:text-[var(--ink)] bg-transparent border-none cursor-pointer py-1 self-center transition-colors"
             >
-              or upload image
+              {t.uploadImage ?? 'Upload image'}
             </button>
           </div>
         )}

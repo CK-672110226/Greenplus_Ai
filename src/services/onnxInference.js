@@ -12,6 +12,14 @@ async function loadSession(modelUrl) {
   return session
 }
 
+// Release ONNX WASM memory when the admin deploys a new model URL.
+export async function clearModelCache() {
+  for (const session of Object.values(_sessionCache)) {
+    try { await session.release() } catch { /* already released */ }
+  }
+  _sessionCache = {}
+}
+
 // Preprocess a <canvas> or ImageData into a Float32 NCHW tensor [1, 3, 224, 224]
 function preprocessImage(source) {
   const canvas = document.createElement('canvas')
@@ -32,6 +40,7 @@ function preprocessImage(source) {
 
 // Run inference on a model URL. Returns Float32Array of logits, or null on failure.
 export async function runOnnx(modelUrl, imageSource) {
+  const t0 = performance.now()
   try {
     const { Tensor } = await import('onnxruntime-web')
     const session   = await loadSession(modelUrl)
@@ -39,6 +48,8 @@ export async function runOnnx(modelUrl, imageSource) {
     const inputName = session.inputNames[0]
     const tensor    = new Tensor('float32', inputData, [1, 3, 224, 224])
     const output    = await session.run({ [inputName]: tensor })
+    const ms = (performance.now() - t0).toFixed(1)
+    console.info(`[ONNX] inference ${ms}ms`)
     return output[session.outputNames[0]].data
   } catch (err) {
     console.warn('[ONNX] inference failed, falling back to mock:', err.message)
@@ -46,14 +57,14 @@ export async function runOnnx(modelUrl, imageSource) {
   }
 }
 
-// Softmax helper
+// Softmax — loop-based to avoid call stack overflow on large ONNX output tensors.
 export function softmax(logits) {
-  const max = Math.max(...logits)
-  const exps = logits.map(x => Math.exp(x - max))
-  const sum = exps.reduce((a, b) => a + b, 0)
-  return exps.map(x => x / sum)
-}
-
-export function clearModelCache() {
-  _sessionCache = {}
+  let max = -Infinity
+  for (let i = 0; i < logits.length; i++) { if (logits[i] > max) max = logits[i] }
+  let sum = 0
+  const exps = new Float64Array(logits.length)
+  for (let i = 0; i < logits.length; i++) { exps[i] = Math.exp(logits[i] - max); sum += exps[i] }
+  const probs = new Array(logits.length)
+  for (let i = 0; i < logits.length; i++) { probs[i] = exps[i] / sum }
+  return probs
 }
