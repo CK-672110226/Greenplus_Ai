@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { toast } from 'sonner'
 import { useT } from '../hooks/useT'
 import { Card } from '../components/Card'
@@ -6,7 +6,8 @@ import { Button } from '../components/Button'
 
 import { useSelector, useDispatch } from 'react-redux'
 import { localName, WASTE_ITEMS, pricePerKg } from '../data/wasteItems'
-import { updateStatus } from '../store/bookingSlice'
+import { setBookings } from '../store/bookingSlice'
+import { useSupabaseBookings } from '../hooks/useSupabaseBookings'
 
 const WEEKLY = [42, 65, 38, 90, 55, 72, 48]
 const DAYS   = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
@@ -41,17 +42,22 @@ export function DashboardPage() {
   const t        = useT()
   const dispatch = useDispatch()
   const language = useSelector(s => s.user.language)
-  const bookings = useSelector(s => s.bookings.bookings)
+
+  const { bookings, loading, acceptBooking, rejectBooking } = useSupabaseBookings()
+
+  useEffect(() => {
+    dispatch(setBookings(bookings))
+  }, [bookings, dispatch])
 
   const [tab, setTab]       = useState('orders')
   const [pricing, setPricing] = useState(initPricing)
 
   function handleAccept(id) {
-    dispatch(updateStatus({ id, status: 'accepted' }))
+    acceptBooking(id)
     toast.success('Order accepted')
   }
   function handleReject(id) {
-    dispatch(updateStatus({ id, status: 'rejected' }))
+    rejectBooking(id)
     toast.error('Order rejected')
   }
   function handlePriceChange(mat, grade, val) {
@@ -63,13 +69,12 @@ export function DashboardPage() {
 
   const pending   = bookings.filter(b => b.status === 'pending').length
   const completed = bookings.filter(b => b.status === 'accepted').length
-  const revenue   = bookings.filter(b => b.status === 'accepted').reduce((s, b) => s + b.weight * 10, 0)
+  const revenue   = bookings.filter(b => b.status === 'accepted').reduce((s, b) => s + (b.totalKg ?? 0) * 10, 0)
 
   return (
     <main className="flex flex-col items-center px-4 py-10 gap-6">
       <h1 className="font-brand text-[28px] text-[var(--ink)] m-0">{t.dashboardTitle ?? t.dashboard}</h1>
 
-      {/* Stats row */}
       <div className="w-full max-w-xl grid grid-cols-3 gap-3">
         <Card className="flex flex-col gap-1 items-center">
           <span className="font-data text-[11px] text-[var(--ink-3)] uppercase tracking-widest text-center">{t.pendingOrders}</span>
@@ -85,7 +90,6 @@ export function DashboardPage() {
         </Card>
       </div>
 
-      {/* Weekly chart */}
       <Card className="w-full max-w-xl flex flex-col gap-3">
         <span className="font-data text-[11px] text-[var(--ink-3)] uppercase tracking-widest">Weekly Volume (kg)</span>
         <div className="flex items-end gap-1 h-20">
@@ -98,15 +102,23 @@ export function DashboardPage() {
         </div>
       </Card>
 
-      {/* Tabs */}
       <div className="w-full max-w-xl flex gap-2">
         <TabBtn active={tab === 'orders'}  onClick={() => setTab('orders')}>{t.recentBookings}</TabBtn>
         <TabBtn active={tab === 'pricing'} onClick={() => setTab('pricing')}>{t.myPricing}</TabBtn>
       </div>
 
-      {/* Orders tab */}
       {tab === 'orders' && (
         <div className="w-full max-w-xl flex flex-col gap-3">
+          {loading && (
+            <span className="font-data text-[11px] text-[var(--ink-3)] uppercase tracking-widest animate-pulse self-center">
+              Loading...
+            </span>
+          )}
+          {!loading && bookings.length === 0 && (
+            <Card className="flex items-center justify-center py-8">
+              <p className="font-body text-[15px] text-[var(--ink-3)] m-0">No bookings yet.</p>
+            </Card>
+          )}
           {bookings.map(b => (
             <Card key={b.id} className="flex flex-col gap-2">
               <div className="flex items-center justify-between flex-wrap gap-2">
@@ -137,7 +149,6 @@ export function DashboardPage() {
         </div>
       )}
 
-      {/* Pricing CRUD tab (B-02) */}
       {tab === 'pricing' && (
         <div className="w-full max-w-xl flex flex-col gap-3">
           <div className="grid grid-cols-4 gap-2 font-data text-[11px] text-[var(--ink-3)] uppercase tracking-widest px-3">

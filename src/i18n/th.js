@@ -180,4 +180,28 @@ export const th = {
   // Login
   emailNotVerified:     'กรุณายืนยันอีเมลก่อนเข้าสู่ระบบ — เช็กกล่องจดหมายของคุณ',
   resendVerification:   'ส่งอีเมลยืนยันอีกครั้ง',
+
+  // Report / Vertex / Stage2
+  reportIssue:         'แจ้งปัญหา',
+  reportTitle:         'แจ้งการระบุผิดพลาด',
+  reportHint:          'ขยะนี้จริงๆ แล้วคืออะไร?',
+  reportSubmit:        'ส่งรายงาน',
+  reportSuccess:       'ส่งรายงานแล้ว ขอบคุณ!',
+  reportCancel:        'ยกเลิก',
+  adminReports:        'รายงาน',
+  pendingReports:      'รอตรวจสอบ',
+  approveAsLabel:      'อนุมัติเป็น',
+  noReports:           'ไม่มีรายงานที่รอตรวจสอบ',
+  vertexConfig:        'Vertex AI Config',
+  vertexProjectId:     'Project ID',
+  vertexLocation:      'Location',
+  vertexToken:         'Access Token',
+  vertexS1Endpoint:    'Stage 1 Endpoint ID',
+  vertexS2Endpoint:    'Stage 2 Endpoint ID',
+  saveVertexConfig:    'บันทึก Vertex Config',
+  exportManifest:      'Export Dataset Manifest',
+  stage2Dataset:       'Stage 2 — ชุดข้อมูลความสะอาด',
+  cleanImages:         'รูปสะอาด',
+  dirtyImages:         'รูปสกปรก',
+  uploading:           'กำลังอัปโหลด...',
 }
