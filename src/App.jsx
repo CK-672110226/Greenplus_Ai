@@ -1,10 +1,12 @@
 import { lazy, Suspense, useEffect } from 'react'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { Toaster } from 'sonner'
-import { useSelector } from 'react-redux'
+import { useDispatch, useSelector } from 'react-redux'
+import { SpeedInsights } from '@vercel/speed-insights/react'
 import { SmartLayout } from './layouts/SmartLayout'
 import { ProtectedRoute } from './components/ProtectedRoute'
 import { useAuth } from './hooks/useAuth'
+import { setDarkMode } from './store/userSlice'
 
 // Eagerly loaded — always needed on first paint
 import { LandingPage } from './pages/LandingPage'
@@ -38,11 +40,23 @@ function PageFallback() {
 
 function AuthInitializer({ children }) {
   useAuth()
+  const dispatch = useDispatch()
   const darkMode = useSelector(s => s.user.darkMode)
 
   useEffect(() => {
     document.documentElement.classList.toggle('dark', darkMode)
   }, [darkMode])
+
+  useEffect(() => {
+    const mq = window.matchMedia('(prefers-color-scheme: dark)')
+    const handler = e => {
+      if (localStorage.getItem('gp_dark') === null) {
+        dispatch(setDarkMode(e.matches))
+      }
+    }
+    mq.addEventListener('change', handler)
+    return () => mq.removeEventListener('change', handler)
+  }, [dispatch])
 
   return children
 }
@@ -52,6 +66,7 @@ function App() {
     <BrowserRouter>
       <AuthInitializer>
         <Toaster richColors position="top-right" />
+        <SpeedInsights />
         <Suspense fallback={<PageFallback />}>
           <Routes>
             <Route element={<SmartLayout />}>

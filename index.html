@@ -1,13 +1,96 @@
 <!doctype html>
-<html lang="en">
+<html lang="th">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/png" href="/Lightmode.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>GreenPlus.Ai</title>
+
+    <!-- ── Primary SEO ────────────────────────────────────────────────── -->
+    <title>GreenPlus.Ai — AI คัดแยกขยะรีไซเคิล หาราคาและร้านรับซื้อใกล้คุณ</title>
+    <meta name="description"
+          content="GreenPlus.Ai ใช้ AI วิเคราะห์ขยะรีไซเคิลจากกล้อง บอกราคารับซื้อวันนี้ และหาร้านรับซื้อใกล้บ้านคุณในเชียงใหม่ สแกนฟรี ไม่ต้องสมัครสมาชิก" />
+    <meta name="keywords"
+          content="recycling Thailand, ขายของเก่า, รับซื้อของเก่า, ขยะรีไซเคิล, AI scan waste, scrap price Chiang Mai, greenplus" />
+    <meta name="robots" content="index, follow" />
+    <link rel="canonical" href="https://greenplus.ai/" />
+
+    <!-- ── hreflang ────────────────────────────────────────────────────── -->
+    <link rel="alternate" hreflang="th" href="https://greenplus.ai/" />
+    <link rel="alternate" hreflang="en" href="https://greenplus.ai/?lang=en" />
+    <link rel="alternate" hreflang="x-default" href="https://greenplus.ai/" />
+
+    <!-- ── Open Graph (Facebook, LINE, iMessage) ──────────────────────── -->
+    <meta property="og:type"        content="website" />
+    <meta property="og:url"         content="https://greenplus.ai/" />
+    <meta property="og:site_name"   content="GreenPlus.Ai" />
+    <meta property="og:title"       content="GreenPlus.Ai — AI คัดแยกขยะ หาราคารับซื้อวันนี้" />
+    <meta property="og:description" content="สแกนขยะรีไซเคิลด้วย AI รู้ราคาทันที หาร้านรับซื้อใกล้คุณ เก็บ Eco Points ทุกครั้งที่รีไซเคิล" />
+    <meta property="og:image"       content="https://greenplus.ai/og-cover.png" />
+    <meta property="og:image:width"  content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:locale"      content="th_TH" />
+    <meta property="og:locale:alternate" content="en_US" />
+
+    <!-- ── Twitter / X Card ───────────────────────────────────────────── -->
+    <meta name="twitter:card"        content="summary_large_image" />
+    <meta name="twitter:title"       content="GreenPlus.Ai — AI คัดแยกขยะ" />
+    <meta name="twitter:description" content="สแกนขยะรีไซเคิลด้วย AI รู้ราคาทันที หาร้านรับซื้อใกล้คุณ" />
+    <meta name="twitter:image"       content="https://greenplus.ai/og-cover.png" />
+
+    <!-- ── Icons & PWA ────────────────────────────────────────────────── -->
+    <link rel="icon" type="image/png" href="/Lightmode.png" />
+    <link rel="apple-touch-icon"       href="/Lightmode.png" />
+    <link rel="manifest"               href="/manifest.json" />
+    <meta name="theme-color"           content="#16a34a" />
+    <meta name="mobile-web-app-capable"       content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+
+    <!-- ── Structured Data (JSON-LD) ─────────────────────────────────── -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "GreenPlus.Ai",
+      "url": "https://greenplus.ai",
+      "description": "AI-powered waste classification and recycling marketplace for Thailand. Scan recyclables, get real-time prices, find nearby buyers.",
+      "applicationCategory": "UtilitiesApplication",
+      "operatingSystem": "Web",
+      "inLanguage": ["th", "en"],
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "THB"
+      },
+      "provider": {
+        "@type": "Organization",
+        "name": "GreenPlus.Ai",
+        "url": "https://greenplus.ai",
+        "email": "support@greenplus.ai",
+        "areaServed": {
+          "@type": "City",
+          "name": "Chiang Mai",
+          "sameAs": "https://www.wikidata.org/wiki/Q1543"
+        }
+      }
+    }
+    </script>
+
+    <!-- ── Fonts — non-blocking load ─────────────────────────────────── -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Architects+Daughter&family=Caveat:wght@400;600&family=JetBrains+Mono:wght@400;700&family=Sarabun:wght@400;600&family=IBM+Plex+Sans+Thai:wght@400;600&family=Mitr:wght@400;500&display=swap" />
+    <!--
+      Load fonts without blocking render: use media="print" trick.
+      The browser downloads in the background and switches rel to stylesheet on load.
+    -->
+    <link
+      rel="stylesheet"
+      media="print"
+      onload="this.media='all'"
+      href="https://fonts.googleapis.com/css2?family=Architects+Daughter&family=Caveat:wght@400;600&family=JetBrains+Mono:wght@400;700&family=Sarabun:wght@400;600&family=IBM+Plex+Sans+Thai:wght@400;600&family=Mitr:wght@400;500&display=swap"
+    />
+    <noscript>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Architects+Daughter&family=Caveat:wght@400;600&family=JetBrains+Mono:wght@400;700&family=Sarabun:wght@400;600&family=IBM+Plex+Sans+Thai:wght@400;600&family=Mitr:wght@400;500&display=swap" />
+    </noscript>
   </head>
   <body>
     <div id="root"></div>

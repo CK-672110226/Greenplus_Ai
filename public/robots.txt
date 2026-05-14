@@ -1,0 +1,22 @@
+User-agent: *
+
+# Block authenticated-only routes — no value for crawlers
+Disallow: /scan
+Disallow: /basket
+Disallow: /home
+Disallow: /map
+Disallow: /eco-points
+Disallow: /marketplace
+Disallow: /dashboard
+Disallow: /profile
+Disallow: /settings
+Disallow: /admin
+Disallow: /x/admin
+
+# Block Supabase OAuth callback paths
+Disallow: /auth/
+
+Allow: /
+Allow: /login
+
+Sitemap: https://greenplus.ai/sitemap.xml

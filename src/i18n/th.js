@@ -180,6 +180,25 @@ export const th = {
   // Login
   emailNotVerified:     'กรุณายืนยันอีเมลก่อนเข้าสู่ระบบ — เช็กกล่องจดหมายของคุณ',
   resendVerification:   'ส่งอีเมลยืนยันอีกครั้ง',
+  invalidCredentials:   'อีเมลหรือรหัสผ่านไม่ถูกต้อง',
+
+  // Home page
+  goodMorning:    'สวัสดีตอนเช้า',
+  goodAfternoon:  'สวัสดีตอนบ่าย',
+  goodEvening:    'สวัสดีตอนเย็น',
+  weeklyEarnings: 'รายได้สัปดาห์นี้',
+  weeklyVolume:   'ปริมาณสแกน (กก.)',
+  quickAccess:    'เมนูด่วน',
+  todayRates:     'ราคาวันนี้',
+  yourAccount:    'บัญชีของคุณ',
+  prices:         'ราคา',
+
+  // Scan page
+  uploadImage:        'อัปโหลดรูป',
+  uploadInstead:      'อัปโหลดรูปแทน',
+  startingCamera:     'กำลังเปิดกล้อง…',
+  lowConfidenceTitle: 'ความมั่นใจต่ำ',
+  lowConfidenceHint:  'AI ระบุวัสดุไม่ชัดเจน ลองถ่ายในที่แสงดีขึ้นหรือเปลี่ยนมุมกล้อง',
 
   // Report / Vertex / Stage2
   reportIssue:         'แจ้งปัญหา',

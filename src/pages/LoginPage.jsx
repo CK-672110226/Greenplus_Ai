@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useEffect, useState, useId } from 'react'
+import { useNavigate, useSearchParams, useLocation } from 'react-router-dom'
 import { useSelector } from 'react-redux'
 import { supabase } from '../lib/supabase'
 import { Button } from '../components/Button'
@@ -23,10 +23,10 @@ function EyeIcon({ open }) {
   )
 }
 
-function Field({ label, children }) {
+function Field({ label, id, children }) {
   return (
     <div className="flex flex-col gap-1.5">
-      <label className="font-data text-[11px] text-[var(--ink-2)] uppercase tracking-widest">{label}</label>
+      <label htmlFor={id} className="font-data text-[11px] text-[var(--ink-2)] uppercase tracking-widest">{label}</label>
       {children}
     </div>
   )
@@ -34,8 +34,10 @@ function Field({ label, children }) {
 
 export function LoginPage() {
   const navigate             = useNavigate()
+  const location             = useLocation()
   const [params]             = useSearchParams()
-  const role                 = params.get('role') ?? 'user'
+  const rawRole              = params.get('role')
+  const role                 = ['user', 'buyer'].includes(rawRole) ? rawRole : 'user'
   const t                    = useT()
   const { session, profile } = useSelector(s => s.user)
   const darkMode             = useSelector(s => s.user.darkMode)
@@ -47,25 +49,23 @@ export function LoginPage() {
   const [error, setError]         = useState(null)
   const [loading, setLoading]     = useState(false)
   const [unverified, setUnverified] = useState(false)
+  const emailId    = useId()
+  const passwordId = useId()
 
   useEffect(() => {
     if (session && profile) {
-      navigate(ROLE_DEST[profile.role] ?? '/scan', { replace: true })
+      const from = location.state?.from?.pathname
+      const dest = from && from !== '/login' ? from : (ROLE_DEST[profile.role] ?? '/scan')
+      navigate(dest, { replace: true })
     }
-  }, [session, profile, navigate])
-
-  async function insertProfile(userId) {
-    await supabase.from('user_profiles').insert({
-      id:            userId,
-      role,
-      display_name:  email.split('@')[0],
-      language_pref: 'th',
-      eco_points:    0,
-    })
-  }
+  }, [session, profile, navigate, location])
 
   async function doSignUp() {
-    const { data, error: authErr } = await supabase.auth.signUp({ email, password })
+    const { data, error: authErr } = await supabase.auth.signUp({
+      email,
+      password,
+      options: { data: { pending_role: role } },
+    })
     if (authErr) {
       if (authErr.message?.toLowerCase().includes('user already registered')) {
         setMode('signin')
@@ -79,20 +79,16 @@ export function LoginPage() {
       }
       return
     }
-    if (data.user && !data.user.confirmed_at) { setUnverified(true); return }
-    if (data.user) await insertProfile(data.user.id)
+    if (data.user && !data.user.confirmed_at) setUnverified(true)
   }
 
   async function doSignIn() {
     const { error: authErr } = await supabase.auth.signInWithPassword({ email, password })
     if (authErr) {
-      if (authErr.message?.toLowerCase().includes('invalid login credentials')) {
-        setMode('signup')
-        await doSignUp()
-      } else if (authErr.message?.toLowerCase().includes('email not confirmed')) {
+      if (authErr.message?.toLowerCase().includes('email not confirmed')) {
         setUnverified(true)
       } else {
-        setError(authErr.message)
+        setError(t.invalidCredentials ?? 'Invalid email or password')
       }
     }
   }
@@ -170,52 +166,11 @@ export function LoginPage() {
 
         {!unverified && (
           <>
-            {/* OAuth buttons — top of form per wireframe */}
-            {role !== 'admin' && (
-              <div className="flex flex-col gap-2.5">
-                <button
-                  type="button"
-                  onClick={handleGoogleSignIn}
-                  disabled={loading}
-                  className="w-full flex items-center gap-3 px-4 py-3 border-[1.5px] border-[var(--ink)] bg-[var(--paper)] font-body text-[16px] text-[var(--ink)] cursor-pointer hover:bg-[var(--ink)] hover:text-[var(--paper)] transition-colors disabled:opacity-50"
-                >
-                  <span className="w-5 h-5 border-[1.5px] border-[var(--ink-4)] flex items-center justify-center flex-shrink-0">
-                    <svg width="14" height="14" viewBox="0 0 48 48" aria-hidden="true">
-                      <path fill="#4285F4" d="M44.5 20H24v8.5h11.8C34.7 33.9 30.1 37 24 37c-7.2 0-13-5.8-13-13s5.8-13 13-13c3.1 0 5.9 1.1 8.1 2.9l6.4-6.4C34.6 4.1 29.6 2 24 2 11.8 2 2 11.8 2 24s9.8 22 22 22c11 0 21-8 21-22 0-1.3-.2-2.7-.5-4z"/>
-                      <path fill="#34A853" d="M6.3 14.7l7 5.1C15 16.1 19.1 13 24 13c3.1 0 5.9 1.1 8.1 2.9l6.4-6.4C34.6 4.1 29.6 2 24 2 16.3 2 9.7 7.4 6.3 14.7z"/>
-                      <path fill="#FBBC05" d="M24 46c5.9 0 10.9-2 14.5-5.4l-6.7-5.5C29.8 36.9 27 38 24 38c-6.1 0-10.7-3.9-11.8-9.2l-7 5.4C8.1 41.1 15.5 46 24 46z"/>
-                      <path fill="#EA4335" d="M44.5 20H24v8.5h11.8c-.9 2.8-2.8 5.1-5.3 6.6l6.7 5.5C41.8 37.3 45 31.5 45 24c0-1.3-.2-2.7-.5-4z"/>
-                    </svg>
-                  </span>
-                  Continue with Google
-                </button>
-                {role === 'user' && (
-                  <button
-                    type="button"
-                    disabled={loading}
-                    className="w-full flex items-center gap-3 px-4 py-3 border-[1.5px] border-[var(--ink)] bg-[var(--paper)] font-body text-[16px] text-[var(--ink)] cursor-pointer hover:bg-[var(--ink)] hover:text-[var(--paper)] transition-colors disabled:opacity-50"
-                    onClick={() => setError('LINE login coming soon')}
-                  >
-                    <span className="w-5 h-5 border-[1.5px] border-[var(--ink-4)] flex items-center justify-center flex-shrink-0 font-data text-[10px]">L</span>
-                    Continue with LINE
-                  </button>
-                )}
-              </div>
-            )}
-
-            {/* Divider */}
-            {role !== 'admin' && (
-              <div className="flex items-center gap-3">
-                <div className="flex-1 h-px bg-[var(--ink-4)]" />
-                <span className="font-data text-[10px] text-[var(--ink-3)] uppercase tracking-widest">or with email</span>
-                <div className="flex-1 h-px bg-[var(--ink-4)]" />
-              </div>
-            )}
-
             {/* Email / Password form */}
             <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-              <Field label={t.email ?? 'Email'}>
+              <Field label={t.email ?? 'Email'} id={emailId}>
                 <input
+                  id={emailId}
                   type="email"
                   required
                   autoComplete="username"
@@ -226,9 +181,10 @@ export function LoginPage() {
                 />
               </Field>
 
-              <Field label={t.password ?? 'Password'}>
+              <Field label={t.password ?? 'Password'} id={passwordId}>
                 <div className="relative">
                   <input
+                    id={passwordId}
                     type={showPass ? 'text' : 'password'}
                     required
                     autoComplete="current-password"
@@ -278,6 +234,31 @@ export function LoginPage() {
                   : 'Create account →'}
               </Button>
             </form>
+
+            {/* Divider */}
+            <div className="flex items-center gap-3">
+              <div className="flex-1 h-px bg-[var(--ink-4)]" />
+              <span className="font-data text-[10px] text-[var(--ink-3)] uppercase tracking-widest">or</span>
+              <div className="flex-1 h-px bg-[var(--ink-4)]" />
+            </div>
+
+            {/* Google OAuth */}
+            <button
+              type="button"
+              onClick={handleGoogleSignIn}
+              disabled={loading}
+              className="w-full flex items-center gap-3 px-4 py-3 border-[1.5px] border-[var(--ink)] bg-[var(--paper)] font-body text-[16px] text-[var(--ink)] cursor-pointer hover:bg-[var(--ink)] hover:text-[var(--paper)] transition-colors disabled:opacity-50"
+            >
+              <span className="w-5 h-5 border-[1.5px] border-[var(--ink-4)] flex items-center justify-center flex-shrink-0">
+                <svg width="14" height="14" viewBox="0 0 48 48" aria-hidden="true">
+                  <path fill="#4285F4" d="M44.5 20H24v8.5h11.8C34.7 33.9 30.1 37 24 37c-7.2 0-13-5.8-13-13s5.8-13 13-13c3.1 0 5.9 1.1 8.1 2.9l6.4-6.4C34.6 4.1 29.6 2 24 2 11.8 2 2 11.8 2 24s9.8 22 22 22c11 0 21-8 21-22 0-1.3-.2-2.7-.5-4z"/>
+                  <path fill="#34A853" d="M6.3 14.7l7 5.1C15 16.1 19.1 13 24 13c3.1 0 5.9 1.1 8.1 2.9l6.4-6.4C34.6 4.1 29.6 2 24 2 16.3 2 9.7 7.4 6.3 14.7z"/>
+                  <path fill="#FBBC05" d="M24 46c5.9 0 10.9-2 14.5-5.4l-6.7-5.5C29.8 36.9 27 38 24 38c-6.1 0-10.7-3.9-11.8-9.2l-7 5.4C8.1 41.1 15.5 46 24 46z"/>
+                  <path fill="#EA4335" d="M44.5 20H24v8.5h11.8c-.9 2.8-2.8 5.1-5.3 6.6l6.7 5.5C41.8 37.3 45 31.5 45 24c0-1.3-.2-2.7-.5-4z"/>
+                </svg>
+              </span>
+              Continue with Google
+            </button>
 
             {/* Toggle signin/signup */}
             <div className="font-data text-[12px] text-[var(--ink-3)] text-center uppercase tracking-widest">
