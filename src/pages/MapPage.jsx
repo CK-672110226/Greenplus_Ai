@@ -23,7 +23,7 @@ export function MapPage() {
 
   const visible = filter === 'all'
     ? shops
-    : shops.filter(s => s.accepts.includes(filter))
+    : shops.filter(s => (s.accepts ?? []).includes(filter))
 
   return (
     <main className="flex flex-col items-center px-4 py-10 gap-6">
@@ -74,7 +74,7 @@ export function MapPage() {
                   )}
                   <div style={{ fontSize: 12, marginTop: 4 }}>
                     <em>{t.shopAccepts}:</em>{' '}
-                    {shop.accepts.map(a => localName(a, language)).join(', ')}
+                    {(shop.accepts ?? []).map(a => localName(a, language)).join(', ')}
                   </div>
                   <a
                     href={`https://www.google.com/maps/dir/?api=1&destination=${shop.lat},${shop.lng}`}
