@@ -70,3 +70,5 @@ ruvector.db
 .claude-flow/swarm/
 .claude-flow/tasks/
 
+# Local development overrides
+.docs/
