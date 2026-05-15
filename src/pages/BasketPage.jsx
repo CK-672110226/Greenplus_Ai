@@ -13,7 +13,6 @@ import { addBooking } from '../store/bookingSlice'
 import { useShops } from '../hooks/useShops'
 import { useMarketPricing } from '../hooks/useMarketPricing'
 
-const GRADES = ['A', 'B', 'C']
 const MATERIAL_KEYS = Object.keys(WASTE_ITEMS)
 
 function distOf(shop, userLat, userLng) {
@@ -25,7 +24,7 @@ function distOf(shop, userLat, userLng) {
 
 function shopTotalFor(shop, activeItems, shopPrice, marketPrice) {
   return activeItems.reduce((sum, i) => {
-    const p = shopPrice(shop.id, i.materialType, i.grade) ?? marketPrice(i.materialType, i.grade)
+    const p = shopPrice(shop.id, i.materialType, i.clean ?? true) ?? marketPrice(i.materialType, i.clean ?? true)
     return sum + p * (i.weight ?? 0)
   }, 0)
 }
@@ -92,12 +91,12 @@ function BookingModal({ shop, estValue, onConfirm, onCancel }) {
 
 function ManualAddPanel({ t, language, onAdd }) {
   const [mat,    setMat]    = useState('')
-  const [grade,  setGrade]  = useState('A')
+  const [clean,  setClean]  = useState(true)
   const [weight, setWeight] = useState('')
 
   function submit() {
     if (!mat || !weight || parseFloat(weight) <= 0) return
-    onAdd(mat, grade, parseFloat(weight))
+    onAdd(mat, clean, parseFloat(weight))
     setWeight('')
   }
 
@@ -122,18 +121,15 @@ function ManualAddPanel({ t, language, onAdd }) {
       </div>
       <div className="flex gap-2 items-center">
         <div className="flex gap-1">
-          {GRADES.map(g => (
-            <button
-              key={g}
-              onClick={() => setGrade(g)}
-              className={[
-                'w-8 h-8 font-data text-[12px] border-[1.5px] border-[var(--ink)]',
-                grade === g ? 'bg-[var(--ink)] text-[var(--paper)]' : 'bg-[var(--paper)] text-[var(--ink)]',
-              ].join(' ')}
-            >
-              {g}
-            </button>
-          ))}
+          {['สะอาด', 'ไม่สะอาด'].map((label, i) => {
+            const val = i === 0
+            return (
+              <button key={label} onClick={() => setClean(val)}
+                className={['px-3 h-8 font-data text-[11px] border-[1.5px] border-[var(--ink)]', clean === val ? 'bg-[var(--ink)] text-[var(--paper)]' : 'bg-[var(--paper)] text-[var(--ink)]'].join(' ')}>
+                {label}
+              </button>
+            )
+          })}
         </div>
         <input
           type="number"
@@ -172,7 +168,7 @@ export function BasketPage() {
   const activeItems  = basket.filter(i => !i.skipped)
   const basketMats   = [...new Set(basket.map(i => i.materialType))]
   const visibleItems = filterMat === 'all' ? basket : basket.filter(i => i.materialType === filterMat)
-  const total        = activeItems.reduce((sum, i) => sum + marketPrice(i.materialType, i.grade) * (i.weight ?? 0), 0)
+  const total        = activeItems.reduce((sum, i) => sum + marketPrice(i.materialType, i.clean ?? true) * (i.weight ?? 0), 0)
 
   function handleBookClick(shop) { setBookingShop(shop) }
 
@@ -190,11 +186,11 @@ export function BasketPage() {
     setBookingShop(null)
   }
 
-  function handleManualAdd(mat, grade, weight) {
+  function handleManualAdd(mat, clean, weight) {
     dispatch(addToBasket({
       id:           `manual-${Date.now()}`,
       materialType: mat,
-      grade,
+      clean,
       weight,
       confidence:   1,
       source:       'manual',
@@ -261,13 +257,13 @@ export function BasketPage() {
           {/* LEFT — basket items */}
           <div className="flex flex-col gap-3 md:sticky md:top-4">
             {visibleItems.map(item => {
-              const unitPrice = marketPrice(item.materialType, item.grade)
+              const unitPrice = marketPrice(item.materialType, item.clean ?? true)
               const lineTotal = unitPrice * (item.weight ?? 0)
               return (
                 <Card key={item.id} className={`flex flex-col gap-3 ${item.skipped ? 'opacity-50' : ''}`}>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <GradeTag grade={item.grade} />
+                      <GradeTag clean={item.clean} />
                       <span className="font-body text-[15px] text-[var(--ink)]">
                         {localName(item.materialType, language)}
                       </span>

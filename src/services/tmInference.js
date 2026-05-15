@@ -1,7 +1,7 @@
 // Teachable Machine / TF.js inference
 // Lazy-loads @tensorflow/tfjs only when a model URL is configured.
 // Stage 1: classifies material type → returns top class + confidence
-// Stage 2: classifies cleanliness per-material → returns grade A/B/C/D
+// Stage 2: classifies cleanliness per-material → returns pass/fail
 
 let _tf = null
 const _modelCache = {}
@@ -40,7 +40,7 @@ export async function tmStage1(modelUrl, classLabels, imageSource) {
     t.dispose()
     preds.dispose()
 
-    const topIdx     = probs.indexOf(Math.max(...probs))
+    const topIdx      = probs.indexOf(Math.max(...probs))
     const materialType = classLabels[topIdx] ?? `class_${topIdx}`
     return {
       materialType,
@@ -55,9 +55,8 @@ export async function tmStage1(modelUrl, classLabels, imageSource) {
 }
 
 // Run stage 2 — cleanliness classifier for a specific material
-// Expected class order from TM: index 0 = "clean", index 1 = "dirty"
-// (admin should label classes this way when training on TM)
-// Returns { grade, cleanlinessScore, label } or null on failure
+// Expected class order from TM: index 0 = clean, index 1 = dirty
+// Returns { pass, cleanlinessScore } or null on failure
 export async function tmStage2(modelUrl, imageSource) {
   try {
     const tf    = await getTf()
@@ -68,19 +67,11 @@ export async function tmStage2(modelUrl, imageSource) {
     t.dispose()
     preds.dispose()
 
-    const cleanProb      = probs[0] ?? 0.5
+    const cleanProb        = probs[0] ?? 0.5
     const cleanlinessScore = Math.round(cleanProb * 100)
-    const grade = cleanlinessScore >= 80 ? 'A'
-                : cleanlinessScore >= 60 ? 'B'
-                : cleanlinessScore >= 40 ? 'C' : 'D'
     return {
-      grade,
+      pass:             cleanlinessScore >= 40,
       cleanlinessScore,
-      label:        cleanProb >= 0.5 ? 'clean' : 'dirty',
-      weightedScore: cleanlinessScore,
-      factorScores:  { cleanliness: cleanProb * 10 },
-      failReasons:   cleanlinessScore < 40 ? ['Item appears contaminated'] : [],
-      pass:          cleanlinessScore >= 30,
     }
   } catch (err) {
     console.warn('[TM stage2] failed:', err.message)

@@ -62,3 +62,5 @@ This folder stores canonical implementation history for the repository.
 - `Feature/MapTreeRouting/` `.03` — MapPage responsive height + dark tiles + desktop sidebar (UIQ-06/07/08)
 - `Feature/MapTreeRouting/` `.04` — Full UI quality audit: 10 issues (UIQ-01→UIQ-10) across UserLayout, EcoPointsPage, ProfilePage, MapPage, SettingsPage, AdminPage; PRD Section 19 added
 - `Feature/EcoPoints/` `.01` — Dark mode token fix (tier colors), desktop 2-col layout
+- `Fix/AIStudioStage2/` `.05` — Local TM model integration (public/model_ai/), Grade→Pass/Fail (สะอาด/ไม่สะอาด) throughout stack, EcoPoints removal from nav/routing, Marketplace location (lat/lng + geolocation)
+- `Fix/MarketplaceCleanDirty/` (baseline: `Fix-MarketplaceCleanDirty.00.md`) — Migrate Marketplace from A/B/C grades to boolean clean/dirty: MarketplacePage pricing calls, PostAdForm toggle + geolocation field, marketplaceSlice gradeFilter removal

@@ -3,8 +3,7 @@ import { createSlice } from '@reduxjs/toolkit'
 const marketplaceSlice = createSlice({
   name: 'marketplace',
   initialState: {
-    posts:       [],
-    gradeFilter: 'all',
+    posts: [],
   },
   reducers: {
     addPost: (state, action) => {
@@ -17,12 +16,11 @@ const marketplaceSlice = createSlice({
       const p = state.posts.find(p => p.id === action.payload)
       if (p) p.flagged = !p.flagged
     },
-    setGradeFilter: (state, action) => { state.gradeFilter = action.payload },
     setPosts: (state, action) => {
       state.posts = action.payload
     },
   },
 })
 
-export const { addPost, removePost, flagPost, setGradeFilter, setPosts } = marketplaceSlice.actions
+export const { addPost, removePost, flagPost, setPosts } = marketplaceSlice.actions
 export default marketplaceSlice.reducer

@@ -22,7 +22,7 @@ const CATEGORIES = {
 /* ── Shop card (replaces mock RequestCard) ────────────────────── */
 function ShopCard({ shop, language, t, marketPrice }) {
   const materials = (shop.accepts ?? []).slice(0, 3)
-  const bestPrice = materials.length > 0 ? marketPrice(materials[0], 'A') : null
+  const bestPrice = materials.length > 0 ? marketPrice(materials[0], true) : null
 
   return (
     <div className="flex flex-col gap-2 border-[1.5px] border-[var(--ink)] p-4 bg-[var(--paper-2)] shadow-[2px_2px_0_var(--ink)]">
@@ -67,7 +67,7 @@ function PostAdForm({ onClose, onAdd, marketPrice }) {
   const dispatch = useDispatch()
   const language = useSelector(s => s.user.language)
 
-  const [form, setForm] = useState({ materialType: MATERIAL_KEYS[0], grade: 'A', qty: '', pricePerKg: '', contact: '', shop: '' })
+  const [form, setForm] = useState({ materialType: MATERIAL_KEYS[0], clean: true, qty: '', pricePerKg: '', contact: '', shop: '', lat: null, lng: null })
   function set(k, v) { setForm(prev => ({ ...prev, [k]: v })) }
 
   async function handleSubmit(e) {
@@ -80,7 +80,7 @@ function PostAdForm({ onClose, onAdd, marketPrice }) {
     onClose()
   }
 
-  const suggested = (marketPrice(form.materialType, form.grade) ?? pricePerKg(form.materialType, form.grade)).toFixed(1)
+  const suggested = (marketPrice(form.materialType, form.clean) ?? pricePerKg(form.materialType, form.clean)).toFixed(1)
 
   return (
     <div className="border-[1.5px] border-[var(--green)] bg-[var(--paper-2)] p-5 flex flex-col gap-4">
@@ -96,10 +96,13 @@ function PostAdForm({ onClose, onAdd, marketPrice }) {
           </select>
         </div>
         <div className="flex flex-col gap-1">
-          <label className="font-data text-[10px] text-[var(--ink-3)] uppercase tracking-widest">{t.gradeLabel}</label>
+          <label className="font-data text-[10px] text-[var(--ink-3)] uppercase tracking-widest">สภาพ</label>
           <div className="flex gap-2">
-            {['A', 'B', 'C'].map(g => (
-              <button key={g} type="button" onClick={() => set('grade', g)} className={`flex-1 py-2 font-data text-[12px] uppercase tracking-widest border-[1.5px] border-[var(--ink)] transition-colors ${form.grade === g ? 'bg-[var(--ink)] text-[var(--paper)]' : 'bg-transparent text-[var(--ink)]'}`}>{g}</button>
+            {[{ label: 'สะอาด', val: true }, { label: 'ไม่สะอาด', val: false }].map(({ label, val }) => (
+              <button key={label} type="button" onClick={() => set('clean', val)}
+                className={`flex-1 py-2 font-data text-[12px] uppercase tracking-widest border-[1.5px] border-[var(--ink)] transition-colors ${form.clean === val ? 'bg-[var(--ink)] text-[var(--paper)]' : 'bg-transparent text-[var(--ink)]'}`}>
+                {label}
+              </button>
             ))}
           </div>
         </div>
@@ -120,6 +123,31 @@ function PostAdForm({ onClose, onAdd, marketPrice }) {
         <div className="flex flex-col gap-1">
           <label className="font-data text-[10px] text-[var(--ink-3)] uppercase tracking-widest">{t.contactInfo}</label>
           <input type="text" value={form.contact} onChange={e => set('contact', e.target.value)} placeholder="LINE / Tel" className="w-full px-3 py-2 border-[1.5px] border-[var(--ink)] bg-[var(--paper)] font-body text-[15px] outline-none focus:border-[var(--green)]" />
+        </div>
+        <div className="flex flex-col gap-1">
+          <label className="font-data text-[10px] text-[var(--ink-3)] uppercase tracking-widest">ที่ตั้ง (สำหรับแผนที่)</label>
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={form.lat != null ? `${form.lat.toFixed(5)}, ${form.lng.toFixed(5)}` : ''}
+              readOnly
+              placeholder="กด 'ใช้ตำแหน่งปัจจุบัน'"
+              className="flex-1 px-3 py-2 border-[1.5px] border-[var(--ink)] bg-[var(--paper-2)] font-data text-[11px] outline-none text-[var(--ink-3)]"
+            />
+            <button
+              type="button"
+              onClick={() => {
+                if (!navigator.geolocation) return
+                navigator.geolocation.getCurrentPosition(
+                  pos => { set('lat', pos.coords.latitude); set('lng', pos.coords.longitude) },
+                  () => {}
+                )
+              }}
+              className="px-3 py-2 font-data text-[11px] uppercase tracking-widest border-[1.5px] border-[var(--ink)] bg-transparent hover:bg-[var(--ink)] hover:text-[var(--paper)] transition-colors whitespace-nowrap"
+            >
+              📍 ตำแหน่ง
+            </button>
+          </div>
         </div>
         <Button type="submit" variant="primary" fullWidth>{t.postAd}</Button>
       </form>
@@ -246,7 +274,7 @@ export function MarketplacePage() {
               </div>
             ) : (
               visibleMaterials.map(key => {
-                const price  = marketPrice(key, 'A')
+                const price  = marketPrice(key, true)
                 const inBask = basketMaterials.has(key)
                 return (
                   <div

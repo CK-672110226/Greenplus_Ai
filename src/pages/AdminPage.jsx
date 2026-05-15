@@ -426,7 +426,7 @@ export function AdminPage() {
               >
                 <div className="flex items-center justify-between flex-wrap gap-2">
                   <div className="flex items-center gap-2">
-                    <GradeTag grade={post.grade} />
+                    <GradeTag clean={post.grade !== 'C'} />
                     <span className="font-body text-[15px] text-[var(--ink)]">
                       {resolve(post.materialType)}
                     </span>
@@ -495,7 +495,7 @@ export function AdminPage() {
                     <div className="flex items-center gap-2">
                       <span className="font-data text-[11px] text-[var(--ink-3)] uppercase">AI said</span>
                       <span className="font-body text-[13px] text-[var(--ink-2)]">{resolve(report.ai_material)}</span>
-                      {report.ai_grade && <GradeTag grade={report.ai_grade} />}
+                      {report.ai_grade != null && <GradeTag clean={report.ai_grade !== 'C'} />}
                     </div>
                   )}
                   <div className="flex items-center gap-2">

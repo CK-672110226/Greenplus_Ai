@@ -71,8 +71,7 @@ export function HomePage() {
   const totalValue   = activeItems.reduce((sum, i) => sum + pricePerKg(i.materialType, i.grade) * (i.weight ?? 0), 0)
   const weeklyData   = weeklyBuckets(basket, 'weight')
   const weeklyKg     = weeklyData.reduce((s, d) => s + d.val, 0).toFixed(1)
-  const ecoPoints    = profile?.eco_points ?? 0
-  const { salute, name: displayName } = greeting(profile?.display_name)
+const { salute, name: displayName } = greeting(profile?.display_name)
 
   const recentItems = activeItems.length > 0 ? activeItems.slice(-5).reverse() : []
   const nearbyShops = shops.slice(0, 3)
@@ -141,18 +140,6 @@ export function HomePage() {
             <span className="font-data text-[11px] text-[var(--green-ink)]">▲ ฿{totalValue.toFixed(0)} this week</span>
           )}
           <span className="font-data text-[10px] text-[var(--ink-4)]">pending payout ฿{(totalValue * 0.63).toFixed(0)}</span>
-        </div>
-
-        {/* Impact points */}
-        <div className="flex flex-col gap-1.5 px-6 lg:px-10 py-5 border-t-[1.5px] sm:border-t-0 border-[var(--ink)]">
-          <span className="font-data text-[9px] text-[var(--ink-4)] uppercase tracking-[0.15em]">
-            Impact points
-          </span>
-          <div className="flex items-baseline gap-2">
-            <span className="font-brand text-[40px] text-[var(--ink)] leading-none">{ecoPoints}</span>
-            <span className="font-data text-[12px] text-[var(--ink-3)]">pts</span>
-          </div>
-          <span className="font-data text-[11px] text-[var(--green-ink)]">Gold tier · 520 to Platinum</span>
         </div>
       </div>
 
