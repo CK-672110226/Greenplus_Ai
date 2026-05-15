@@ -9,6 +9,7 @@ import { localName, WASTE_ITEMS } from '../data/wasteItems'
 import { setBookings } from '../store/bookingSlice'
 import { toggleMaterial, setOpenDays } from '../store/buyerSlice'
 import { useSupabaseBookings } from '../hooks/useSupabaseBookings'
+import { supabase } from '../lib/supabase'
 
 function TabBtn({ active, onClick, children }) {
   return (
@@ -28,6 +29,7 @@ export function DashboardPage() {
   const t        = useT()
   const dispatch = useDispatch()
   const language = useSelector(s => s.user.language)
+  const session  = useSelector(s => s.user.session)
 
   const savedOpenDays     = useSelector(s => s.buyer?.openDays ?? [1, 2, 3, 4, 5, 6])
   const acceptedMaterials = useSelector(s => s.buyer?.acceptedMaterials ?? Object.keys(WASTE_ITEMS))
@@ -49,8 +51,18 @@ export function DashboardPage() {
     )
   }
 
-  function handleSaveCalendar() {
+  async function handleSaveCalendar() {
     dispatch(setOpenDays(openDays))
+    try {
+      if (session?.user?.id) {
+        await supabase
+          .from('user_profiles')
+          .update({ open_days: openDays })
+          .eq('id', session.user.id)
+      }
+    } catch {
+      // fail silently
+    }
     toast.success(language === 'th' ? 'บันทึกวันเปิดทำการแล้ว' : 'Calendar saved successfully')
   }
 
@@ -209,7 +221,19 @@ export function DashboardPage() {
             </div>
             <Button
               variant="primary"
-              onClick={() => toast.success(language === 'th' ? 'บันทึกแล้ว' : 'Saved')}
+              onClick={async () => {
+                try {
+                  if (session?.user?.id) {
+                    await supabase
+                      .from('user_profiles')
+                      .update({ accepted_materials: acceptedMaterials })
+                      .eq('id', session.user.id)
+                  }
+                } catch {
+                  // fail silently
+                }
+                toast.success(language === 'th' ? 'บันทึกแล้ว' : 'Saved')
+              }}
             >
               {language === 'th' ? 'บันทึก' : 'Save'}
             </Button>

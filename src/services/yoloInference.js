@@ -132,7 +132,7 @@ function parseYolo(rawData, shape, classLabels, padX, padY, scale) {
 }
 
 // ── Entry point ───────────────────────────────────────────────────
-// Returns { materialType, confidence, bbox, sizeKg } or null
+// Returns Array<{ materialType, confidence, bbox, sizeKg }> — empty on failure or no detection
 export async function yoloStage1(modelUrl, classLabels, imageSource) {
   try {
     const { Tensor, InferenceSession } = await import('onnxruntime-web')
@@ -150,12 +150,12 @@ export async function yoloStage1(modelUrl, classLabels, imageSource) {
     const dets = parseYolo(rawData, shape, classLabels, padX, padY, scale)
     if (!dets.length) {
       console.info('[YOLO] no detections above threshold')
-      return null
+      return []
     }
-    console.info('[YOLO] top detection:', dets[0].materialType, dets[0].confidence)
-    return dets[0]
+    console.info('[YOLO] detections:', dets.length, dets.map(d => `${d.materialType}(${d.confidence})`).join(', '))
+    return dets
   } catch (err) {
     console.warn('[YOLO] inference failed:', err.message)
-    return null
+    return []
   }
 }

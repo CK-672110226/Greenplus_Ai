@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 import { toast } from 'sonner'
 import { useT } from '../hooks/useT'
@@ -6,6 +6,8 @@ import { Card } from '../components/Card'
 import { Button } from '../components/Button'
 import { WASTE_ITEMS, localName, pricePerKg } from '../data/wasteItems'
 import { bulkSet, resetToDefault } from '../store/pricingSlice'
+import { useMyShop } from '../hooks/useMyShop'
+import { supabase } from '../lib/supabase'
 
 function buildDefaultPrices() {
   const prices = {}
@@ -26,14 +28,61 @@ export function PricingPage() {
   const reduxPrices = useSelector(s => s.pricing.prices)
 
   const [local, setLocal] = useState(() => JSON.parse(JSON.stringify(reduxPrices)))
+  const { shop } = useMyShop()
+
+  useEffect(() => {
+    if (!shop?.id) return
+
+    async function loadShopPricing() {
+      try {
+        const { data, error } = await supabase
+          .from('shop_pricing')
+          .select('material_type, price_grade_a, price_grade_b, price_grade_c')
+          .eq('shop_id', shop.id)
+
+        if (!error && data && data.length > 0) {
+          const merged = { ...reduxPrices }
+          data.forEach(row => {
+            merged[row.material_type] = {
+              A: row.price_grade_a ?? merged[row.material_type]?.A,
+              B: row.price_grade_b ?? merged[row.material_type]?.B,
+              C: row.price_grade_c ?? merged[row.material_type]?.C,
+            }
+          })
+          setLocal(merged)
+        }
+      } catch {
+        // Supabase not configured — fail silently
+      }
+    }
+    loadShopPricing()
+  // reduxPrices intentionally excluded — only sync from DB once when shop loads
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [shop])
 
   function handleChange(mat, grade, raw) {
     const value = parseFloat(raw) || 0
     setLocal(prev => ({ ...prev, [mat]: { ...prev[mat], [grade]: value } }))
   }
 
-  function handleSave() {
+  async function handleSave() {
     dispatch(bulkSet(local))
+
+    if (shop?.id) {
+      const rows = Object.entries(local).map(([mat, grades]) => ({
+        shop_id:       shop.id,
+        material_type: mat,
+        price_grade_a: grades.A ?? null,
+        price_grade_b: grades.B ?? null,
+        price_grade_c: grades.C ?? null,
+      }))
+      try {
+        await supabase.from('shop_pricing').upsert(rows, { onConflict: 'shop_id,material_type' })
+      } catch {
+        // Supabase not configured — fail silently
+      }
+    }
+
     toast.success(t.pricingSaved)
   }
 

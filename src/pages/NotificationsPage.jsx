@@ -4,6 +4,7 @@ import { Card } from '../components/Card'
 import { Button } from '../components/Button'
 import { SectionDivider } from '../components/SectionDivider'
 import { markRead, markAllRead, dismiss, selectUnreadCount } from '../store/notificationSlice'
+import { useRealtimeNotifications } from '../hooks/useRealtimeNotifications'
 
 const TYPE_ICON = {
   new_order:       '📦',
@@ -66,6 +67,8 @@ export function NotificationsPage() {
   const dispatch   = useDispatch()
   const items      = useSelector(s => s.notifications.items)
   const unread     = useSelector(selectUnreadCount)
+
+  useRealtimeNotifications()
 
   const TODAY   = new Date().toISOString().slice(0, 10)
   const today   = items.filter(n => n.createdAt.startsWith(TODAY))
