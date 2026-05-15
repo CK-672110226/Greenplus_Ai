@@ -705,13 +705,22 @@ export function ScanPage() {
               </div>
 
               {getRulesFor(liveResult.materialType).length > 0 && (
-                <div className="flex flex-col gap-1.5 border-t-[1px] border-[var(--ink-4)] pt-3">
-                  {getRulesFor(liveResult.materialType).map((rule, i) => (
-                    <p key={i} className="font-data text-[10px] m-0" style={{ color: SEVERITY_COLOR[rule.severity] }}>
-                      {rule.severity === 'reject' ? '✕ ' : rule.severity === 'warning' ? '! ' : '· '}
-                      {language === 'th' ? rule.titleTh : rule.titleEn}
-                    </p>
-                  ))}
+                <div className="flex flex-col gap-2 border-t-[1px] border-[var(--ink-4)] pt-3">
+                  <span className="font-data text-[9px] text-[var(--ink-4)] uppercase tracking-[0.15em]">
+                    {t.handlingGuide ?? 'Handling Guide'}
+                  </span>
+                  <div className="flex flex-col gap-1.5">
+                    {getRulesFor(liveResult.materialType).map((rule, i) => (
+                      <div key={i} className="flex items-start gap-1.5">
+                        <span className="font-data text-[10px] shrink-0 leading-relaxed" style={{ color: SEVERITY_COLOR[rule.severity] }}>
+                          {rule.severity === 'reject' ? '✕' : rule.severity === 'warning' ? '!' : '·'}
+                        </span>
+                        <p className="font-data text-[10px] m-0 leading-relaxed" style={{ color: SEVERITY_COLOR[rule.severity] }}>
+                          {language === 'th' ? rule.titleTh : rule.titleEn}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
 

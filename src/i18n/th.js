@@ -193,6 +193,7 @@ export const th = {
   prices:         'ราคา',
 
   // Scan page
+  handlingGuide:      'แนวทางการจัดการ',
   uploadImage:        'อัปโหลดรูป',
   uploadInstead:      'อัปโหลดรูปแทน',
   startingCamera:     'กำลังเปิดกล้อง…',
