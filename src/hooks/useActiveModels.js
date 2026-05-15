@@ -5,7 +5,7 @@ import { useEffect } from 'react'
 import { useDispatch } from 'react-redux'
 import { supabase } from '../lib/supabase'
 import { setAiConfig } from '../store/aiConfigSlice'
-import { LOCAL_STAGE1_URL, LOCAL_STAGE1_LABELS, LOCAL_STAGE2_URLS } from '../config/localModels'
+import { LOCAL_STAGE1_URL, LOCAL_STAGE1_LABELS, LOCAL_STAGE2_URLS, LOCAL_YOLO_STAGE1_URL, LOCAL_YOLO_CLASS_LABELS } from '../config/localModels'
 
 export function useActiveModels() {
   const dispatch = useDispatch()
@@ -36,11 +36,13 @@ export function useActiveModels() {
 
           if (tmStage1Url) {
             const modelVersion = data.find(r => r.stage === 1)?.model_files?.version_tag ?? 'v1-supabase'
-            // Fall back to local labels if Supabase row has empty class_labels
             const resolvedLabels = stage1ClassLabels.length > 0 ? stage1ClassLabels : LOCAL_STAGE1_LABELS
-            // Fill any missing stage-2 models from local
             const resolvedStage2 = { ...LOCAL_STAGE2_URLS, ...tmStage2Urls }
-            dispatch(setAiConfig({ tmStage1Url, stage1ClassLabels: resolvedLabels, tmStage2Urls: resolvedStage2, modelVersion }))
+            dispatch(setAiConfig({
+              yoloStage1Url:   LOCAL_YOLO_STAGE1_URL,
+              yoloClassLabels: LOCAL_YOLO_CLASS_LABELS,
+              tmStage1Url, stage1ClassLabels: resolvedLabels, tmStage2Urls: resolvedStage2, modelVersion,
+            }))
             return
           }
         }
@@ -50,6 +52,8 @@ export function useActiveModels() {
 
       // Use local models from public/model_ai/
       dispatch(setAiConfig({
+        yoloStage1Url:     LOCAL_YOLO_STAGE1_URL,
+        yoloClassLabels:   LOCAL_YOLO_CLASS_LABELS,
         tmStage1Url:       LOCAL_STAGE1_URL,
         stage1ClassLabels: LOCAL_STAGE1_LABELS,
         tmStage2Urls:      LOCAL_STAGE2_URLS,

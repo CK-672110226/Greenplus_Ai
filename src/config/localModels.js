@@ -2,6 +2,19 @@
 // Stage 1: material type classifier (English folder name)
 export const LOCAL_STAGE1_URL = '/model_ai/tm-my-image-model/model.json'
 
+// YOLO stage 1 — exported from Waste-Classification-using-YOLOv8/best.pt
+// Classes (index order from training): BIODEGRADABLE→ไม่ใช่ขยะ, CARDBOARD→กระดาษลัง,
+//   GLASS→ขวดแก้ว, METAL→เหล็ก, PAPER→กระดาษ, PLASTIC→พลาสติก
+export const LOCAL_YOLO_STAGE1_URL = '/model_ai/yolo_stage1.onnx'
+export const LOCAL_YOLO_CLASS_LABELS = [
+  'ไม่ใช่ขยะ',  // 0 BIODEGRADABLE
+  'กระดาษลัง',  // 1 CARDBOARD
+  'ขวดแก้ว',    // 2 GLASS
+  'เหล็ก',      // 3 METAL
+  'กระดาษ',     // 4 PAPER
+  'พลาสติก',    // 5 PLASTIC
+]
+
 export const LOCAL_STAGE1_LABELS = [
   'ขวดน้ำ', 'เหล็ก', 'กระดาษ', 'กระดาษลัง',
   'พลาสติก', 'ขวดแก้ว', 'น้ำมันเก่า', 'หนังสือ',
