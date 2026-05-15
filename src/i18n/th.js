@@ -23,7 +23,6 @@ export const th = {
   marketplace:   'ตลาด',
   dashboard:     'แดชบอร์ด',
   admin:         'ผู้ดูแล',
-  ecoPoints:     'Eco-Points',
   role:          'บทบาท',
   home:          'หน้าหลัก',
   comingSoon:    'จะเปิดให้ใช้ใน Milestone ถัดไป',
@@ -102,14 +101,6 @@ export const th = {
   activeShops:       'ร้านที่เปิดใช้',
   heatmap:           'ฮีทแมป',
   modelConfig:       'ตั้งค่า AI',
-
-  // Eco Points
-  ecoPointsTitle:    'คะแนน Eco',
-  yourPoints:        'คะแนนของคุณ',
-  pointsHistory:     'ประวัติคะแนน',
-  earnedFrom:        'ได้จาก',
-  redeemPoints:      'แลก',
-  pointsExplain:     'รับคะแนนจากการสแกนและขายขยะ',
 
   // Second Brain
   secondBrainTitle:  'สมองที่ 2',

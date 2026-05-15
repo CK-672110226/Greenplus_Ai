@@ -23,7 +23,6 @@ export const en = {
   marketplace:   'Marketplace',
   dashboard:     'Dashboard',
   admin:         'Admin',
-  ecoPoints:     'Eco-Points',
   role:          'Role',
   home:          'Home',
   comingSoon:    'Coming in the next milestone.',
@@ -102,14 +101,6 @@ export const en = {
   activeShops:       'Active Shops',
   heatmap:           'Heatmap',
   modelConfig:       'AI Model Config',
-
-  // Eco Points
-  ecoPointsTitle:    'Eco Points',
-  yourPoints:        'Your Points',
-  pointsHistory:     'Points History',
-  earnedFrom:        'Earned from',
-  redeemPoints:      'Redeem',
-  pointsExplain:     'Earn points by scanning and selling waste.',
 
   // Second Brain
   secondBrainTitle:  'Second Brain',

@@ -34,7 +34,6 @@ export function NavBar() {
             <NavLink to="/basket">{t.basket}</NavLink>
             <NavLink to="/map">{t.map}</NavLink>
             <NavLink to="/marketplace">{t.marketplace}</NavLink>
-            <NavLink to="/eco-points">{t.ecoPoints}</NavLink>
           </>
         )}
         {session && role === 'buyer' && (

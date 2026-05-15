@@ -16,7 +16,6 @@ const HomePage       = lazy(() => import('./pages/HomePage').then(m => ({ defaul
 const ScanPage       = lazy(() => import('./pages/ScanPage').then(m => ({ default: m.ScanPage })))
 const BasketPage     = lazy(() => import('./pages/BasketPage').then(m => ({ default: m.BasketPage })))
 const MapPage        = lazy(() => import('./pages/MapPage').then(m => ({ default: m.MapPage })))
-const EcoPointsPage  = lazy(() => import('./pages/EcoPointsPage').then(m => ({ default: m.EcoPointsPage })))
 const MarketplacePage= lazy(() => import('./pages/MarketplacePage').then(m => ({ default: m.MarketplacePage })))
 const DashboardPage  = lazy(() => import('./pages/DashboardPage').then(m => ({ default: m.DashboardPage })))
 const AdminPage      = lazy(() => import('./pages/AdminPage').then(m => ({ default: m.AdminPage })))
@@ -62,7 +61,6 @@ function App() {
               <Route path="/scan"       element={<ProtectedRoute requiredRole="user"><ScanPage /></ProtectedRoute>} />
               <Route path="/basket"     element={<ProtectedRoute requiredRole="user"><BasketPage /></ProtectedRoute>} />
               <Route path="/map"        element={<ProtectedRoute requiredRole="user"><MapPage /></ProtectedRoute>} />
-              <Route path="/eco-points" element={<ProtectedRoute requiredRole="user"><EcoPointsPage /></ProtectedRoute>} />
 
               {/* Buyer portal */}
               <Route path="/dashboard" element={<ProtectedRoute requiredRole="buyer"><DashboardPage /></ProtectedRoute>} />

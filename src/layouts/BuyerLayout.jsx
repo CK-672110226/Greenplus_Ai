@@ -1,7 +1,7 @@
 import { Outlet, NavLink, useNavigate } from 'react-router-dom'
 import { useSelector, useDispatch } from 'react-redux'
 import { supabase } from '../lib/supabase'
-import { clearUser, setLanguage } from '../store/userSlice'
+import { clearUser, setLanguage, toggleDarkMode } from '../store/userSlice'
 import { useT } from '../hooks/useT'
 import { Logo } from '../components/Logo'
 
@@ -47,7 +47,7 @@ function TopNavLink({ to, label }) {
 export function BuyerLayout() {
   const navigate = useNavigate()
   const dispatch = useDispatch()
-  const { language } = useSelector(s => s.user)
+  const { language, darkMode } = useSelector(s => s.user)
   const t = useT()
 
   async function handleLogout() {
@@ -58,6 +58,17 @@ export function BuyerLayout() {
 
   function toggleLang() {
     dispatch(setLanguage(language === 'th' ? 'en' : 'th'))
+  }
+
+  function handleToggleDark() {
+    dispatch(toggleDarkMode())
+  }
+
+  function IconSun() {
+    return <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="5" /><line x1="12" y1="1" x2="12" y2="3" /><line x1="12" y1="21" x2="12" y2="23" /><line x1="4.22" y1="4.22" x2="5.64" y2="5.64" /><line x1="18.36" y1="18.36" x2="19.78" y2="19.78" /><line x1="1" y1="12" x2="3" y2="12" /><line x1="21" y1="12" x2="23" y2="12" /><line x1="4.22" y1="19.78" x2="5.64" y2="18.36" /><line x1="18.36" y1="5.64" x2="19.78" y2="4.22" /></svg>
+  }
+  function IconMoon() {
+    return <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" /></svg>
   }
 
   return (
@@ -76,12 +87,21 @@ export function BuyerLayout() {
         </nav>
 
         <div className="px-5 py-4 border-t-[1.5px] border-[var(--ink)] flex flex-col gap-2">
-          <button
-            onClick={toggleLang}
-            className="font-data text-[11px] border-[1.5px] border-[var(--ink-4)] px-2 py-1 hover:border-[var(--ink)] transition-colors bg-transparent text-left cursor-pointer"
-          >
-            {language === 'th' ? 'EN' : 'TH'}
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleToggleDark}
+              className="flex items-center justify-center w-7 h-7 border-[1.5px] border-[var(--ink-4)] hover:border-[var(--ink)] transition-colors bg-transparent cursor-pointer text-[var(--ink-3)] hover:text-[var(--ink)]"
+              aria-label={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
+            >
+              {darkMode ? <IconSun /> : <IconMoon />}
+            </button>
+            <button
+              onClick={toggleLang}
+              className="font-data text-[11px] border-[1.5px] border-[var(--ink-4)] px-2 py-1 hover:border-[var(--ink)] transition-colors bg-transparent text-left cursor-pointer"
+            >
+              {language === 'th' ? 'EN' : 'TH'}
+            </button>
+          </div>
           <button
             onClick={handleLogout}
             className="font-body text-[14px] text-[var(--ink-3)] hover:text-[var(--ink)] bg-transparent border-none text-left cursor-pointer p-0 transition-colors"
@@ -97,6 +117,13 @@ export function BuyerLayout() {
         <header className="sticky top-0 z-40 md:hidden flex items-center justify-between px-4 py-3 bg-[var(--paper)] border-b-[1.5px] border-[var(--ink)]">
           <Logo height={22} />
           <div className="flex items-center gap-3">
+            <button
+              onClick={handleToggleDark}
+              className="flex items-center justify-center w-8 h-8 bg-transparent border-none cursor-pointer text-[var(--ink-3)] hover:text-[var(--ink)] transition-colors"
+              aria-label={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
+            >
+              {darkMode ? <IconSun /> : <IconMoon />}
+            </button>
             <button
               onClick={toggleLang}
               className="font-data text-[11px] border-[1.5px] border-[var(--ink-4)] px-2 py-0.5 hover:border-[var(--ink)] transition-colors bg-transparent cursor-pointer"

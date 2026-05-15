@@ -61,7 +61,17 @@ export function HomePage() {
   const activeItems = basket.filter(i => !i.skipped)
   const totalValue  = activeItems.reduce((sum, i) => sum + pricePerKg(i.materialType, i.grade) * (i.weight ?? 0), 0)
   const weeklyKg    = MOCK_WEEKLY.reduce((s, d) => s + d.val, 0).toFixed(1)
+<<<<<<< Updated upstream
   const ecoPoints   = profile?.eco_points ?? 0
+=======
+  const { salute, name: displayName } = greeting(profile?.display_name)
+
+  // Recent items: show basket items (up to 5) as "recent scans"
+  const recentItems = activeItems.length > 0 ? activeItems.slice(-5).reverse() : []
+
+  // Nearby shops (first 3)
+  const nearbyShops = SHOPS.slice(0, 3)
+>>>>>>> Stashed changes
 
   return (
     <div className="flex flex-col gap-5 px-4 py-6">
@@ -119,6 +129,7 @@ export function HomePage() {
         </Button>
       </Card>
 
+<<<<<<< Updated upstream
       {/* Active basket */}
       {activeItems.length > 0 && (
         <div className="flex flex-col gap-3">
@@ -136,6 +147,122 @@ export function HomePage() {
                   <GradeTag grade={item.grade} />
                   <span className="font-data text-[12px] text-[var(--ink-2)]">
                     ฿{(pricePerKg(item.materialType, item.grade) * (item.weight ?? 0)).toFixed(0)}
+=======
+        {/* Earnings */}
+        <div className="flex flex-col gap-1.5 px-6 lg:px-10 py-5 sm:border-r-[1.5px] border-[var(--ink)] border-t-[1.5px] sm:border-t-0 border-[var(--ink)]">
+          <span className="font-data text-[9px] text-[var(--ink-4)] uppercase tracking-[0.15em]">
+            Earnings
+          </span>
+          <div className="flex items-baseline gap-2">
+            <span className="font-brand text-[40px] text-[var(--ink)] leading-none">฿{totalValue.toFixed(0)}</span>
+            <span className="font-data text-[12px] text-[var(--ink-3)]">thb</span>
+          </div>
+          {totalValue > 0 && (
+            <span className="font-data text-[11px] text-[var(--green-ink)]">▲ ฿{totalValue.toFixed(0)} this week</span>
+          )}
+          <span className="font-data text-[10px] text-[var(--ink-4)]">pending payout ฿{(totalValue * 0.63).toFixed(0)}</span>
+        </div>
+
+      </div>
+
+      {/* ── Main body (2-col on desktop) ───────────────────────── */}
+      <div className="flex flex-col lg:flex-row flex-1">
+
+        {/* Left column */}
+        <div className="flex flex-col flex-1 min-w-0 lg:border-r-[1.5px] lg:border-[var(--ink)]">
+
+          {/* Weekly chart */}
+          <div className="px-6 lg:px-10 py-6 border-b-[1.5px] border-[var(--ink)]">
+            <div className="flex items-center justify-between mb-3">
+              <SectionDivider label="Weekly impact · 7 days" />
+              <span className="font-data text-[10px] text-[var(--ink-4)]">last refresh 4m</span>
+            </div>
+            <div className="border-[1.5px] border-[var(--ink)] px-4 pt-4 pb-2 bg-[var(--paper-2)]">
+              <HatchBarChart data={MOCK_WEEKLY} />
+            </div>
+          </div>
+
+          {/* Quick actions */}
+          <div className="px-6 lg:px-10 py-6">
+            <SectionDivider label="Quick actions" />
+            <div className="mt-3 grid grid-cols-2 lg:grid-cols-4 gap-3">
+              {[
+                { action: () => navigate('/scan'),        sub: 'use AI camera',   title: 'Scan an item' },
+                { action: () => navigate('/marketplace'), sub: 'buy & sell',      title: 'Marketplace' },
+                { action: () => navigate('/map'),         sub: 'live rates',      title: "Today's prices" },
+                { action: () => navigate('/map'),         sub: 'find shops',      title: 'Nearby buyer' },
+              ].map(({ action, sub, title }) => (
+                <button
+                  key={title}
+                  onClick={action}
+                  className="flex flex-col gap-2 border-[1.5px] border-[var(--ink)] px-4 py-5 text-left bg-[var(--paper-2)] cursor-pointer hover:bg-[var(--ink)] hover:text-[var(--paper)] transition-colors group shadow-[3px_3px_0_var(--ink)] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none"
+                >
+                  <span className="font-data text-[9px] text-[var(--ink-3)] uppercase tracking-widest group-hover:text-[var(--ink-4)]">
+                    {sub}
+                  </span>
+                  <span className="font-brand text-[17px] text-[var(--ink)] group-hover:text-[var(--paper)] leading-tight">
+                    {title}
+                  </span>
+                </button>
+              ))}
+            </div>
+            <button
+              onClick={() => navigate('/map')}
+              className="mt-3 font-data text-[10px] text-[var(--ink-4)] uppercase tracking-widest bg-transparent border-none cursor-pointer hover:text-[var(--ink)] transition-colors"
+            >
+              see all shortcuts →
+            </button>
+          </div>
+        </div>
+
+        {/* Right column */}
+        <div className="flex flex-col w-full lg:w-[320px] shrink-0">
+
+          {/* Recent scans */}
+          <div className="px-6 py-6 border-t-[1.5px] lg:border-t-0 border-[var(--ink)] border-b-[1.5px]">
+            <SectionDivider label="Recent scans" />
+
+            {recentItems.length > 0 ? (
+              <div className="flex flex-col mt-3">
+                {recentItems.map((item, idx) => {
+                  const value = pricePerKg(item.materialType, item.grade) * (item.weight ?? 0)
+                  const timeLabels = ['2m ago', '1h ago', 'Yest.', '2d ago', '3d ago']
+                  return (
+                    <div
+                      key={item.id}
+                      className="flex items-center justify-between py-3 border-b-[1px] border-[var(--ink-4)] last:border-b-0"
+                    >
+                      <div className="flex flex-col gap-0.5">
+                        <span className="font-body text-[14px] text-[var(--ink)]">
+                          {localName(item.materialType, language)} · {(item.weight ?? 0).toFixed(1)}kg
+                        </span>
+                        <span className="font-data text-[10px] text-[var(--ink-4)]">
+                          {timeLabels[idx] ?? 'Recent'}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <GradeTag grade={item.grade} />
+                        <span className="font-data text-[13px] text-[var(--ink)]">฿{value.toFixed(0)}</span>
+                      </div>
+                    </div>
+                  )
+                })}
+                <button
+                  onClick={() => navigate('/basket')}
+                  className="mt-3 w-full font-data text-[11px] uppercase tracking-widest border-[1.5px] border-[var(--ink)] py-2.5 text-center bg-transparent cursor-pointer hover:bg-[var(--ink)] hover:text-[var(--paper)] transition-colors"
+                >
+                  View basket · {activeItems.length} items
+                </button>
+              </div>
+            ) : lastScan ? (
+              <div className="flex items-center justify-between py-3 mt-2">
+                <div className="flex flex-col gap-0.5">
+                  <span className="font-body text-[14px] text-[var(--ink)]">
+                    {localName(lastScan.material, language)}
+                  </span>
+                  <span className="font-data text-[10px] text-[var(--ink-4)]">
+                    {t.confidence} {lastScan.confidence}%
+>>>>>>> Stashed changes
                   </span>
                 </div>
               </div>
