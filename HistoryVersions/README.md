@@ -28,3 +28,4 @@ This folder stores canonical implementation history for the repository.
 - `Fix/PricingCleanDirty/` — `.00` remove A/B/C grades; replace with two-level Clean/Dirty pricing system
 - `Fix/LocalModelsSlugKeys/` — `.00` change YOLO + TM class label arrays from Thai strings to WASTE_ITEMS English slug keys so pricePerKg() lookups return correct prices
 - `Feature/LiveAnalysisHandlingGuide/` — `.00` add "แนวทางการจัดการ" section header to Live Analysis rules panel in ScanPage
+- `Feature/ExpandedWasteRules/` — `.00` expand WASTE_RULES from 1–2 to 3–4 rules per material (reject/warning/info) for all 8 materials
