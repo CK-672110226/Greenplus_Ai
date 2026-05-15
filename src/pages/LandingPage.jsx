@@ -15,7 +15,7 @@ const ROLES = [
     icon: '♻',
     title: "I'm a recycler",
     desc: 'Households, baan-rao, café owners selling their daily scrap.',
-    features: ['scan', 'basket', 'map', 'eco-points'],
+    features: ['scan', 'basket', 'map'],
     accent: true,
   },
   {

@@ -1,6 +1,6 @@
 import { Outlet, NavLink, useNavigate } from 'react-router-dom'
 import { useSelector, useDispatch } from 'react-redux'
-import { setLanguage } from '../store/userSlice'
+import { setLanguage, toggleDarkMode } from '../store/userSlice'
 import { useT } from '../hooks/useT'
 import { Logo } from '../components/Logo'
 import { supabase } from '../lib/supabase'
@@ -23,9 +23,6 @@ function IconProfile() {
 }
 function IconMarket() {
   return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2 9m13-9l2 9M9 21h6" /></svg>
-}
-function IconEco() {
-  return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22V12" /><path d="M5 12C5 6.5 8 4 12 4c4 0 7 2.5 7 8-2 0-4.5-.5-7-3-2.5 2.5-5 3-7 3z" /></svg>
 }
 function IconSettings() {
   return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z" /></svg>
@@ -92,7 +89,7 @@ function Tab({ to, icon, label, badge }) {
 export function UserLayout() {
   const navigate = useNavigate()
   const dispatch = useDispatch()
-  const { language, profile } = useSelector(s => s.user)
+  const { language, profile, darkMode } = useSelector(s => s.user)
   const basket = useSelector(s => s.waste?.basket ?? [])
   const t = useT()
 
@@ -111,7 +108,6 @@ export function UserLayout() {
     { to: '/home',         icon: <IconHome />,    label: t.home },
     { to: '/scan',         icon: <IconScan />,    label: 'AI Scanner' },
     { to: '/marketplace',  icon: <IconMarket />,  label: t.marketplace },
-    { to: '/eco-points',   icon: <IconEco />,     label: t.ecoPoints },
     { to: '/map',          icon: <IconMap />,     label: t.map },
   ]
 
@@ -184,12 +180,33 @@ export function UserLayout() {
               {profile?.role ?? 'user'}
             </span>
           </div>
-          <button
-            onClick={toggleLang}
-            className="ml-auto font-data text-[10px] border-[1.5px] border-[var(--ink-4)] px-1.5 py-0.5 hover:border-[var(--ink)] transition-colors bg-transparent cursor-pointer shrink-0"
-          >
-            {language === 'th' ? 'EN' : 'TH'}
-          </button>
+          <div className="ml-auto flex items-center gap-1.5">
+            <button
+              onClick={() => dispatch(toggleDarkMode())}
+              className="flex items-center justify-center w-6 h-6 border-[1.5px] border-[var(--ink-4)] hover:border-[var(--ink)] hover:text-[var(--ink)] text-[var(--ink-3)] transition-colors bg-transparent cursor-pointer shrink-0"
+              aria-label="Toggle dark mode"
+            >
+              {darkMode ? (
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="4"/>
+                  <line x1="12" y1="2" x2="12" y2="4"/><line x1="12" y1="20" x2="12" y2="22"/>
+                  <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+                  <line x1="2" y1="12" x2="4" y2="12"/><line x1="20" y1="12" x2="22" y2="12"/>
+                  <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+                </svg>
+              ) : (
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+                </svg>
+              )}
+            </button>
+            <button
+              onClick={toggleLang}
+              className="font-data text-[10px] border-[1.5px] border-[var(--ink-4)] px-1.5 py-0.5 hover:border-[var(--ink)] transition-colors bg-transparent cursor-pointer shrink-0"
+            >
+              {language === 'th' ? 'EN' : 'TH'}
+            </button>
+          </div>
         </div>
       </aside>
 
@@ -206,6 +223,25 @@ export function UserLayout() {
             <Logo height={30} showWordmark />
           </button>
           <div className="flex items-center gap-3">
+            <button
+              onClick={() => dispatch(toggleDarkMode())}
+              className="flex items-center justify-center w-7 h-7 border-[1.5px] border-[var(--ink-4)] hover:border-[var(--ink)] hover:text-[var(--ink)] text-[var(--ink-3)] transition-colors bg-transparent cursor-pointer shrink-0"
+              aria-label="Toggle dark mode"
+            >
+              {darkMode ? (
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="4"/>
+                  <line x1="12" y1="2" x2="12" y2="4"/><line x1="12" y1="20" x2="12" y2="22"/>
+                  <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+                  <line x1="2" y1="12" x2="4" y2="12"/><line x1="20" y1="12" x2="22" y2="12"/>
+                  <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+                </svg>
+              ) : (
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+                </svg>
+              )}
+            </button>
             <button
               onClick={toggleLang}
               className="font-data text-[11px] border-[1.5px] border-[var(--ink-4)] px-2 py-0.5 hover:border-[var(--ink)] transition-colors bg-transparent cursor-pointer"
