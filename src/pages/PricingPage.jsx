@@ -13,9 +13,8 @@ function buildDefaultPrices() {
   const prices = {}
   Object.keys(WASTE_ITEMS).forEach(mat => {
     prices[mat] = {
-      A: pricePerKg(mat, 'A'),
-      B: pricePerKg(mat, 'B'),
-      C: pricePerKg(mat, 'C'),
+      clean: pricePerKg(mat, true),
+      dirty: pricePerKg(mat, false),
     }
   })
   return prices
@@ -37,16 +36,15 @@ export function PricingPage() {
       try {
         const { data, error } = await supabase
           .from('shop_pricing')
-          .select('material_type, price_grade_a, price_grade_b, price_grade_c')
+          .select('material_type, price_grade_a, price_grade_c')
           .eq('shop_id', shop.id)
 
         if (!error && data && data.length > 0) {
           const merged = { ...reduxPrices }
           data.forEach(row => {
             merged[row.material_type] = {
-              A: row.price_grade_a ?? merged[row.material_type]?.A,
-              B: row.price_grade_b ?? merged[row.material_type]?.B,
-              C: row.price_grade_c ?? merged[row.material_type]?.C,
+              clean: row.price_grade_a ?? merged[row.material_type]?.clean,
+              dirty: row.price_grade_c ?? merged[row.material_type]?.dirty,
             }
           })
           setLocal(merged)
@@ -60,9 +58,9 @@ export function PricingPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [shop])
 
-  function handleChange(mat, grade, raw) {
+  function handleChange(mat, field, raw) {
     const value = parseFloat(raw) || 0
-    setLocal(prev => ({ ...prev, [mat]: { ...prev[mat], [grade]: value } }))
+    setLocal(prev => ({ ...prev, [mat]: { ...prev[mat], [field]: value } }))
   }
 
   async function handleSave() {
@@ -72,9 +70,8 @@ export function PricingPage() {
       const rows = Object.entries(local).map(([mat, grades]) => ({
         shop_id:       shop.id,
         material_type: mat,
-        price_grade_a: grades.A ?? null,
-        price_grade_b: grades.B ?? null,
-        price_grade_c: grades.C ?? null,
+        price_grade_a: grades.clean ?? null,
+        price_grade_c: grades.dirty ?? null,
       }))
       try {
         await supabase.from('shop_pricing').upsert(rows, { onConflict: 'shop_id,material_type' })
@@ -106,42 +103,40 @@ export function PricingPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-4 gap-2 font-data text-[11px] text-[var(--ink-3)] uppercase tracking-widest px-3">
+      <div className="grid grid-cols-3 gap-2 font-data text-[11px] text-[var(--ink-3)] uppercase tracking-widest px-3">
         <span>{t.materialTypeLabel}</span>
-        <span>{t.gradeA}</span>
-        <span>{t.gradeB}</span>
-        <span>{t.gradeC}</span>
+        <span>{t.gradeClean}</span>
+        <span>{t.gradeDirty}</span>
       </div>
 
       <div className="flex flex-col gap-3">
         {Object.keys(WASTE_ITEMS).map(mat => {
-          const marketA = pricePerKg(mat, 'A')
-          const marketB = pricePerKg(mat, 'B')
-          const marketC = pricePerKg(mat, 'C')
-          const currentPrices = local[mat] ?? { A: marketA, B: marketB, C: marketC }
+          const marketClean = pricePerKg(mat, true)
+          const marketDirty = pricePerKg(mat, false)
+          const currentPrices = local[mat] ?? { clean: marketClean, dirty: marketDirty }
 
           return (
-            <Card key={mat} className="grid grid-cols-4 gap-3 items-center">
+            <Card key={mat} className="grid grid-cols-3 gap-3 items-center">
               <div className="flex flex-col gap-0.5">
                 <span className="font-body text-[14px] text-[var(--ink)]">
                   {localName(mat, language)}
                 </span>
                 <span className="font-data text-[10px]" style={{ color: 'var(--ink-3)' }}>
-                  {t.marketRate}: ฿{marketA} / ฿{marketB} / ฿{marketC}
+                  {t.marketRate}: ฿{marketClean} / ฿{marketDirty}
                 </span>
               </div>
 
-              {[['A', marketA], ['B', marketB], ['C', marketC]].map(([grade, market]) => {
-                const val = currentPrices[grade] ?? 0
+              {[['clean', marketClean], ['dirty', marketDirty]].map(([field, market]) => {
+                const val = currentPrices[field] ?? 0
                 const diff = val - market
                 return (
-                  <div key={grade} className="flex flex-col gap-0.5">
+                  <div key={field} className="flex flex-col gap-0.5">
                     <input
                       type="number"
                       min="0"
                       step="0.5"
                       value={val}
-                      onChange={e => handleChange(mat, grade, e.target.value)}
+                      onChange={e => handleChange(mat, field, e.target.value)}
                       className="w-full px-2 py-1 border-[1.5px] border-[var(--ink)] bg-[var(--paper)] font-data text-[13px] outline-none focus:border-[var(--green)]"
                     />
                     {diff > 0 && (

@@ -184,7 +184,7 @@ export function BasketPage() {
       totalKg:   activeItems.reduce((s, i) => s + (i.weight ?? 0), 0),
       estValue:  Math.round(total),
     }))
-    await insertBooking(shop, activeItems, Math.round(total))
+    await insertBooking(shop, activeItems)
     toast.success(t.bookingConfirmed)
     setBookingShop(null)
   }

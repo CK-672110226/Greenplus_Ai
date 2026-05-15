@@ -5,9 +5,8 @@ function buildDefaultPrices() {
   const prices = {}
   Object.keys(WASTE_ITEMS).forEach(mat => {
     prices[mat] = {
-      A: pricePerKg(mat, 'A'),
-      B: pricePerKg(mat, 'B'),
-      C: pricePerKg(mat, 'C'),
+      clean: pricePerKg(mat, true),
+      dirty: pricePerKg(mat, false),
     }
   })
   return prices
@@ -16,7 +15,17 @@ function buildDefaultPrices() {
 function loadFromStorage() {
   try {
     const raw = localStorage.getItem('gp_pricing')
-    if (raw) return JSON.parse(raw)
+    if (raw) {
+      const parsed = JSON.parse(raw)
+      // Discard stale A/B/C format so users get fresh clean/dirty defaults
+      const firstMat = Object.values(parsed)[0]
+      if (firstMat?.A !== undefined) {
+        localStorage.removeItem('gp_pricing')
+        localStorage.removeItem('gp_pricing_savedAt')
+        return null
+      }
+      return parsed
+    }
   } catch {
     // ignore
   }
@@ -32,11 +41,6 @@ const pricingSlice = createSlice({
     savedAt: stored ? (localStorage.getItem('gp_pricing_savedAt') ?? null) : null,
   },
   reducers: {
-    setPrice: (state, action) => {
-      const { material, grade, value } = action.payload
-      if (!state.prices[material]) state.prices[material] = {}
-      state.prices[material][grade] = value
-    },
     bulkSet: (state, action) => {
       state.prices = action.payload
       state.savedAt = new Date().toISOString()
@@ -60,5 +64,5 @@ const pricingSlice = createSlice({
   },
 })
 
-export const { setPrice, bulkSet, resetToDefault } = pricingSlice.actions
+export const { bulkSet, resetToDefault } = pricingSlice.actions
 export default pricingSlice.reducer

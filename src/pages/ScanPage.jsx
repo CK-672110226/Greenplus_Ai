@@ -14,21 +14,16 @@ import { supabase } from '../lib/supabase'
 
 /* ── Batch queue item row ────────────────────────────────────── */
 function QueueRow({ item, onRemove }) {
-  const resolve = useResolvedName()
-  const value = pricePerKg(item.materialType, item.clean ?? true) * (item.weight ?? 0)
+  const resolve   = useResolvedName()
+  const unitPrice = pricePerKg(item.materialType, item.clean ?? true)
   return (
     <div className="flex items-center justify-between py-2.5 border-b-[1px] border-[var(--ink-4)] last:border-b-0">
-      <div className="flex flex-col gap-0.5 min-w-0">
-        <span className="font-body text-[14px] text-[var(--ink)] truncate">
-          {resolve(item.materialType)}
-        </span>
-        <span className="font-data text-[10px] text-[var(--ink-3)]">
-          {(item.weight ?? 0).toFixed(2)} kg
-        </span>
-      </div>
+      <span className="font-body text-[14px] text-[var(--ink)] truncate flex-1 min-w-0">
+        {resolve(item.materialType)}
+      </span>
       <div className="flex items-center gap-2 shrink-0 ml-2">
         <GradeTag clean={item.clean} />
-        <span className="font-data text-[13px] text-[var(--ink)]">฿{value.toFixed(0)}</span>
+        <span className="font-data text-[12px] text-[var(--green)]">฿{unitPrice.toFixed(0)}/kg</span>
         <button
           onClick={() => onRemove(item.id)}
           className="font-data text-[11px] text-[var(--ink-4)] hover:text-[var(--ink)] bg-transparent border-none cursor-pointer p-0 leading-none"

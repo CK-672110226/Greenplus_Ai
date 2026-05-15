@@ -233,14 +233,12 @@ export function MapPage() {
                           <em>{t.shopAccepts}:</em>{' '}
                           {(shop.accepts ?? []).map(a => localName(a, language)).join(', ')}
                         </div>
-                        <a
-                          href={`https://www.google.com/maps/dir/?api=1&destination=${shop.lat},${shop.lng}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          style={{ fontSize: 12, color: '#22C55E', display: 'block', marginTop: 6 }}
+                        <button
+                          onClick={() => window.open(`https://maps.google.com/maps?daddr=${shop.lat},${shop.lng}`, '_blank')}
+                          style={{ fontSize: 12, color: '#22C55E', background: 'none', border: 'none', cursor: 'pointer', padding: 0, marginTop: 6, display: 'block' }}
                         >
-                          {t.directions}
-                        </a>
+                          {t.directions} →
+                        </button>
                       </div>
                     </Popup>
                   </Marker>

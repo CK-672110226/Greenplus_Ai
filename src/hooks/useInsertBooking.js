@@ -5,27 +5,30 @@ import { supabase } from '../lib/supabase'
 export function useInsertBooking() {
   const session = useSelector(s => s.user.session)
 
-  const insertBooking = useCallback(async (shop, activeItems, estValue) => {
+  const insertBooking = useCallback(async (shop, activeItems) => {
     if (!session?.user?.id) return false
 
-    const materialTotals = {}
+    // Group by material_type; keep clean flag from first item of that type
+    const groups = {}
     activeItems.forEach(item => {
-      materialTotals[item.materialType] = (materialTotals[item.materialType] ?? 0) + (item.weight ?? 0)
+      if (!groups[item.materialType]) {
+        groups[item.materialType] = { weight_kg: 0, clean: item.clean ?? true }
+      }
+      groups[item.materialType].weight_kg += item.weight ?? 0
     })
 
-    const rows = Object.entries(materialTotals).map(([material_type, weight_kg]) => ({
+    const rows = Object.entries(groups).map(([material_type, { weight_kg, clean }]) => ({
       shop_id:       shop.id,
       seller_id:     session.user.id,
       material_type,
+      grade:         clean ? 'A' : 'C',
       weight_kg,
-      est_value:     estValue,
       status:        'pending',
     }))
 
     try {
       const { error } = await supabase.from('bookings').insert(rows)
-      if (error) return false
-      return true
+      return !error
     } catch {
       return false
     }

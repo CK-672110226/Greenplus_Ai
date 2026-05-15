@@ -13,8 +13,9 @@ async function fetchOrCreateProfile(user, dispatch) {
 
   if (data) {
     dispatch(setProfile(data))
-    if (data.open_days) dispatch(setOpenDays(data.open_days))
-    if (data.accepted_materials) dispatch(setAcceptedMaterials(data.accepted_materials))
+    // open_days / accepted_materials exist after migration 008 — guard for older deployments
+    if (Array.isArray(data.open_days)) dispatch(setOpenDays(data.open_days))
+    if (Array.isArray(data.accepted_materials)) dispatch(setAcceptedMaterials(data.accepted_materials))
     return
   }
 
