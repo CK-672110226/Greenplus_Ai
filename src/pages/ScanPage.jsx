@@ -96,7 +96,8 @@ export function ScanPage() {
     handleReset()
   }
 
-  const isMockMode   = !aiConfig.tmStage1Url && !aiConfig.onnxStage1Url && !aiConfig.vertexStage1Endpoint
+  const isMockMode = !aiConfig.tmStage1Url && !aiConfig.onnxStage1Url && !aiConfig.vertexStage1Endpoint
+  const aiMode     = aiConfig.tmStage1Url ? 'tfjs' : aiConfig.onnxStage1Url ? 'onnx' : aiConfig.vertexStage1Endpoint ? 'vertex' : 'demo'
   const activeBasket = basket.filter(i => !i.skipped)
   const basketTotal  = activeBasket.reduce((s, i) => s + pricePerKg(i.materialType, i.clean ?? true) * (i.weight ?? 0), 0)
   const queueTotal   = batchQueue.reduce((s, i) => s + pricePerKg(i.materialType, i.clean ?? true) * (i.weight ?? 0), 0)
@@ -123,6 +124,15 @@ export function ScanPage() {
 
   // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { startCamera(); return () => { streamRef.current?.getTracks().forEach(t => t.stop()) } }, [startCamera])
+
+  // Auto-scan: chain 2s timeouts while camera is idle
+  useEffect(() => {
+    if (phase !== 'idle' || inputMode !== 'camera') return
+    const timer = setTimeout(() => {
+      if (videoRef.current) runInference(videoRef.current)
+    }, 2000)
+    return () => clearTimeout(timer)
+  }, [phase, inputMode]) // eslint-disable-line react-hooks/exhaustive-deps
 
   /* ── Inference ────────────────────────────────────────────── */
   async function runInference(source) {
@@ -199,7 +209,6 @@ export function ScanPage() {
       return
     }
     navigator.vibrate?.(50)
-    // eslint-disable-next-line react-hooks/purity
     const id = `${result.materialType}_${Date.now()}`
     dispatch(addToBasket({ id, materialType: result.materialType, clean: result.stage2Pass ?? true, weight: result.weight, pricePerKg: pricePerKg(result.materialType, result.stage2Pass ?? true) }))
     insertScan(result)
@@ -210,7 +219,6 @@ export function ScanPage() {
   function handleConfirmClean() {
     setDirtyAlert(false)
     navigator.vibrate?.(50)
-    // eslint-disable-next-line react-hooks/purity
     const id = `${result.materialType}_${Date.now()}`
     dispatch(addToBasket({ id, materialType: result.materialType, clean: result.stage2Pass ?? true, weight: result.weight, pricePerKg: pricePerKg(result.materialType, result.stage2Pass ?? true) }))
     insertScan(result)
@@ -303,7 +311,7 @@ export function ScanPage() {
                 {phase === 'analyzing' ? 'analyzing' : phase === 'idle' ? 'live · ready' : phase}
               </span>
               <span className={`font-data text-[9px] border-[1.5px] px-1.5 py-0.5 uppercase ${isMockMode ? 'border-[var(--ink-4)] text-[var(--ink-4)]' : 'border-[var(--green)] text-[var(--green)]'}`}>
-                {isMockMode ? 'demo' : 'onnx'}
+                {aiMode}
               </span>
             </div>
           </div>
@@ -419,7 +427,18 @@ export function ScanPage() {
 
             {/* Scan controls */}
             <div className="flex flex-col gap-2">
-              {(phase === 'idle' || phase === 'analyzing') && (
+              {/* Camera: auto-scan indicator | Upload: manual scan button */}
+              {(phase === 'idle' || phase === 'analyzing') && inputMode === 'camera' && (
+                <div className="flex items-center justify-center gap-2.5 py-2.5 border-[1.5px] border-[var(--ink-4)]">
+                  <span className={`w-2 h-2 rounded-full ${phase === 'analyzing' ? 'bg-[var(--green)] animate-pulse' : 'bg-[var(--ink-4)]'}`} />
+                  <span className="font-data text-[11px] text-[var(--ink-3)] uppercase tracking-widest">
+                    {phase === 'analyzing'
+                      ? (language === 'th' ? 'กำลังวิเคราะห์…' : 'Analyzing…')
+                      : (language === 'th' ? 'สแกนอัตโนมัติ — รอสักครู่' : 'Auto-scanning — stand by')}
+                  </span>
+                </div>
+              )}
+              {(phase === 'idle' || phase === 'analyzing') && inputMode === 'upload' && (
                 <Button variant="primary" fullWidth onClick={handleScan} disabled={phase === 'analyzing'}>
                   {phase === 'analyzing' ? t.analyzing : t.scanBtn}
                 </Button>
