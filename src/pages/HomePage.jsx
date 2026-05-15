@@ -68,7 +68,7 @@ export function HomePage() {
   const { shops } = useShops()
 
   const activeItems  = basket.filter(i => !i.skipped)
-  const totalValue   = activeItems.reduce((sum, i) => sum + pricePerKg(i.materialType, i.grade) * (i.weight ?? 0), 0)
+  const totalValue   = activeItems.reduce((sum, i) => sum + pricePerKg(i.materialType, i.clean ?? true) * (i.weight ?? 0), 0)
   const weeklyData   = weeklyBuckets(basket, 'weight')
   const weeklyKg     = weeklyData.reduce((s, d) => s + d.val, 0).toFixed(1)
 const { salute, name: displayName } = greeting(profile?.display_name)
@@ -203,7 +203,7 @@ const { salute, name: displayName } = greeting(profile?.display_name)
             {recentItems.length > 0 ? (
               <div className="flex flex-col mt-3">
                 {recentItems.map((item, idx) => {
-                  const value = pricePerKg(item.materialType, item.grade) * (item.weight ?? 0)
+                  const value = pricePerKg(item.materialType, item.clean ?? true) * (item.weight ?? 0)
                   const timeLabels = ['2m ago', '1h ago', 'Yest.', '2d ago', '3d ago']
                   return (
                     <div
@@ -219,7 +219,7 @@ const { salute, name: displayName } = greeting(profile?.display_name)
                         </span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <GradeTag grade={item.grade} />
+                        <GradeTag clean={item.clean} />
                         <span className="font-data text-[13px] text-[var(--ink)]">฿{value.toFixed(0)}</span>
                       </div>
                     </div>
@@ -236,13 +236,13 @@ const { salute, name: displayName } = greeting(profile?.display_name)
               <div className="flex items-center justify-between py-3 mt-2">
                 <div className="flex flex-col gap-0.5">
                   <span className="font-body text-[14px] text-[var(--ink)]">
-                    {localName(lastScan.material, language)}
+                    {localName(lastScan.materialType, language)}
                   </span>
                   <span className="font-data text-[10px] text-[var(--ink-4)]">
                     {t.confidence} {lastScan.confidence}%
                   </span>
                 </div>
-                <GradeTag grade={lastScan.grade} />
+                <GradeTag clean={lastScan.stage2Pass} />
               </div>
             ) : (
               <div className="flex flex-col items-center gap-2 py-8 text-center">

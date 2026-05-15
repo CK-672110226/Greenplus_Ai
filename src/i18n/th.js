@@ -143,9 +143,8 @@ export const th = {
 
   // Dashboard pricing CRUD (B-02)
   myPricing:         'ราคารับซื้อ',
-  gradeA:            'เกรด A (฿/กก.)',
-  gradeB:            'เกรด B (฿/กก.)',
-  gradeC:            'เกรด C (฿/กก.)',
+  gradeClean:        'สะอาด (฿/กก.)',
+  gradeDirty:        'ไม่สะอาด (฿/กก.)',
   savePricing:       'บันทึกราคา',
 
   // Settings

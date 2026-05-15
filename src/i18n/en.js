@@ -143,9 +143,8 @@ export const en = {
 
   // Dashboard pricing CRUD (B-02)
   myPricing:         'My Pricing',
-  gradeA:            'Grade A (฿/kg)',
-  gradeB:            'Grade B (฿/kg)',
-  gradeC:            'Grade C (฿/kg)',
+  gradeClean:        'Clean (฿/kg)',
+  gradeDirty:        'Dirty (฿/kg)',
   savePricing:       'Save Pricing',
 
   // Settings
