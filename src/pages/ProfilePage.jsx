@@ -18,7 +18,7 @@ function Avatar({ name }) {
 }
 
 function UserProfile({ profile, session, t, language }) {
-  const { scans, loading, totalKg, totalValue, totalCo2 } = useScanHistory()
+  const { scans, loading, totalKg, totalValue } = useScanHistory()
 
   const emptyMsg = language === 'th'
     ? 'ยังไม่มีการสแกน ชี้กล้องไปที่วัสดุรีไซเคิลเพื่อเริ่มต้น'
@@ -39,19 +39,15 @@ function UserProfile({ profile, session, t, language }) {
             </span>
           </div>
         </div>
-        {/* Lifetime impact grid */}
-        <div className="grid grid-cols-3 border-t-[1.5px] border-[var(--ink-4)] pt-3">
+        {/* Lifetime stats grid */}
+        <div className="grid grid-cols-2 border-t-[1.5px] border-[var(--ink-4)] pt-3">
           <div className="flex flex-col gap-0.5 border-r border-[var(--ink-4)] pr-3">
             <span className="font-brand text-[22px] text-[var(--ink)] leading-none">{totalKg.toFixed(1)}</span>
             <span className="font-data text-[9px] text-[var(--ink-3)] uppercase tracking-widest leading-tight">kg recycled</span>
           </div>
-          <div className="flex flex-col gap-0.5 border-r border-[var(--ink-4)] px-3">
+          <div className="flex flex-col gap-0.5 pl-3">
             <span className="font-data text-[22px] text-[var(--green)] leading-none">฿{totalValue.toFixed(0)}</span>
             <span className="font-data text-[9px] text-[var(--ink-3)] uppercase tracking-widest leading-tight">earned</span>
-          </div>
-          <div className="flex flex-col gap-0.5 pl-3">
-            <span className="font-brand text-[22px] text-[var(--ink)] leading-none">{totalCo2}</span>
-            <span className="font-data text-[9px] text-[var(--ink-3)] uppercase tracking-widest leading-tight">kg CO₂ saved</span>
           </div>
         </div>
       </Card>

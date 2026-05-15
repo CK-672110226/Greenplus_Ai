@@ -22,7 +22,7 @@
 ### `user`
 ```
 session: null | SupabaseSession
-profile: null | { id, role:'user'|'buyer'|'admin', display_name, eco_points, language_pref }
+profile: null | { id, role:'user'|'buyer'|'admin', display_name, language_pref }
 language: 'en' | 'th'
 loading: boolean
 darkMode: boolean  ← persisted gp_dark
@@ -269,19 +269,7 @@ TM local stage-1 model (11 classes):
 
 ---
 
-### `/eco-points` — EcoPointsPage 🔴
-| Item | Status |
-|------|--------|
-| Tier display + progress bar | ✅ UI only |
-| Tier table | ✅ UI only |
-| Redeem rewards | 🔴 toast "coming in M10" |
-| Points history | 🔴 empty |
-| Backend accrual (on booking complete) | ❌ not built |
-
-**Redux:** reads `user.profile.eco_points`
-**Supabase:** ❌ no integration — eco_point_ledger table exists but no hook
-
-**Gap:** Need `eco_point_ledger` INSERT when booking status → 'completed', then UPDATE `user_profiles.eco_points`
+### `/eco-points` — 🗑️ DELETED
 
 ---
 
@@ -289,10 +277,9 @@ TM local stage-1 model (11 classes):
 | Item | Status |
 |------|--------|
 | User: scan history table | ✅ |
-| User: lifetime stats (kg, ฿, CO₂) | ✅ |
+| User: lifetime stats (kg, ฿) | ✅ |
 | Buyer: accepted materials toggle + save | ✅ |
 | Admin: stats (shops to approve, flagged) | 🔴 hardcoded 0 |
-| CO₂ calculation | 🔴 hardcoded formula |
 
 **Redux:** reads `user.session`, `user.profile`
 **Supabase:** SELECT scan_history (useScanHistory), UPDATE user_profiles (buyer)
@@ -415,20 +402,19 @@ Stage 2 (cleanliness per material):
 |---|------|---------|
 | 4 | Buyer settings (openDays, acceptedMaterials) → Supabase | DashboardPage, shops/user_profiles |
 | 5 | PricingPage → INSERT/UPDATE shop_pricing in Supabase | PricingPage, usePricing hook needed |
-| 6 | Eco-points accrual on booking complete | SchedulePage/DashboardPage → eco_point_ledger |
 
 ### P3 — UI-only features needing backend
 | # | Task | File(s) |
 |---|------|---------|
-| 7 | Notifications — push via Supabase Realtime / DB trigger | notificationSlice, new hook |
-| 8 | Heatmap — aggregate scan_history by district | AdminPage, new Supabase query |
-| 9 | Shop approval workflow in AdminPage | AdminPage, shops table UPDATE |
-| 10 | LandingPage global stats (kg, paid) from scan_history | LandingPage, new Supabase query |
+| 6 | Notifications — push via Supabase Realtime / DB trigger | notificationSlice, new hook |
+| 7 | Heatmap — aggregate scan_history by district | AdminPage, new Supabase query |
+| 8 | Shop approval workflow in AdminPage | AdminPage, shops table UPDATE |
+| 9 | LandingPage global stats (kg, paid) from scan_history | LandingPage, new Supabase query |
 
 ### P4 — UX polish
 | # | Task | File(s) |
 |---|------|---------|
-| 11 | Forgot password flow | LoginPage |
-| 12 | Admin profile stats (not hardcoded 0) | ProfilePage |
-| 13 | Settings notification prefs persist | SettingsPage |
-| 14 | Export data (scan history CSV) | SettingsPage / ProfilePage |
+| 10 | Forgot password flow | LoginPage |
+| 11 | Admin profile stats (not hardcoded 0) | ProfilePage |
+| 12 | Settings notification prefs persist | SettingsPage |
+| 13 | Export scan history CSV | SettingsPage / ProfilePage |

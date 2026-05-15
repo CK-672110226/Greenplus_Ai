@@ -27,7 +27,6 @@ async function fetchOrCreateProfile(user, dispatch) {
       role,
       display_name:  displayName,
       language_pref: 'th',
-      eco_points:    0,
     })
     .select()
     .single()
