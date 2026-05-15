@@ -54,8 +54,11 @@ export function ScanPage() {
   const fileRef   = useRef(null)
   const insertScan = useScanInsert()
 
+  const uploadImgRef = useRef(null)   // holds Image element for re-scan in upload mode
+
   const [phase, setPhase]                   = useState('starting')
   const [result, setResult]                 = useState(null)
+  const [pendingItem, setPendingItem]       = useState(null)  // dirty item awaiting confirmation
   const [uploadSrc, setUploadSrc]           = useState(null)
   const [inputMode, setInputMode]           = useState('camera')
   const [, setHasStream]                    = useState(false)
@@ -84,10 +87,16 @@ export function ScanPage() {
   }
 
   function handleSwipeRight() {
-    if (result?.stage2Pass === false) {
+    if (!result) return
+    // eslint-disable-next-line react-hooks/purity
+    const item = { ...result, id: `${result.materialType}_${Date.now()}` }
+    if (result.stage2Pass === false) {
+      setPendingItem(item)
       setDirtyAlert(true)
     } else {
-      handleAddSingle()
+      setBatchQueue(q => [...q, item])
+      toast.success(`+ ${resolve(result.materialType)}`, { duration: 1500 })
+      handleReset()
     }
   }
 
@@ -96,8 +105,8 @@ export function ScanPage() {
     handleReset()
   }
 
-  const isMockMode = !aiConfig.tmStage1Url && !aiConfig.onnxStage1Url && !aiConfig.vertexStage1Endpoint
-  const aiMode     = aiConfig.tmStage1Url ? 'tfjs' : aiConfig.onnxStage1Url ? 'onnx' : aiConfig.vertexStage1Endpoint ? 'vertex' : 'demo'
+  const isMockMode = !aiConfig.yoloStage1Url && !aiConfig.tmStage1Url && !aiConfig.onnxStage1Url && !aiConfig.vertexStage1Endpoint
+  const aiMode     = aiConfig.yoloStage1Url ? 'yolo' : aiConfig.tmStage1Url ? 'tfjs' : aiConfig.onnxStage1Url ? 'onnx' : aiConfig.vertexStage1Endpoint ? 'vertex' : 'demo'
   const activeBasket = basket.filter(i => !i.skipped)
   const basketTotal  = activeBasket.reduce((s, i) => s + pricePerKg(i.materialType, i.clean ?? true) * (i.weight ?? 0), 0)
   const queueTotal   = batchQueue.reduce((s, i) => s + pricePerKg(i.materialType, i.clean ?? true) * (i.weight ?? 0), 0)
@@ -122,29 +131,39 @@ export function ScanPage() {
     }
   }, [])
 
-  // eslint-disable-next-line react-hooks/set-state-in-effect
-  useEffect(() => { startCamera(); return () => { streamRef.current?.getTracks().forEach(t => t.stop()) } }, [startCamera])
-
-  // Auto-scan: chain 2s timeouts while camera is idle
+  // Cleanup camera on unmount only
   useEffect(() => {
-    if (phase !== 'idle' || inputMode !== 'camera') return
-    const timer = setTimeout(() => {
-      if (videoRef.current) runInference(videoRef.current)
-    }, 2000)
-    return () => clearTimeout(timer)
-  }, [phase, inputMode]) // eslint-disable-line react-hooks/exhaustive-deps
+    return () => { streamRef.current?.getTracks().forEach(t => t.stop()) }
+  }, [])
+
+  function stopCamera() {
+    streamRef.current?.getTracks().forEach(t => t.stop())
+    streamRef.current = null
+    setHasStream(false)
+    if (videoRef.current) videoRef.current.srcObject = null
+  }
 
   /* ── Inference ────────────────────────────────────────────── */
   async function runInference(source) {
+    if (isMockMode) {
+      const msg = language === 'th'
+        ? 'AI ยังไม่พร้อมใช้บริการ — ยังไม่ได้ตั้งค่าโมเดล'
+        : 'AI not ready — no model configured'
+      toast.error(msg, { duration: 4000 })
+      setPhase(streamRef.current ? 'idle' : 'starting')
+      return
+    }
     setPhase('analyzing')
     try {
       const infer = await twoStageInfer(source, {
-        confidenceThreshold: aiConfig.confidenceThreshold,
-        tmStage1Url:         aiConfig.tmStage1Url       || null,
-        stage1ClassLabels:   aiConfig.stage1ClassLabels ?? [],
-        tmStage2Urls:        aiConfig.tmStage2Urls      ?? {},
-        onnxStage1Url:       aiConfig.onnxStage1Url     || null,
-        onnxStage2Url:       aiConfig.onnxStage2Url     || null,
+        confidenceThreshold:  aiConfig.confidenceThreshold,
+        yoloStage1Url:        aiConfig.yoloStage1Url      || null,
+        yoloClassLabels:      aiConfig.yoloClassLabels    ?? [],
+        tmStage1Url:          aiConfig.tmStage1Url        || null,
+        stage1ClassLabels:    aiConfig.stage1ClassLabels  ?? [],
+        tmStage2Urls:         aiConfig.tmStage2Urls       ?? {},
+        onnxStage1Url:        aiConfig.onnxStage1Url      || null,
+        onnxStage2Url:        aiConfig.onnxStage2Url      || null,
         vertexStage1Endpoint: aiConfig.vertexStage1Endpoint || null,
         vertexStage2Endpoint: aiConfig.vertexStage2Endpoint || null,
       })
@@ -154,20 +173,33 @@ export function ScanPage() {
       setResult(infer)
       dispatch(setLastScan(infer))
 
-      if (batchMode) {
-        setBatchQueue(q => [...q, { ...infer, id: `${infer.materialType}_${Date.now()}` }])
-        setPhase('idle')
-      } else {
+      // Always accumulate in batch queue; dirty items need user confirmation first
+      const item = { ...infer, id: `${infer.materialType}_${Date.now()}` }
+      if (infer.stage2Pass === false) {
+        setPendingItem(item)
+        setDirtyAlert(true)
         setPhase('result')
+      } else {
+        setBatchQueue(q => [...q, item])
+        toast.success(`+ ${resolve(infer.materialType)}`, { duration: 1500 })
+        setPhase(streamRef.current ? 'idle' : 'starting')
       }
-    } catch {
-      toast.error('Inference failed — try again')
-      setPhase('idle')
+    } catch (err) {
+      console.error('[Scan] inference error:', err)
+      const msg = language === 'th'
+        ? 'AI ขัดข้อง — กรุณาลองใหม่อีกครั้ง'
+        : 'AI error — please try again'
+      toast.error(msg, { duration: 4000 })
+      setPhase(streamRef.current ? 'idle' : 'starting')
     }
   }
 
   async function handleScan() {
-    if (videoRef.current) await runInference(videoRef.current)
+    if (inputMode === 'upload' && uploadImgRef.current) {
+      await runInference(uploadImgRef.current)
+    } else if (videoRef.current) {
+      await runInference(videoRef.current)
+    }
   }
 
   async function handleFileChange(e) {
@@ -180,8 +212,9 @@ export function ScanPage() {
     const url = URL.createObjectURL(file)
     setUploadSrc(url)
     setInputMode('upload')
+    setPhase('idle')
     const img = new window.Image()
-    img.onload  = () => runInference(img)
+    img.onload  = () => { uploadImgRef.current = img; runInference(img) }
     img.onerror = () => { toast.error('Could not load image'); setPhase('idle') }
     img.src = url
   }
@@ -200,44 +233,33 @@ export function ScanPage() {
     setShowReport(false)
   }
 
-  /* ── Add to basket ────────────────────────────────────────── */
-  function handleAddSingle() {
-    if (!result) return
-    if (result.stage2Pass === false) {
-      navigator.vibrate?.([100, 50, 100])
-      setDirtyAlert(true)
-      return
-    }
-    navigator.vibrate?.(50)
-    const id = `${result.materialType}_${Date.now()}`
-    dispatch(addToBasket({ id, materialType: result.materialType, clean: result.stage2Pass ?? true, weight: result.weight, pricePerKg: pricePerKg(result.materialType, result.stage2Pass ?? true) }))
-    insertScan(result)
-    toast.success(`${resolve(result.materialType)} added`)
-    handleReset()
-  }
-
+  /* ── Queue / basket actions ───────────────────────────────── */
   function handleConfirmClean() {
+    const item = pendingItem
     setDirtyAlert(false)
+    setPendingItem(null)
+    if (!item) { handleReset(); return }
     navigator.vibrate?.(50)
-    const id = `${result.materialType}_${Date.now()}`
-    dispatch(addToBasket({ id, materialType: result.materialType, clean: result.stage2Pass ?? true, weight: result.weight, pricePerKg: pricePerKg(result.materialType, result.stage2Pass ?? true) }))
-    insertScan(result)
-    toast.success(`${resolve(result.materialType)} added`)
-    handleReset()
+    setBatchQueue(q => [...q, item])
+    toast.success(`+ ${resolve(item.materialType)}`, { duration: 1500 })
+    // stay in camera idle if camera is running, else go back to starting
+    setPhase(streamRef.current ? 'idle' : 'starting')
   }
 
   function handleRejectClean() {
     setDirtyAlert(false)
+    setPendingItem(null)
     toast.error(language === 'th' ? 'กรุณาทำความสะอาดก่อนนำมาขาย' : 'Please wash it before selling')
-    handleReset()
+    setPhase(streamRef.current ? 'idle' : 'starting')
   }
 
   function handleAddBatch() {
     if (batchQueue.length === 0) return
     batchQueue.forEach(item => {
       dispatch(addToBasket({ id: item.id, materialType: item.materialType, clean: item.stage2Pass ?? true, weight: item.weight, pricePerKg: pricePerKg(item.materialType, item.stage2Pass ?? true) }))
+      insertScan(item)
     })
-    toast.success(`${batchQueue.length} items added to basket`)
+    toast.success(language === 'th' ? `เพิ่ม ${batchQueue.length} รายการลงตะกร้าแล้ว` : `${batchQueue.length} items added to basket`)
     setBatchQueue([])
   }
 
@@ -248,10 +270,11 @@ export function ScanPage() {
   function handleReset() {
     if (uploadSrc) URL.revokeObjectURL(uploadSrc)
     setUploadSrc(null)
+    uploadImgRef.current = null
     setResult(null)
     setDirtyAlert(false)
+    setInputMode('camera')
     setPhase('starting')
-    startCamera()
   }
 
   /* ── Derived values for live analysis panel ─────────── */
@@ -277,10 +300,12 @@ export function ScanPage() {
           {/* Panel header */}
           <div className="px-6 lg:px-8 py-5 border-b-[1.5px] border-[var(--ink)]">
             <h1 className="font-brand text-[24px] lg:text-[28px] text-[var(--ink)] m-0 leading-tight">
-              Point camera at the item
+              {language === 'th' ? 'สแกนขยะรีไซเคิล' : 'Scan Recyclables'}
             </h1>
             <p className="font-data text-[10px] text-[var(--ink-3)] uppercase tracking-widest m-0 mt-1">
-              {batchMode ? 'batch mode · scan many · review before submit' : 'single mode · scan one · add to basket'}
+              {language === 'th'
+                ? 'มือถือ: เปิดกล้อง → ถ่ายรูป · Desktop: อัปโหลดรูป'
+                : 'Mobile: open camera → capture · Desktop: upload image'}
             </p>
           </div>
 
@@ -316,14 +341,16 @@ export function ScanPage() {
             </div>
           </div>
 
-          {/* Demo mode banner */}
+          {/* AI not ready banner */}
           {isMockMode && (
-            <div className="px-6 lg:px-8 py-2.5 border-b-[1.5px] border-[var(--orange)] bg-[rgba(245,158,11,0.08)] flex items-center gap-3">
-              <span className="font-data text-[9px] border-[1.5px] border-[var(--orange)] text-[var(--orange)] px-1.5 py-0.5 uppercase tracking-widest shrink-0">DEMO</span>
+            <div className="px-6 lg:px-8 py-3 border-b-[1.5px] border-[#E53E3E] bg-[rgba(229,62,62,0.07)] flex items-center gap-3">
+              <span className="font-data text-[9px] border-[1.5px] border-[#E53E3E] text-[#E53E3E] px-1.5 py-0.5 uppercase tracking-widest shrink-0">
+                {language === 'th' ? 'ยังไม่พร้อม' : 'NOT READY'}
+              </span>
               <span className="font-data text-[10px] text-[var(--ink-3)] uppercase tracking-wide">
                 {language === 'th'
-                  ? 'โหมดสาธิต — ผลลัพธ์จำลอง · ตั้งค่า ONNX ใน Admin เพื่อเปิด Edge AI'
-                  : 'Demo mode — results are simulated · configure ONNX in Admin to enable Edge AI'}
+                  ? 'AI ยังไม่พร้อมใช้บริการ — โมเดลยังไม่ได้โหลด'
+                  : 'AI not ready — model not loaded yet'}
               </span>
             </div>
           )}
@@ -371,8 +398,20 @@ export function ScanPage() {
               )}
 
               {phase === 'starting' && (
-                <div className="absolute inset-0 flex items-center justify-center bg-[var(--paper-2)]">
-                  <span className="font-data text-[11px] text-[var(--ink-4)] uppercase tracking-widest">Starting camera…</span>
+                <div className="absolute inset-0 flex flex-col items-center justify-center gap-5 bg-[var(--paper-2)]">
+                  <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--ink-3)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                    <circle cx="12" cy="13" r="4"/>
+                  </svg>
+                  <button
+                    onClick={startCamera}
+                    className="lg:hidden font-data text-[12px] uppercase tracking-widest border-[2px] border-[var(--ink)] px-6 py-3 bg-[var(--green)] text-[var(--paper)] shadow-[3px_3px_0_var(--ink)] active:shadow-none active:translate-x-[3px] active:translate-y-[3px] transition-all cursor-pointer"
+                  >
+                    {language === 'th' ? 'เปิดกล้อง' : 'Open Camera'}
+                  </button>
+                  <span className="hidden lg:block font-data text-[10px] text-[var(--ink-4)] uppercase tracking-widest">
+                    {language === 'th' ? 'อัปโหลดรูปด้านล่าง' : 'Upload image below'}
+                  </span>
                 </div>
               )}
 
@@ -427,28 +466,54 @@ export function ScanPage() {
 
             {/* Scan controls */}
             <div className="flex flex-col gap-2">
-              {/* Camera: auto-scan indicator | Upload: manual scan button */}
-              {(phase === 'idle' || phase === 'analyzing') && inputMode === 'camera' && (
-                <div className="flex items-center justify-center gap-2.5 py-2.5 border-[1.5px] border-[var(--ink-4)]">
-                  <span className={`w-2 h-2 rounded-full ${phase === 'analyzing' ? 'bg-[var(--green)] animate-pulse' : 'bg-[var(--ink-4)]'}`} />
-                  <span className="font-data text-[11px] text-[var(--ink-3)] uppercase tracking-widest">
-                    {phase === 'analyzing'
-                      ? (language === 'th' ? 'กำลังวิเคราะห์…' : 'Analyzing…')
-                      : (language === 'th' ? 'สแกนอัตโนมัติ — รอสักครู่' : 'Auto-scanning — stand by')}
+              {/* Starting: open camera (mobile) */}
+              {phase === 'starting' && (
+                <div className="flex gap-2">
+                  <Button variant="primary" fullWidth onClick={startCamera} className="lg:hidden">
+                    {language === 'th' ? '📷 เปิดกล้อง' : '📷 Open Camera'}
+                  </Button>
+                  <Button variant="secondary" fullWidth onClick={() => fileRef.current?.click()}>
+                    {language === 'th' ? 'อัปโหลดรูป' : 'Upload Image'}
+                  </Button>
+                </div>
+              )}
+
+              {/* Camera idle: capture button */}
+              {phase === 'idle' && inputMode === 'camera' && (
+                <div className="flex gap-2">
+                  <Button variant="primary" fullWidth onClick={handleScan}>
+                    {language === 'th' ? '📷 ถ่ายรูปเพื่อสแกน' : '📷 Capture & Scan'}
+                  </Button>
+                  <button
+                    onClick={() => { stopCamera(); setPhase('starting') }}
+                    className="font-data text-[11px] uppercase tracking-widest border-[1.5px] border-[var(--ink-4)] px-3 py-2 bg-transparent text-[var(--ink-3)] cursor-pointer hover:border-[var(--ink)] hover:text-[var(--ink)] transition-colors shrink-0"
+                  >
+                    {language === 'th' ? 'ปิด' : 'Close'}
+                  </button>
+                </div>
+              )}
+
+              {/* Analyzing */}
+              {phase === 'analyzing' && (
+                <div className="flex items-center justify-center gap-2.5 py-2.5 border-[1.5px] border-[var(--green)]">
+                  <span className="w-2 h-2 rounded-full bg-[var(--green)] animate-pulse" />
+                  <span className="font-data text-[11px] text-[var(--green)] uppercase tracking-widest">
+                    {language === 'th' ? 'กำลังวิเคราะห์…' : 'Analyzing…'}
                   </span>
                 </div>
               )}
-              {(phase === 'idle' || phase === 'analyzing') && inputMode === 'upload' && (
-                <Button variant="primary" fullWidth onClick={handleScan} disabled={phase === 'analyzing'}>
-                  {phase === 'analyzing' ? t.analyzing : t.scanBtn}
+
+              {/* Upload mode re-scan */}
+              {phase === 'idle' && inputMode === 'upload' && (
+                <Button variant="secondary" fullWidth onClick={handleScan}>
+                  {language === 'th' ? 'สแกนอีกครั้ง' : 'Re-scan'}
                 </Button>
               )}
 
-              {!batchMode && phase === 'result' && liveResult && (
+              {phase === 'result' && liveResult && (
                 <>
                   <div className="flex gap-3">
-                    <Button variant="primary" fullWidth onClick={handleAddSingle}>{t.addToBasket}</Button>
-                    <Button variant="secondary" onClick={handleReset}>{t.scanAgain}</Button>
+                    <Button variant="secondary" fullWidth onClick={handleReset}>{t.scanAgain}</Button>
                   </div>
                   {!showReport ? (
                     <button
@@ -483,13 +548,15 @@ export function ScanPage() {
               )}
 
               <div className="flex items-center gap-4">
-                <button
-                  type="button"
-                  onClick={() => fileRef.current?.click()}
-                  className="font-data text-[10px] uppercase tracking-widest text-[var(--ink-4)] hover:text-[var(--ink)] bg-transparent border-none cursor-pointer py-1 transition-colors"
-                >
-                  or upload image
-                </button>
+                {phase !== 'starting' && (
+                  <button
+                    type="button"
+                    onClick={() => fileRef.current?.click()}
+                    className="font-data text-[10px] uppercase tracking-widest text-[var(--ink-4)] hover:text-[var(--ink)] bg-transparent border-none cursor-pointer py-1 transition-colors"
+                  >
+                    {language === 'th' ? 'หรืออัปโหลดรูป' : 'or upload image'}
+                  </button>
+                )}
                 {batchMode && (
                   <button
                     type="button"

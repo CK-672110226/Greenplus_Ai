@@ -9,11 +9,14 @@ const aiConfigSlice = createSlice({
     apiKey:               saved.apiKey               ?? '',
     systemPrompt:         saved.systemPrompt         ?? 'You are a waste classification AI for Thai recycling shops. Analyze waste items and return JSON with: materialType, grade (A/B/C), estimatedWeight (kg), confidence (0-1), explanation.',
     confidenceThreshold:  saved.confidenceThreshold  ?? 0.6,
-    // TF.js / Teachable Machine models (takes priority over ONNX)
-    tmStage1Url:          saved.tmStage1Url          ?? '',   // model.json URL for material classifier
-    stage1ClassLabels:    saved.stage1ClassLabels    ?? [],   // string[] matching TM output nodes
-    tmStage2Urls:         saved.tmStage2Urls         ?? {},   // { [materialType]: modelJsonUrl }
-    // ONNX models (fallback)
+    // YOLO ONNX — stage 1 object detection (highest priority)
+    yoloStage1Url:        saved.yoloStage1Url        ?? '',
+    yoloClassLabels:      saved.yoloClassLabels      ?? [],
+    // TF.js / Teachable Machine — stage 1 fallback + stage 2 cleanliness
+    tmStage1Url:          saved.tmStage1Url          ?? '',
+    stage1ClassLabels:    saved.stage1ClassLabels    ?? [],
+    tmStage2Urls:         saved.tmStage2Urls         ?? {},
+    // ONNX classifier fallback
     onnxStage1Url:        saved.onnxStage1Url        ?? '',
     onnxStage2Url:        saved.onnxStage2Url        ?? '',
     modelVersion:         saved.modelVersion         ?? 'v0-mock',
