@@ -45,14 +45,15 @@ export function useMarketPricing() {
     load()
   }, [])
 
-  function marketPrice(materialType, grade) {
-    return pricing[materialType]?.[grade] ?? pricePerKg(materialType, grade)
+  function marketPrice(materialType, clean = true) {
+    const grade = clean === false ? 'C' : 'A'
+    return pricing[materialType]?.[grade] ?? pricePerKg(materialType, clean)
   }
 
-  function shopPrice(shopId, materialType, grade) {
+  function shopPrice(shopId, materialType, clean = true) {
     const row = shopPricing.find(r => r.shop_id === shopId && r.material_type === materialType)
     if (!row) return null
-    const key = grade === 'A' ? 'price_grade_a' : grade === 'B' ? 'price_grade_b' : 'price_grade_c'
+    const key = clean === false ? 'price_grade_c' : 'price_grade_a'
     return row[key] != null ? Number(row[key]) : null
   }
 

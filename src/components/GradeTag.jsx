@@ -1,17 +1,11 @@
-const GRADE_STYLES = {
-  A: { background: '#22C55E', color: '#062040' },
-  B: { background: '#FFF3A8', color: '#5A4A1A' },
-  C: { background: '#FFFFFF', color: '#7A7A7A' },
-}
-
-export function GradeTag({ grade }) {
-  const style = GRADE_STYLES[grade] ?? GRADE_STYLES.C
+export function GradeTag({ clean }) {
+  const ok = clean !== false
   return (
     <span
       className="inline-flex items-center px-2 py-0.5 font-data text-[11px] font-bold border-[1.5px] border-[var(--ink)]"
-      style={style}
+      style={{ background: ok ? '#22C55E' : '#FFA500', color: ok ? '#062040' : '#1A1A1A' }}
     >
-      {grade}
+      {ok ? 'สะอาด' : 'ไม่สะอาด'}
     </span>
   )
 }

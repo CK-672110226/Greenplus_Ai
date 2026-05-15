@@ -1,6 +1,6 @@
 // C-06: Two-stage waste AI pipeline
 // Stage 1 — Material type + size estimation (from camera frame)
-// Stage 2 — Cleanliness scoring → grade (A/B/C/D), per-material model
+// Stage 2 — Cleanliness check (pass/fail), per-material model; skipped when no model exists
 // Priority per stage: TF.js (TM) → ONNX → Vertex AI → Mock fallback
 
 import { WASTE_ITEMS } from '../data/wasteItems'
@@ -22,29 +22,12 @@ function mockStage1() {
   return { pass: true, materialType, confidence, sizeKg }
 }
 
-function mockStage2(materialType) {
-  const factors = {
-    cleanliness: 3 + Math.random() * 7,
-    moisture:    5 + Math.random() * 5,
-    preparation: 4 + Math.random() * 6,
-    color:       7 + Math.random() * 3,
-    purity:      6 + Math.random() * 4,
+function mockStage2() {
+  const cleanlinessScore = Math.round(Math.random() * 100)
+  return {
+    pass:             cleanlinessScore >= 40,
+    cleanlinessScore,
   }
-
-  let weightedScore
-  if (materialType === 'pet_bottle_clear') {
-    weightedScore = (factors.cleanliness * 0.3) + (factors.color * 0.25) + (factors.preparation * 0.25) + (factors.moisture * 0.2)
-  } else if (materialType === 'cardboard') {
-    weightedScore = (factors.moisture * 0.4) + (factors.preparation * 0.25) + (factors.purity * 0.2) + (factors.cleanliness * 0.15)
-  } else {
-    weightedScore = (factors.cleanliness * 0.4) + (factors.purity * 0.6)
-  }
-
-  weightedScore = Math.round(weightedScore * 10)
-
-  const grade = weightedScore >= 80 ? 'A' : weightedScore >= 50 ? 'B' : 'C'
-  const failReasons = weightedScore < 50 ? ['Item appears contaminated or damaged'] : []
-  return { pass: factors.cleanliness >= 3, weightedScore, factorScores: factors, grade, failReasons }
 }
 
 // ── ONNX implementations ─────────────────────────────────────────
@@ -62,23 +45,13 @@ async function onnxStage1(imageSource, modelUrl) {
 }
 
 // eslint-disable-next-line no-unused-vars
-async function onnxStage2(imageSource, modelUrl, _materialType) {
+async function onnxStage2(imageSource, modelUrl) {
   const logits = await runOnnx(modelUrl, imageSource)
   if (!logits) return null
 
-  const probs = softmax(Array.from(logits.slice(0, 5)))
-
-  const factorScores = {
-    cleanliness: probs[0] * 10,
-    moisture:    probs[1] * 10,
-    preparation: probs[2] * 10,
-    color:       probs[3] * 10,
-    purity:      probs[4] * 10,
-  }
-
-  const weightedScore = Math.round(probs[0] * 100)
-  const grade = weightedScore >= 80 ? 'A' : weightedScore >= 50 ? 'B' : 'C'
-  return { pass: factorScores.cleanliness >= 3, weightedScore, factorScores, grade, failReasons: [] }
+  const probs           = softmax(Array.from(logits.slice(0, 2)))
+  const cleanlinessScore = Math.round(probs[0] * 100)
+  return { pass: cleanlinessScore >= 40, cleanlinessScore }
 }
 
 // ── Pipeline entry point ─────────────────────────────────────────
@@ -122,37 +95,46 @@ export async function twoStageInfer(imageSource, config = {}) {
     s1Raw = await vertexStage1(b64, vertexStage1Endpoint)
     if (s1Raw) aiSource = 'vertex'
   }
+  // 'ไม่ใช่ขยะ' is the trained reject class; everything else passes stage-1.
+  if (s1Raw && !('pass' in s1Raw)) {
+    s1Raw.pass = s1Raw.materialType !== 'ไม่ใช่ขยะ'
+  }
   const s1 = s1Raw ?? mockStage1()
 
-  if (!s1.pass)                              return { troll: true }
-  if (s1.confidence < confidenceThreshold)   return { lowConfidence: true, confidence: s1.confidence, stage: 1 }
+  if (!s1.pass)                            return { troll: true }
+  if (s1.confidence < confidenceThreshold) return { lowConfidence: true, confidence: s1.confidence, stage: 1 }
 
-  // ── Stage 2: per-material cleanliness classifier ─────────────
-  let s2Raw = null
-
-  // Try per-material TM model first
+  // ── Stage 2: per-material cleanliness check ──────────────────
   const materialStage2Url = tmStage2Urls[s1.materialType] ?? null
+
+  // No stage-2 model for this material → skip, auto-pass
+  if (!materialStage2Url && !onnxStage2Url && !vertexStage2Endpoint) {
+    return {
+      materialType:  s1.materialType,
+      confidence:    s1.confidence,
+      weight:        s1.sizeKg,
+      stage2Pass:    true,
+      stage2Skipped: true,
+      source:        aiSource,
+    }
+  }
+
+  let s2Raw = null
   if (materialStage2Url) {
     s2Raw = await tmStage2(materialStage2Url, imageSource)
   }
-  // Fall back to global ONNX stage2
   if (!s2Raw && onnxStage2Url) {
-    s2Raw = await onnxStage2(imageSource, onnxStage2Url, s1.materialType)
+    s2Raw = await onnxStage2(imageSource, onnxStage2Url)
   }
-  // Fall back to Vertex AI
   if (!s2Raw && vertexStage2Endpoint) {
     s2Raw = await vertexStage2(b64, vertexStage2Endpoint)
   }
-  const s2 = s2Raw ?? mockStage2(s1.materialType)
+  const s2 = s2Raw ?? mockStage2()
 
   return {
     materialType: s1.materialType,
     confidence:   s1.confidence,
     weight:       s1.sizeKg,
-    score:        s2.weightedScore,
-    factorScores: s2.factorScores,
-    grade:        s2.grade,
-    failReasons:  s2.failReasons,
     stage2Pass:   s2.pass,
     source:       aiSource,
   }

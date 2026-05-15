@@ -9,12 +9,10 @@ export const WASTE_ITEMS = {
   cooking_oil:      { nameEn: 'Cooking Oil',        nameTh: 'น้ำมันพืชใช้แล้ว',     basePrice: 12  },
 }
 
-const GRADE_MULTIPLIERS = { A: 1.2, B: 1.0, C: 0.7 }
-
-export function pricePerKg(materialType, grade) {
+export function pricePerKg(materialType, clean = true) {
   const item = WASTE_ITEMS[materialType]
   if (!item) return 0
-  return item.basePrice * (GRADE_MULTIPLIERS[grade] ?? 1.0)
+  return item.basePrice * (clean === false ? 0.7 : 1.0)
 }
 
 export function localName(materialType, language) {

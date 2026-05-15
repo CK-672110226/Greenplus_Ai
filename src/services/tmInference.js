@@ -68,19 +68,11 @@ export async function tmStage2(modelUrl, imageSource) {
     t.dispose()
     preds.dispose()
 
-    const cleanProb      = probs[0] ?? 0.5
+    const cleanProb        = probs[0] ?? 0.5
     const cleanlinessScore = Math.round(cleanProb * 100)
-    const grade = cleanlinessScore >= 80 ? 'A'
-                : cleanlinessScore >= 60 ? 'B'
-                : cleanlinessScore >= 40 ? 'C' : 'D'
     return {
-      grade,
+      pass:             cleanlinessScore >= 40,
       cleanlinessScore,
-      label:        cleanProb >= 0.5 ? 'clean' : 'dirty',
-      weightedScore: cleanlinessScore,
-      factorScores:  { cleanliness: cleanProb * 10 },
-      failReasons:   cleanlinessScore < 40 ? ['Item appears contaminated'] : [],
-      pass:          cleanlinessScore >= 30,
     }
   } catch (err) {
     console.warn('[TM stage2] failed:', err.message)

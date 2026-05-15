@@ -12,41 +12,11 @@ import { twoStageInfer } from '../services/twoStageAI'
 import { useScanInsert } from '../hooks/useScanInsert'
 import { supabase } from '../lib/supabase'
 
-/* ── Contamination meter ─────────────────────────────────────── */
-function ContaminationMeter({ score }) {
-  const level = score >= 70 ? 0 : score >= 40 ? 1 : 2
-  const segments = [
-    { label: 'clean',  color: 'var(--green)',  bg: 'var(--green-soft)' },
-    { label: 'mixed',  color: 'var(--orange)', bg: 'rgba(245,158,11,.15)' },
-    { label: 'contam.',color: '#E53E3E',        bg: 'rgba(229,62,62,.12)' },
-  ]
-  return (
-    <div className="flex flex-col gap-2">
-      <span className="font-data text-[9px] uppercase tracking-[0.15em] text-[var(--ink-4)]">Contamination</span>
-      <div className="flex gap-1">
-        {segments.map((seg, i) => (
-          <div key={seg.label} className="flex-1 flex flex-col items-center gap-1">
-            <div
-              className="w-full h-2 border-[1.5px]"
-              style={{
-                borderColor: i === level ? seg.color : 'var(--ink-4)',
-                background:  i === level ? seg.bg : 'transparent',
-              }}
-            />
-            <span className="font-data text-[9px] uppercase tracking-wide" style={{ color: i === level ? seg.color : 'var(--ink-4)' }}>
-              {seg.label}
-            </span>
-          </div>
-        ))}
-      </div>
-    </div>
-  )
-}
 
 /* ── Batch queue item row ────────────────────────────────────── */
 function QueueRow({ item, onRemove }) {
   const resolve = useResolvedName()
-  const value = pricePerKg(item.materialType, item.grade) * (item.weight ?? 0)
+  const value = pricePerKg(item.materialType, item.clean ?? true) * (item.weight ?? 0)
   return (
     <div className="flex items-center justify-between py-2.5 border-b-[1px] border-[var(--ink-4)] last:border-b-0">
       <div className="flex flex-col gap-0.5 min-w-0">
@@ -58,7 +28,7 @@ function QueueRow({ item, onRemove }) {
         </span>
       </div>
       <div className="flex items-center gap-2 shrink-0 ml-2">
-        <GradeTag grade={item.grade} />
+        <GradeTag clean={item.clean} />
         <span className="font-data text-[13px] text-[var(--ink)]">฿{value.toFixed(0)}</span>
         <button
           onClick={() => onRemove(item.id)}
@@ -115,7 +85,7 @@ export function ScanPage() {
   }
 
   function handleSwipeRight() {
-    if (result?.factorScores?.cleanliness < 5) {
+    if (result?.stage2Pass === false) {
       setDirtyAlert(true)
     } else {
       handleAddSingle()
@@ -214,7 +184,7 @@ export function ScanPage() {
         reporter_id:      null,
         claimed_material: reportMaterial,
         ai_material:      result?.materialType ?? null,
-        ai_grade:         result?.grade ?? null,
+        ai_clean:         result?.stage2Pass ?? null,
       })
     } catch { /* silent */ }
     toast.success(t.reportSuccess ?? 'Report submitted. Thank you!')
@@ -224,7 +194,7 @@ export function ScanPage() {
   /* ── Add to basket ────────────────────────────────────────── */
   function handleAddSingle() {
     if (!result) return
-    if (result?.factorScores?.cleanliness != null && result.factorScores.cleanliness < 5) {
+    if (result.stage2Pass === false) {
       navigator.vibrate?.([100, 50, 100])
       setDirtyAlert(true)
       return
@@ -232,7 +202,7 @@ export function ScanPage() {
     navigator.vibrate?.(50)
     // eslint-disable-next-line react-hooks/purity
     const id = `${result.materialType}_${Date.now()}`
-    dispatch(addToBasket({ id, materialType: result.materialType, grade: result.grade, weight: result.weight, pricePerKg: pricePerKg(result.materialType, result.grade) }))
+    dispatch(addToBasket({ id, materialType: result.materialType, clean: result.stage2Pass ?? true, weight: result.weight, pricePerKg: pricePerKg(result.materialType, result.stage2Pass ?? true) }))
     insertScan(result)
     toast.success(`${resolve(result.materialType)} added`)
     handleReset()
@@ -243,7 +213,7 @@ export function ScanPage() {
     navigator.vibrate?.(50)
     // eslint-disable-next-line react-hooks/purity
     const id = `${result.materialType}_${Date.now()}`
-    dispatch(addToBasket({ id, materialType: result.materialType, grade: result.grade, weight: result.weight, pricePerKg: pricePerKg(result.materialType, result.grade) }))
+    dispatch(addToBasket({ id, materialType: result.materialType, clean: result.stage2Pass ?? true, weight: result.weight, pricePerKg: pricePerKg(result.materialType, result.stage2Pass ?? true) }))
     insertScan(result)
     toast.success(`${resolve(result.materialType)} added`)
     handleReset()
@@ -258,7 +228,7 @@ export function ScanPage() {
   function handleAddBatch() {
     if (batchQueue.length === 0) return
     batchQueue.forEach(item => {
-      dispatch(addToBasket({ id: item.id, materialType: item.materialType, grade: item.grade, weight: item.weight, pricePerKg: pricePerKg(item.materialType, item.grade) }))
+      dispatch(addToBasket({ id: item.id, materialType: item.materialType, clean: item.stage2Pass ?? true, weight: item.weight, pricePerKg: pricePerKg(item.materialType, item.stage2Pass ?? true) }))
     })
     toast.success(`${batchQueue.length} items added to basket`)
     setBatchQueue([])
@@ -279,9 +249,7 @@ export function ScanPage() {
 
   /* ── Derived values for live analysis panel ─────────── */
   const liveResult = result
-  const liveValue  = liveResult ? pricePerKg(liveResult.materialType, liveResult.grade) * liveResult.weight : 0
-  const liveImpact = Math.round(liveValue * 1.8)
-  const liveCO2    = liveResult ? (liveResult.weight * 0.38).toFixed(2) : '0.00'
+  const liveValue  = liveResult ? pricePerKg(liveResult.materialType, liveResult.stage2Pass ?? true) * liveResult.weight : 0
 
   return (
     <div className="flex flex-col min-h-full">
@@ -586,7 +554,7 @@ export function ScanPage() {
               <div className="flex flex-col gap-1">
                 <span className="font-data text-[9px] text-[var(--ink-4)] uppercase tracking-[0.15em]">Detected</span>
                 <div className="flex items-center gap-2">
-                  <GradeTag grade={liveResult.grade} />
+                  <GradeTag clean={liveResult.stage2Pass} />
                   <span className="font-brand text-[18px] text-[var(--ink)] leading-tight">
                     {resolve(liveResult.materialType)}
                   </span>
@@ -596,24 +564,17 @@ export function ScanPage() {
                 </div>
               </div>
 
-              <ContaminationMeter score={liveResult.score} />
-
               <div className="flex flex-col gap-2">
                 <span className="font-data text-[9px] text-[var(--ink-4)] uppercase tracking-[0.15em]">Estimated value</span>
                 <div className="border-[1.5px] border-[var(--ink)] p-3 flex flex-col gap-2 bg-[var(--paper-2)]">
                   <div className="font-data text-[11px] text-[var(--ink-3)]">
                     {liveResult.weight}kg
                     <span className="text-[var(--ink-4)] mx-1">×</span>
-                    ฿{pricePerKg(liveResult.materialType, liveResult.grade).toFixed(0)}/kg
+                    ฿{pricePerKg(liveResult.materialType, liveResult.stage2Pass ?? true).toFixed(0)}/kg
                   </div>
                   <div className="font-brand text-[28px] text-[var(--ink)] leading-none">
                     ฿ {liveValue.toFixed(2)}
                   </div>
-                </div>
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="font-data text-[10px] text-[var(--green-ink)]">+{liveImpact} impact pts</span>
-                  <span className="text-[var(--ink-4)] font-data text-[10px]">·</span>
-                  <span className="font-data text-[10px] text-[var(--ink-3)]">CO₂ saved {liveCO2}kg</span>
                 </div>
               </div>
 
@@ -686,7 +647,7 @@ export function ScanPage() {
 
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <GradeTag grade={result.grade} />
+              <GradeTag clean={result.stage2Pass} />
               <span className="font-body text-[17px] text-[var(--ink)] font-semibold">
                 {resolve(result.materialType)}
               </span>
@@ -696,38 +657,16 @@ export function ScanPage() {
             )}
           </div>
 
-          <div className="flex flex-col gap-1">
-            <span className="font-data text-[11px] text-[var(--ink-3)] uppercase tracking-widest">{t.scoreLabel}</span>
-            <ContaminationMeter score={result.score} />
-          </div>
-
-          {result.factorScores && (
-            <div className="flex flex-col gap-1 mt-1 p-2 bg-[var(--paper-2)] border-[1px] border-[var(--ink-4)]">
-              <span className="font-data text-[10px] text-[var(--ink-3)] uppercase mb-1">Factor Breakdown</span>
-              {Object.entries(result.factorScores).map(([factor, fscore]) => (
-                <div key={factor} className="flex items-center justify-between">
-                  <span className="font-data text-[10px] text-[var(--ink-2)] capitalize">{factor}</span>
-                  <div className="flex items-center gap-2 w-1/2">
-                    <div className="w-full h-1.5 bg-[var(--paper)] border-[1px] border-[var(--ink)]">
-                      <div style={{ width: `${fscore * 10}%`, background: fscore >= 5 ? 'var(--green)' : 'var(--orange)', height: '100%' }} />
-                    </div>
-                    <span className="font-data text-[9px] w-6 text-right">{fscore.toFixed(1)}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-
           <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 border-[1px] border-[var(--ink-4)] p-3">
             <span className="font-data text-[11px] text-[var(--ink-3)] uppercase">{t.estWeight}</span>
             <span className="font-data text-[13px] text-[var(--ink)] text-right">{result.weight} kg</span>
             <span className="font-data text-[11px] text-[var(--ink-3)] uppercase">฿/kg</span>
             <span className="font-data text-[13px] text-[var(--ink)] text-right">
-              ฿{pricePerKg(result.materialType, result.grade).toFixed(2)}
+              ฿{pricePerKg(result.materialType, result.stage2Pass ?? true).toFixed(2)}
             </span>
             <span className="font-data text-[11px] text-[var(--ink-3)] uppercase">Total</span>
             <span className="font-data text-[14px] text-[var(--green)] font-bold text-right">
-              ฿{(pricePerKg(result.materialType, result.grade) * result.weight).toFixed(2)}
+              ฿{(pricePerKg(result.materialType, result.stage2Pass ?? true) * result.weight).toFixed(2)}
             </span>
           </div>
 

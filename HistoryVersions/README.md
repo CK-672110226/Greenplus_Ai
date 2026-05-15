@@ -62,3 +62,5 @@ This folder stores canonical implementation history for the repository.
 - `Feature/MapTreeRouting/` `.03` — MapPage responsive height + dark tiles + desktop sidebar (UIQ-06/07/08)
 - `Feature/MapTreeRouting/` `.04` — Full UI quality audit: 10 issues (UIQ-01→UIQ-10) across UserLayout, EcoPointsPage, ProfilePage, MapPage, SettingsPage, AdminPage; PRD Section 19 added
 - `Feature/EcoPoints/` `.01` — Dark mode token fix (tier colors), desktop 2-col layout
+- `Feature/ShopsData/` (baseline: `Feature-ShopsData.00.md`) — Real recycling shops seed data for Chiang Mai Mueang-Suthep zone (6 shops with pricing)
+- `Fix/AIStudioStage2/` `.04` — Remove mock training UI (FolderCard, Stage2UploadRow, train/deploy); rewrite Model Registry with auto-metadata-fetch from TM URL
