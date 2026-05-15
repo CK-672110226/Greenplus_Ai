@@ -177,16 +177,29 @@ export function ScanPage() {
       // Multi-object path: YOLO returned several detections at once
       if (infer.multiResult) {
         const newItems = infer.multiResult.map(r => ({
-          id:          crypto.randomUUID(),
+          id:           crypto.randomUUID(),
           materialType: r.materialType,
-          weight:      r.weight,
-          clean:       r.stage2Pass,
-          confidence:  r.confidence,
-          source:      r.source,
-          bbox:        r.bbox,
+          weight:       r.weight,
+          clean:        r.stage2Pass,
+          confidence:   r.confidence,
+          source:       r.source,
+          bbox:         r.bbox,
         }))
-        setBatchQueue(prev => [...prev, ...newItems])
+
+        // Always update Live Analysis with the first (highest-confidence) detection
+        setResult(infer.multiResult[0])
+        dispatch(setLastScan(infer.multiResult[0]))
         navigator.vibrate?.(100)
+
+        // Single dirty item in normal scan mode → trigger dirty popup
+        if (!batchMode && newItems.length === 1 && newItems[0].clean === false) {
+          setPendingItem(newItems[0])
+          setDirtyAlert(true)
+          setPhase('result')
+          return
+        }
+
+        setBatchQueue(prev => [...prev, ...newItems])
         toast.success(
           newItems.length > 1
             ? `Detected ${newItems.length} items`

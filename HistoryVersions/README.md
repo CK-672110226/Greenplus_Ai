@@ -26,3 +26,4 @@ This folder stores canonical implementation history for the repository.
 - `Fix/AIStudioStage2/` — `.00` multi-object YOLO detection returning full array + concurrent stage-2 per detection
 - `Fix/MapPageNavigation/` — `.00` replace directions `<a href>` with `window.open` button for iOS Leaflet popup compatibility
 - `Fix/PricingCleanDirty/` — `.00` remove A/B/C grades; replace with two-level Clean/Dirty pricing system
+- `Fix/LocalModelsSlugKeys/` — `.00` change YOLO + TM class label arrays from Thai strings to WASTE_ITEMS English slug keys so pricePerKg() lookups return correct prices
