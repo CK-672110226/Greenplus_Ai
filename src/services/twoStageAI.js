@@ -33,6 +33,29 @@ async function onnxStage2(imageSource, modelUrl) {
   return { pass: cleanlinessScore >= 40, cleanlinessScore }
 }
 
+// ── Stage-2 runner for a single YOLO detection ────────────────────
+async function runStage2ForDet(det, config, imageSource, b64) {
+  const { tmStage2Urls = {}, onnxStage2Url, vertexStage2Endpoint } = config
+  const materialStage2Url = tmStage2Urls[det.materialType] ?? null
+
+  if (!materialStage2Url && !onnxStage2Url && !vertexStage2Endpoint) {
+    return { ...det, stage2Pass: true, stage2Skipped: true }
+  }
+
+  let s2Raw = null
+  if (materialStage2Url) {
+    s2Raw = await tmStage2(materialStage2Url, imageSource)
+  }
+  if (!s2Raw && onnxStage2Url) {
+    s2Raw = await onnxStage2(imageSource, onnxStage2Url)
+  }
+  if (!s2Raw && vertexStage2Endpoint) {
+    s2Raw = await vertexStage2(b64, vertexStage2Endpoint)
+  }
+  const s2 = s2Raw ?? { pass: true }
+  return { ...det, stage2Pass: s2.pass }
+}
+
 // ── Pipeline entry point ──────────────────────────────────────────
 // config shape:
 //   yoloStage1Url        — ONNX YOLO model URL for stage 1 (highest priority)
@@ -63,17 +86,48 @@ export async function twoStageInfer(imageSource, config = {}) {
   const b64 = imageToBase64(imageSource)
 
   // ── Stage 1: material detection/classification ───────────────
-  let s1Raw    = null
   let aiSource = 'unknown'
 
-  // 1a. YOLO (ONNX object detection)
+  // 1a. YOLO (ONNX object detection) — returns array of all detections
   if (yoloStage1Url && yoloClassLabels.length > 0) {
-    s1Raw = await yoloStage1(yoloStage1Url, yoloClassLabels, imageSource)
-    if (s1Raw) { aiSource = 'yolo'; s1Raw.pass = true }
+    const yoloDets = await yoloStage1(yoloStage1Url, yoloClassLabels, imageSource)
+
+    if (yoloDets.length > 0) {
+      // Filter troll class and low-confidence before running stage 2
+      const validDets = yoloDets
+        .filter(d => d.materialType !== 'ไม่ใช่ขยะ')
+        .filter(d => d.confidence >= confidenceThreshold)
+
+      if (validDets.length === 0) {
+        // All dets were troll or low-confidence
+        const hasTroll = yoloDets.some(d => d.materialType === 'ไม่ใช่ขยะ')
+        if (hasTroll) return { troll: true }
+        return { lowConfidence: true, confidence: yoloDets[0].confidence, stage: 1 }
+      }
+
+      const stage2Config = { tmStage2Urls, onnxStage2Url, vertexStage2Endpoint }
+      const results = await Promise.all(
+        validDets.map(det => runStage2ForDet(det, stage2Config, imageSource, b64))
+      )
+
+      return {
+        multiResult: results.map(r => ({
+          materialType:  r.materialType,
+          confidence:    r.confidence,
+          weight:        r.sizeKg,
+          bbox:          r.bbox ?? null,
+          stage2Pass:    r.stage2Pass,
+          stage2Skipped: r.stage2Skipped ?? false,
+          source:        'yolo',
+        })),
+      }
+    }
+    // Empty array — YOLO ran but found nothing; fall through to other models
   }
 
   // 1b. TM (Teachable Machine classifier) — labels read from metadata.json, no need for classLabels
-  if (!s1Raw && tmStage1Url) {
+  let s1Raw    = null
+  if (tmStage1Url) {
     s1Raw = await tmStage1(tmStage1Url, stage1ClassLabels, imageSource)
     if (s1Raw) aiSource = 'tfjs'
   }

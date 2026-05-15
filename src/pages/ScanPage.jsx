@@ -179,6 +179,29 @@ export function ScanPage() {
       }
       if (infer.troll || infer.lowConfidence) { setPhase('troll'); return }
 
+      // Multi-object path: YOLO returned several detections at once
+      if (infer.multiResult) {
+        const newItems = infer.multiResult.map(r => ({
+          id:          crypto.randomUUID(),
+          materialType: r.materialType,
+          weight:      r.weight,
+          clean:       r.stage2Pass,
+          confidence:  r.confidence,
+          source:      r.source,
+          bbox:        r.bbox,
+        }))
+        setBatchQueue(prev => [...prev, ...newItems])
+        navigator.vibrate?.(100)
+        toast.success(
+          newItems.length > 1
+            ? `Detected ${newItems.length} items`
+            : `+ ${resolve(newItems[0].materialType)}`,
+          { duration: 1500 }
+        )
+        setPhase(streamRef.current ? 'idle' : 'starting')
+        return
+      }
+
       navigator.vibrate?.(100)
       setResult(infer)
       dispatch(setLastScan(infer))

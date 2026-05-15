@@ -12,6 +12,7 @@ import { haversineKm } from '../utils/haversine'
 import { addBooking } from '../store/bookingSlice'
 import { useShops } from '../hooks/useShops'
 import { useMarketPricing } from '../hooks/useMarketPricing'
+import { useInsertBooking } from '../hooks/useInsertBooking'
 
 const MATERIAL_KEYS = Object.keys(WASTE_ITEMS)
 
@@ -161,6 +162,7 @@ export function BasketPage() {
   const gps = useGPS()
   const { shops } = useShops()
   const { marketPrice, shopPrice } = useMarketPricing()
+  const insertBooking = useInsertBooking()
 
   const shopsWithDist = shops.map(s => ({ ...s, dist: distOf(s, gps.lat, gps.lng) }))
   const { single, multi, unmatched, materials } = computeRoutes(basket, shopsWithDist, gps.lat, gps.lng)
@@ -172,7 +174,7 @@ export function BasketPage() {
 
   function handleBookClick(shop) { setBookingShop(shop) }
 
-  function handleConfirmBooking() {
+  async function handleConfirmBooking() {
     const shop = bookingShop
     dispatch(addBooking({
       shopId:    shop.id,
@@ -182,6 +184,7 @@ export function BasketPage() {
       totalKg:   activeItems.reduce((s, i) => s + (i.weight ?? 0), 0),
       estValue:  Math.round(total),
     }))
+    await insertBooking(shop, activeItems, Math.round(total))
     toast.success(t.bookingConfirmed)
     setBookingShop(null)
   }
