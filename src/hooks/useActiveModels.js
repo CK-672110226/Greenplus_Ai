@@ -35,8 +35,12 @@ export function useActiveModels() {
           }
 
           if (tmStage1Url) {
-            const modelVersion = data.find(r => r.stage === 1)?.model_files?.version_tag ?? 'v0-mock'
-            dispatch(setAiConfig({ tmStage1Url, stage1ClassLabels, tmStage2Urls, modelVersion }))
+            const modelVersion = data.find(r => r.stage === 1)?.model_files?.version_tag ?? 'v1-supabase'
+            // Fall back to local labels if Supabase row has empty class_labels
+            const resolvedLabels = stage1ClassLabels.length > 0 ? stage1ClassLabels : LOCAL_STAGE1_LABELS
+            // Fill any missing stage-2 models from local
+            const resolvedStage2 = { ...LOCAL_STAGE2_URLS, ...tmStage2Urls }
+            dispatch(setAiConfig({ tmStage1Url, stage1ClassLabels: resolvedLabels, tmStage2Urls: resolvedStage2, modelVersion }))
             return
           }
         }

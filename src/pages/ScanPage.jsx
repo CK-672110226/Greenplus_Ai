@@ -167,6 +167,16 @@ export function ScanPage() {
         vertexStage1Endpoint: aiConfig.vertexStage1Endpoint || null,
         vertexStage2Endpoint: aiConfig.vertexStage2Endpoint || null,
       })
+      if (infer.noDetection) {
+        toast.error(
+          language === 'th'
+            ? 'ตรวจไม่พบวัตถุ — ลองปรับมุมกล้องหรือแสงสว่าง'
+            : 'No object detected — try adjusting the angle or lighting',
+          { duration: 3000 }
+        )
+        setPhase(streamRef.current ? 'idle' : 'starting')
+        return
+      }
       if (infer.troll || infer.lowConfidence) { setPhase('troll'); return }
 
       navigator.vibrate?.(100)

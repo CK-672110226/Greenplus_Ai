@@ -1,8 +1,9 @@
 // Two-stage waste AI pipeline
 // Stage 1 — Material type detection
-//   Priority: YOLO (ONNX) → TM (TF.js) → ONNX classifier → Vertex AI → Mock
+//   Priority: YOLO (ONNX) → TM (TF.js) → ONNX classifier → Vertex AI
+//   Returns { noDetection: true } when all models fail — no mock fallback
 // Stage 2 — Cleanliness check (pass/fail), skipped when no model for that material
-//   Priority: TM → ONNX → Vertex AI → Mock
+//   Priority: TM → ONNX → Vertex AI → skip (pass=true) if all fail
 
 import { WASTE_ITEMS } from '../data/wasteItems'
 import { runOnnx, softmax } from './onnxInference'
@@ -11,22 +12,6 @@ import { tmStage1, tmStage2 } from './tmInference'
 import { yoloStage1 } from './yoloInference'
 
 const MATERIALS = Object.keys(WASTE_ITEMS)
-
-// ── Mock implementations ──────────────────────────────────────────
-
-function mockStage1() {
-  const isTroll = Math.random() < 0.08
-  if (isTroll) return { pass: false, troll: true }
-  const materialType = MATERIALS[Math.floor(Math.random() * MATERIALS.length)]
-  const confidence   = +(0.5 + Math.random() * 0.5).toFixed(2)
-  const sizeKg       = +(0.1 + Math.random() * 1.9).toFixed(2)
-  return { pass: true, materialType, confidence, sizeKg }
-}
-
-function mockStage2() {
-  const cleanlinessScore = Math.round(Math.random() * 100)
-  return { pass: cleanlinessScore >= 40, cleanlinessScore }
-}
 
 // ── ONNX classifier fallback (not YOLO) ───────────────────────────
 
@@ -79,7 +64,7 @@ export async function twoStageInfer(imageSource, config = {}) {
 
   // ── Stage 1: material detection/classification ───────────────
   let s1Raw    = null
-  let aiSource = 'mock'
+  let aiSource = 'unknown'
 
   // 1a. YOLO (ONNX object detection)
   if (yoloStage1Url && yoloClassLabels.length > 0) {
@@ -87,8 +72,8 @@ export async function twoStageInfer(imageSource, config = {}) {
     if (s1Raw) { aiSource = 'yolo'; s1Raw.pass = true }
   }
 
-  // 1b. TM (Teachable Machine classifier)
-  if (!s1Raw && tmStage1Url && stage1ClassLabels.length > 0) {
+  // 1b. TM (Teachable Machine classifier) — labels read from metadata.json, no need for classLabels
+  if (!s1Raw && tmStage1Url) {
     s1Raw = await tmStage1(tmStage1Url, stage1ClassLabels, imageSource)
     if (s1Raw) aiSource = 'tfjs'
   }
@@ -105,11 +90,14 @@ export async function twoStageInfer(imageSource, config = {}) {
     if (s1Raw) aiSource = 'vertex'
   }
 
+  // No real model produced a result — hard stop, no mock fallback
+  if (!s1Raw) return { noDetection: true }
+
   // Mark ไม่ใช่ขยะ as troll
-  if (s1Raw && !('pass' in s1Raw)) {
+  if (!('pass' in s1Raw)) {
     s1Raw.pass = s1Raw.materialType !== 'ไม่ใช่ขยะ'
   }
-  const s1 = s1Raw ?? mockStage1()
+  const s1 = s1Raw
 
   if (!s1.pass)                            return { troll: true }
   if (s1.confidence < confidenceThreshold) return { lowConfidence: true, confidence: s1.confidence, stage: 1 }
@@ -139,7 +127,8 @@ export async function twoStageInfer(imageSource, config = {}) {
   if (!s2Raw && vertexStage2Endpoint) {
     s2Raw = await vertexStage2(b64, vertexStage2Endpoint)
   }
-  const s2 = s2Raw ?? mockStage2()
+  // Stage 2 model configured but all failed — skip cleanliness check gracefully
+  const s2 = s2Raw ?? { pass: true }
 
   return {
     materialType: s1.materialType,
