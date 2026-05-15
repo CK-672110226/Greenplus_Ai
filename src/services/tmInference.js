@@ -6,6 +6,10 @@
 const _tmCache = {}   // modelUrl → tmImage model
 
 async function loadTmModel(modelUrl) {
+  // Skip external TM-hosted URLs — they fail with CORS from Vercel
+  if (modelUrl.startsWith('https://teachablemachine.withgoogle.com')) {
+    throw new Error('External TM URL blocked by CORS — use local model')
+  }
   if (_tmCache[modelUrl]) return _tmCache[modelUrl]
 
   const metaUrl = modelUrl.replace('model.json', 'metadata.json')

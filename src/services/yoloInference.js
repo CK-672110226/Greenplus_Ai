@@ -64,25 +64,27 @@ function nms(dets) {
 // ── Output parsing ────────────────────────────────────────────────
 // classLabels: string[] matching model output class indices
 function parseYolo(rawData, shape, classLabels, padX, padY, scale) {
-  const nc      = classLabels.length
+  const nc         = classLabels.length
   const [, d0, d1] = shape   // shape is [1, ?, ?]
-  const numPred = d1 <= d0 ? d1 : d0
-  const numCols = d1 <= d0 ? d0 : d1
-  const isV8    = numCols === (4 + nc)   // YOLOv8 [1, 4+nc, 8400]
-  const isV5    = numCols === (5 + nc)   // YOLOv5 [1, 25200, 5+nc]
+
+  // YOLOv8: [1, 4+nc, num_anchors] — d0 is attr count, d1 is anchor count
+  // YOLOv5: [1, num_pred, 5+nc]    — d0 is anchor count, d1 is attr count
+  const isV8 = d0 === (4 + nc)
+  const isV5 = d1 === (5 + nc)
 
   if (!isV8 && !isV5) {
-    console.warn('[YOLO] unexpected output shape', shape)
+    console.warn('[YOLO] unexpected output shape', shape.length, shape)
     return []
   }
 
-  const dets = []
-  const S = isV8 ? numPred : numCols   // stride
+  const numAnchors = isV8 ? d1 : d0
+  const S          = d1   // raw stride: anchors for V8, attrs for V5
 
-  for (let i = 0; i < numPred; i++) {
+  const dets = []
+  for (let i = 0; i < numAnchors; i++) {
     let cx, cy, w, h, objectness, classStart
     if (isV8) {
-      // shape [1, 4+nc, 8400] — columns are detections
+      // shape [1, 4+nc, num_anchors] — columns are anchors
       cx = rawData[0 * S + i]
       cy = rawData[1 * S + i]
       w  = rawData[2 * S + i]
@@ -90,8 +92,8 @@ function parseYolo(rawData, shape, classLabels, padX, padY, scale) {
       objectness = 1
       classStart = (idx) => rawData[(4 + idx) * S + i]
     } else {
-      // shape [1, 25200, 5+nc] — rows are detections
-      const base = i * numCols
+      // shape [1, num_pred, 5+nc] — rows are anchors
+      const base = i * S
       cx = rawData[base]
       cy = rawData[base + 1]
       w  = rawData[base + 2]
