@@ -6,7 +6,8 @@ import { Card } from '../components/Card'
 import { Button } from '../components/Button'
 import { GradeTag } from '../components/GradeTag'
 import { removePost, flagPost } from '../store/marketplaceSlice'
-import { WASTE_ITEMS, localName } from '../data/wasteItems'
+import { setLabel as setCustomLabel, removeLabel as removeCustomLabel } from '../store/customLabelsSlice'
+import { useResolvedName } from '../hooks/useResolvedName'
 import { supabase } from '../lib/supabase'
 import { useUserReports } from '../hooks/useUserReports'
 import { useShops } from '../hooks/useShops'
@@ -28,7 +29,6 @@ function TabBtn({ active, onClick, children }) {
   )
 }
 
-const MATERIAL_KEYS = Object.keys(WASTE_ITEMS)
 
 function FolderCard({ materialKey, label, count, enough, uploading, onFiles, onRemove }) {
   const fileRef = useRef(null)
@@ -84,21 +84,71 @@ function FolderCard({ materialKey, label, count, enough, uploading, onFiles, onR
   )
 }
 
-function NewFolderDialog({ open, onClose, onConfirm, usedLabels }) {
-  const [label, setLabel] = useState('')
-  const inputRef = useRef(null)
+async function translateText(text, from, to) {
+  try {
+    const res = await fetch(
+      `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${from}|${to}`
+    )
+    const json = await res.json()
+    return json.responseStatus === 200 ? json.responseData.translatedText : null
+  } catch {
+    return null
+  }
+}
 
-  const trimmed   = label.trim()
-  const duplicate = usedLabels.map(l => l.toLowerCase()).includes(trimmed.toLowerCase())
-  const canCreate = trimmed.length > 0 && !duplicate
+function NewFolderDialog({ open, onClose, onConfirm, usedLabels }) {
+  const [nameTh, setNameTh] = useState('')
+  const [nameEn, setNameEn] = useState('')
+  const [translating, setTranslating] = useState(null) // 'th' | 'en' | null
+  const thRef      = useRef(null)
+  const timerRef   = useRef(null)
+  const lastThRef  = useRef('')
+  const lastEnRef  = useRef('')
+
+  const trimTh    = nameTh.trim()
+  const trimEn    = nameEn.trim()
+  const key       = trimTh || trimEn
+  const duplicate = usedLabels.map(l => l.toLowerCase()).includes(key.toLowerCase())
+  const canCreate = key.length > 0 && !duplicate
+
+  function scheduleTranslate(text, from, to, setter) {
+    clearTimeout(timerRef.current)
+    if (!text.trim()) return
+    timerRef.current = setTimeout(async () => {
+      setTranslating(to)
+      const result = await translateText(text.trim(), from, to)
+      setTranslating(null)
+      if (result) setter(result)
+    }, 600)
+  }
+
+  function handleChangeTh(val) {
+    setNameTh(val)
+    if (val.trim() !== lastThRef.current) {
+      lastThRef.current = val.trim()
+      scheduleTranslate(val, 'th', 'en', setNameEn)
+    }
+  }
+
+  function handleChangeEn(val) {
+    setNameEn(val)
+    if (val.trim() !== lastEnRef.current) {
+      lastEnRef.current = val.trim()
+      scheduleTranslate(val, 'en', 'th', setNameTh)
+    }
+  }
 
   function handleConfirm() {
     if (!canCreate) return
-    onConfirm(trimmed)
-    setLabel('')
+    clearTimeout(timerRef.current)
+    onConfirm({ key, nameTh: trimTh, nameEn: trimEn })
+    setNameTh(''); setNameEn('')
+    lastThRef.current = ''; lastEnRef.current = ''
   }
   function handleClose() {
-    setLabel('')
+    clearTimeout(timerRef.current)
+    setNameTh(''); setNameEn('')
+    lastThRef.current = ''; lastEnRef.current = ''
     onClose()
   }
   function handleKeyDown(e) {
@@ -107,7 +157,7 @@ function NewFolderDialog({ open, onClose, onConfirm, usedLabels }) {
   }
 
   useEffect(() => {
-    if (open) setTimeout(() => inputRef.current?.focus(), 50)
+    if (open) setTimeout(() => thRef.current?.focus(), 50)
   }, [open])
 
   if (!open) return null
@@ -121,21 +171,46 @@ function NewFolderDialog({ open, onClose, onConfirm, usedLabels }) {
         <div className="flex flex-col gap-1">
           <span className="font-brand text-[20px] text-[var(--ink)] leading-tight">New Class</span>
           <span className="font-data text-[10px] text-[var(--ink-4)] uppercase tracking-widest">
-            e.g. Electronic waste · ชิปเหลือทิ้ง · Glass bottle
+            พิมพ์ภาษาใดก็แปลให้อัตโนมัติ
           </span>
         </div>
 
-        <div className="flex flex-col gap-1.5">
-          <input
-            ref={inputRef}
-            type="text"
-            value={label}
-            onChange={e => setLabel(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder="Class name…"
-            maxLength={60}
-            className="w-full px-3 py-2 border-[1.5px] border-[var(--ink)] bg-[var(--paper)] font-body text-[15px] text-[var(--ink)] outline-none focus:border-[var(--green)] placeholder:text-[var(--ink-4)]"
-          />
+        <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-1">
+            <div className="flex items-center justify-between">
+              <span className="font-data text-[10px] text-[var(--ink-3)] uppercase tracking-widest">ชื่อภาษาไทย</span>
+              {translating === 'th' && (
+                <span className="font-data text-[9px] text-[var(--ink-4)] uppercase tracking-widest animate-pulse">แปล…</span>
+              )}
+            </div>
+            <input
+              ref={thRef}
+              type="text"
+              value={nameTh}
+              onChange={e => handleChangeTh(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder="เช่น ขวดพลาสติก"
+              maxLength={60}
+              className="w-full px-3 py-2 border-[1.5px] border-[var(--ink)] bg-[var(--paper)] font-body text-[15px] text-[var(--ink)] outline-none focus:border-[var(--green)] placeholder:text-[var(--ink-4)]"
+            />
+          </div>
+          <div className="flex flex-col gap-1">
+            <div className="flex items-center justify-between">
+              <span className="font-data text-[10px] text-[var(--ink-3)] uppercase tracking-widest">English name</span>
+              {translating === 'en' && (
+                <span className="font-data text-[9px] text-[var(--ink-4)] uppercase tracking-widest animate-pulse">translating…</span>
+              )}
+            </div>
+            <input
+              type="text"
+              value={nameEn}
+              onChange={e => handleChangeEn(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder="e.g. Plastic Bottle"
+              maxLength={60}
+              className="w-full px-3 py-2 border-[1.5px] border-[var(--ink)] bg-[var(--paper)] font-body text-[15px] text-[var(--ink)] outline-none focus:border-[var(--green)] placeholder:text-[var(--ink-4)]"
+            />
+          </div>
           {duplicate && (
             <span className="font-data text-[10px] text-[var(--orange)] uppercase tracking-widest">
               Class already exists
@@ -443,8 +518,8 @@ export function AdminPage() {
   const dispatch = useDispatch()
   const aiConfig = useSelector(s => s.aiConfig)
   const posts    = useSelector(s => s.marketplace.posts)
-  const language = useSelector(s => s.user.language)
   const session  = useSelector(s => s.user.session)
+  const resolve  = useResolvedName()
 
   const { shops: allShops } = useShops()
 
@@ -453,17 +528,13 @@ export function AdminPage() {
   // Folder-based class management
   const [folders, setFolders]             = useState([]) // materialKeys the admin has created
   const [showNewFolder, setShowNewFolder] = useState(false)
-  // Stage 1 upload state (keyed by materialKey, populated for all possible keys)
-  const [classImages, setClassImages]       = useState(() => Object.fromEntries(MATERIAL_KEYS.map(k => [k, 0])))
-  const [uploadingClass, setUploadingClass] = useState(() => Object.fromEntries(MATERIAL_KEYS.map(k => [k, false])))
+  // Stage 1 upload state (keyed by materialKey, populated from DB on mount)
+  const [classImages, setClassImages]       = useState({})
+  const [uploadingClass, setUploadingClass] = useState({})
 
   // Stage 2 upload state
-  const [stage2Counts, setStage2Counts] = useState(() =>
-    Object.fromEntries(MATERIAL_KEYS.map(k => [k, { clean: 0, dirty: 0 }]))
-  )
-  const [uploadingStage2, setUploadingStage2] = useState(() =>
-    Object.fromEntries(MATERIAL_KEYS.map(k => [k, { clean: false, dirty: false }]))
-  )
+  const [stage2Counts, setStage2Counts]     = useState({})
+  const [uploadingStage2, setUploadingStage2] = useState({})
 
   // Training state
   const [trainProgress, setTrainProgress] = useState(null)
@@ -487,16 +558,19 @@ export function AdminPage() {
         const s1 = {}
         const s2 = {}
         const seen = new Set()
-        MATERIAL_KEYS.forEach(k => { s1[k] = 0; s2[k] = { clean: 0, dirty: 0 } })
 
         data.forEach(row => {
-          if (row.stage === 1 && s1[row.material_type] !== undefined) {
-            s1[row.material_type]++
-            seen.add(row.material_type)
+          const mt = row.material_type
+          if (!mt) return
+          if (!(mt in s1)) { s1[mt] = 0; s2[mt] = { clean: 0, dirty: 0 } }
+          if (row.stage === 1) {
+            s1[mt]++
+            seen.add(mt)
           }
-          if (row.stage === 2 && s2[row.material_type] !== undefined) {
-            if (row.label === 'clean') s2[row.material_type].clean++
-            if (row.label === 'dirty') s2[row.material_type].dirty++
+          if (row.stage === 2) {
+            if (row.label === 'clean') s2[mt].clean++
+            if (row.label === 'dirty') s2[mt].dirty++
+            seen.add(mt)
           }
         })
         setClassImages(s1)
@@ -541,8 +615,8 @@ export function AdminPage() {
     }
     setClassImages(prev => ({ ...prev, [materialKey]: prev[materialKey] + uploaded }))
     setUploadingClass(prev => ({ ...prev, [materialKey]: false }))
-    if (uploaded > 0) toast.success(`Uploaded ${uploaded} image(s) for ${localName(materialKey, language)}`)
-  }, [session, language])
+    if (uploaded > 0) toast.success(`Uploaded ${uploaded} image(s) for ${resolve(materialKey)}`)
+  }, [session, resolve])
 
   const handleStage2Files = useCallback(async (materialKey, cleanOrDirty, files) => {
     setUploadingStage2(prev => ({ ...prev, [materialKey]: { ...prev[materialKey], [cleanOrDirty]: true } }))
@@ -579,8 +653,8 @@ export function AdminPage() {
       [materialKey]: { ...prev[materialKey], [cleanOrDirty]: prev[materialKey][cleanOrDirty] + uploaded },
     }))
     setUploadingStage2(prev => ({ ...prev, [materialKey]: { ...prev[materialKey], [cleanOrDirty]: false } }))
-    if (uploaded > 0) toast.success(`Uploaded ${uploaded} ${cleanOrDirty} image(s) for ${localName(materialKey, language)}`)
-  }, [session, language])
+    if (uploaded > 0) toast.success(`Uploaded ${uploaded} ${cleanOrDirty} image(s) for ${resolve(materialKey)}`)
+  }, [session, resolve])
 
   function handleTrain() {
     const classesReady = folders.filter(k => classImages[k] >= 3).length
@@ -627,13 +701,17 @@ export function AdminPage() {
     toast.error('Shop rejected')
   }
 
-  function handleAddFolder(key) {
+  function handleAddFolder({ key, nameTh, nameEn }) {
+    dispatch(setCustomLabel({ key, th: nameTh, en: nameEn }))
     setFolders(f => [...f, key])
     setClassImages(prev => key in prev ? prev : { ...prev, [key]: 0 })
     setUploadingClass(prev => key in prev ? prev : { ...prev, [key]: false })
+    setStage2Counts(prev => key in prev ? prev : { ...prev, [key]: { clean: 0, dirty: 0 } })
+    setUploadingStage2(prev => key in prev ? prev : { ...prev, [key]: { clean: false, dirty: false } })
     setShowNewFolder(false)
   }
   function handleRemoveFolder(key) {
+    dispatch(removeCustomLabel(key))
     setFolders(f => f.filter(k => k !== key))
   }
 
@@ -751,7 +829,7 @@ export function AdminPage() {
                 <FolderCard
                   key={key}
                   materialKey={key}
-                  label={key}
+                  label={resolve(key)}
                   count={classImages[key] ?? 0}
                   enough={(classImages[key] ?? 0) >= 3}
                   uploading={uploadingClass[key] ?? false}
@@ -778,15 +856,20 @@ export function AdminPage() {
           <section className="flex flex-col gap-3">
             <span className="font-data text-[12px] text-[var(--ink-2)] uppercase tracking-widest">{t.stage2Dataset}</span>
             <div className="flex flex-col gap-2">
-              {MATERIAL_KEYS.map(key => (
+              {folders.length === 0 && (
+                <p className="font-data text-[11px] text-[var(--ink-4)] uppercase tracking-widest m-0">
+                  Add classes in Stage 1 first
+                </p>
+              )}
+              {folders.map(key => (
                 <Stage2UploadRow
                   key={key}
                   materialKey={key}
-                  label={localName(key, language)}
-                  cleanCount={stage2Counts[key].clean}
-                  dirtyCount={stage2Counts[key].dirty}
-                  uploadingClean={uploadingStage2[key].clean}
-                  uploadingDirty={uploadingStage2[key].dirty}
+                  label={resolve(key)}
+                  cleanCount={stage2Counts[key]?.clean ?? 0}
+                  dirtyCount={stage2Counts[key]?.dirty ?? 0}
+                  uploadingClean={uploadingStage2[key]?.clean ?? false}
+                  uploadingDirty={uploadingStage2[key]?.dirty ?? false}
                   onFiles={handleStage2Files}
                   t={t}
                 />
@@ -870,7 +953,7 @@ export function AdminPage() {
                   <div className="flex items-center gap-2">
                     <GradeTag grade={post.grade} />
                     <span className="font-body text-[15px] text-[var(--ink)]">
-                      {localName(post.materialType, language)}
+                      {resolve(post.materialType)}
                     </span>
                     <span className="font-data text-[12px] text-[var(--ink-3)]">{post.qty}kg · ฿{post.pricePerKg}/kg</span>
                   </div>
@@ -938,12 +1021,12 @@ export function AdminPage() {
                 <div className="flex flex-col gap-1 flex-1">
                   <div className="flex items-center gap-2">
                     <span className="font-data text-[11px] text-[var(--ink-3)] uppercase">Claimed</span>
-                    <span className="font-body text-[14px] text-[var(--ink)]">{localName(report.claimed_material, language)}</span>
+                    <span className="font-body text-[14px] text-[var(--ink)]">{resolve(report.claimed_material)}</span>
                   </div>
                   {report.ai_material && (
                     <div className="flex items-center gap-2">
                       <span className="font-data text-[11px] text-[var(--ink-3)] uppercase">AI said</span>
-                      <span className="font-body text-[13px] text-[var(--ink-2)]">{localName(report.ai_material, language)}</span>
+                      <span className="font-body text-[13px] text-[var(--ink-2)]">{resolve(report.ai_material)}</span>
                       {report.ai_grade && <GradeTag grade={report.ai_grade} />}
                     </div>
                   )}
@@ -963,7 +1046,7 @@ export function AdminPage() {
                   variant="primary"
                   onClick={() => approveReport(report.id, report.claimed_material)}
                 >
-                  {t.approveAsLabel} {localName(report.claimed_material, language)}
+                  {t.approveAsLabel} {resolve(report.claimed_material)}
                 </Button>
                 <Button
                   variant="secondary"

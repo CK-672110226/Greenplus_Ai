@@ -8,6 +8,7 @@ import buyerReducer from './buyerSlice'
 import notificationReducer from './notificationSlice'
 import scheduleReducer from './scheduleSlice'
 import pricingReducer from './pricingSlice'
+import customLabelsReducer from './customLabelsSlice'
 
 export const store = configureStore({
   reducer: {
@@ -20,5 +21,6 @@ export const store = configureStore({
     notifications: notificationReducer,
     schedule:      scheduleReducer,
     pricing:       pricingReducer,
+    customLabels:  customLabelsReducer,
   },
 })
