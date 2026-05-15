@@ -6,6 +6,7 @@ import { SpeedInsights } from '@vercel/speed-insights/react'
 import { SmartLayout } from './layouts/SmartLayout'
 import { ProtectedRoute } from './components/ProtectedRoute'
 import { useAuth } from './hooks/useAuth'
+import { useActiveModels } from './hooks/useActiveModels'
 import { setDarkMode } from './store/userSlice'
 
 // Eagerly loaded — always needed on first paint
@@ -40,6 +41,7 @@ function PageFallback() {
 
 function AuthInitializer({ children }) {
   useAuth()
+  useActiveModels()
   const dispatch = useDispatch()
   const darkMode = useSelector(s => s.user.darkMode)
 

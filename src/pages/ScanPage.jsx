@@ -124,7 +124,7 @@ export function ScanPage() {
     handleReset()
   }
 
-  const isMockMode   = !aiConfig.onnxStage1Url
+  const isMockMode   = !aiConfig.tmStage1Url && !aiConfig.onnxStage1Url && !aiConfig.vertexStage1Endpoint
   const activeBasket = basket.filter(i => !i.skipped)
   const basketTotal  = activeBasket.reduce((s, i) => s + pricePerKg(i.materialType, i.grade) * (i.weight ?? 0), 0)
   const queueTotal   = batchQueue.reduce((s, i) => s + pricePerKg(i.materialType, i.grade) * (i.weight ?? 0), 0)
@@ -158,8 +158,13 @@ export function ScanPage() {
     try {
       const infer = await twoStageInfer(source, {
         confidenceThreshold: aiConfig.confidenceThreshold,
-        onnxStage1Url:       aiConfig.onnxStage1Url || null,
-        onnxStage2Url:       aiConfig.onnxStage2Url || null,
+        tmStage1Url:         aiConfig.tmStage1Url       || null,
+        stage1ClassLabels:   aiConfig.stage1ClassLabels ?? [],
+        tmStage2Urls:        aiConfig.tmStage2Urls      ?? {},
+        onnxStage1Url:       aiConfig.onnxStage1Url     || null,
+        onnxStage2Url:       aiConfig.onnxStage2Url     || null,
+        vertexStage1Endpoint: aiConfig.vertexStage1Endpoint || null,
+        vertexStage2Endpoint: aiConfig.vertexStage2Endpoint || null,
       })
       if (infer.troll || infer.lowConfidence) { setPhase('troll'); return }
 

@@ -11,6 +11,7 @@ import { supabase } from '../lib/supabase'
 import { useUserReports } from '../hooks/useUserReports'
 import { useShops } from '../hooks/useShops'
 import { setAiConfig } from '../store/aiConfigSlice'
+import { useModelRegistry } from '../hooks/useModelRegistry'
 
 
 function TabBtn({ active, onClick, children }) {
@@ -83,50 +84,69 @@ function FolderCard({ materialKey, label, count, enough, uploading, onFiles, onR
   )
 }
 
-function NewFolderDialog({ open, onClose, onConfirm, usedKeys, language }) {
-  const [selected, setSelected] = useState('')
-  const available = MATERIAL_KEYS.filter(k => !usedKeys.includes(k))
+function NewFolderDialog({ open, onClose, onConfirm, usedLabels }) {
+  const [label, setLabel] = useState('')
+  const inputRef = useRef(null)
+
+  const trimmed   = label.trim()
+  const duplicate = usedLabels.map(l => l.toLowerCase()).includes(trimmed.toLowerCase())
+  const canCreate = trimmed.length > 0 && !duplicate
 
   function handleConfirm() {
-    if (!selected) return
-    onConfirm(selected)
-    setSelected('')
+    if (!canCreate) return
+    onConfirm(trimmed)
+    setLabel('')
   }
   function handleClose() {
-    setSelected('')
+    setLabel('')
     onClose()
   }
+  function handleKeyDown(e) {
+    if (e.key === 'Enter') handleConfirm()
+    if (e.key === 'Escape') handleClose()
+  }
+
+  useEffect(() => {
+    if (open) setTimeout(() => inputRef.current?.focus(), 50)
+  }, [open])
 
   if (!open) return null
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#1A1A1Acc] px-4">
-      <div className="w-full max-w-xs bg-[var(--paper)] border-[2px] border-[var(--ink)] shadow-[4px_4px_0_var(--ink)] flex flex-col gap-4 p-5">
-        <span className="font-brand text-[20px] text-[var(--ink)] leading-tight">New Class Folder</span>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#1A1A1Acc] px-4" onClick={handleClose}>
+      <div
+        className="w-full max-w-xs bg-[var(--paper)] border-[2px] border-[var(--ink)] shadow-[4px_4px_0_var(--ink)] flex flex-col gap-4 p-5"
+        onClick={e => e.stopPropagation()}
+      >
+        <div className="flex flex-col gap-1">
+          <span className="font-brand text-[20px] text-[var(--ink)] leading-tight">New Class</span>
+          <span className="font-data text-[10px] text-[var(--ink-4)] uppercase tracking-widest">
+            e.g. Electronic waste · ชิปเหลือทิ้ง · Glass bottle
+          </span>
+        </div>
 
-        {available.length === 0 ? (
-          <p className="font-data text-[12px] text-[var(--ink-3)] uppercase tracking-widest m-0">
-            All material classes added
-          </p>
-        ) : (
-          <select
-            value={selected}
-            onChange={e => setSelected(e.target.value)}
-            className="w-full px-3 py-2 border-[1.5px] border-[var(--ink)] bg-[var(--paper)] font-data text-[12px] uppercase tracking-widest outline-none focus:border-[var(--green)]"
-          >
-            <option value="">Select material…</option>
-            {available.map(k => (
-              <option key={k} value={k}>
-                {localName(k, language)}
-              </option>
-            ))}
-          </select>
-        )}
+        <div className="flex flex-col gap-1.5">
+          <input
+            ref={inputRef}
+            type="text"
+            value={label}
+            onChange={e => setLabel(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder="Class name…"
+            maxLength={60}
+            className="w-full px-3 py-2 border-[1.5px] border-[var(--ink)] bg-[var(--paper)] font-body text-[15px] text-[var(--ink)] outline-none focus:border-[var(--green)] placeholder:text-[var(--ink-4)]"
+          />
+          {duplicate && (
+            <span className="font-data text-[10px] text-[var(--orange)] uppercase tracking-widest">
+              Class already exists
+            </span>
+          )}
+        </div>
 
         <div className="flex gap-2">
           <button
             onClick={handleConfirm}
-            disabled={!selected}
+            disabled={!canCreate}
             className="flex-1 py-2 bg-[var(--ink)] text-[var(--paper)] font-data text-[11px] uppercase tracking-widest border-[1.5px] border-[var(--ink)] disabled:opacity-40 cursor-pointer disabled:cursor-not-allowed hover:bg-[var(--ink-2)] transition-colors"
           >
             Create
@@ -185,6 +205,236 @@ function Stage2UploadRow({ materialKey, label, cleanCount, dirtyCount, uploading
         </div>
       </div>
     </div>
+  )
+}
+
+// ── Model Registry UI ────────────────────────────────────────────
+
+function ModelRegistrySection({ folders }) {
+  const { files, activeByKey, loading, uploadModel, registerModelUrl, activateModel } = useModelRegistry()
+  const dispatch = useDispatch()
+
+  // Upload form state
+  const [stage,        setStage]        = useState(1)
+  const [materialKey,  setMaterialKey]  = useState('')
+  const [versionTag,   setVersionTag]   = useState('')
+  const [modelFile,    setModelFile]    = useState(null)
+  const [metaFile,     setMetaFile]     = useState(null)
+  const [tmUrl,        setTmUrl]        = useState('')
+  const [uploadMode,   setUploadMode]   = useState('url') // 'url' | 'file'
+  const [busy,         setBusy]         = useState(false)
+  const modelFileRef   = useRef(null)
+  const metaFileRef    = useRef(null)
+
+  async function handleRegister() {
+    setBusy(true)
+    try {
+      if (uploadMode === 'url') {
+        if (!tmUrl.trim()) { toast.error('Paste a model URL first'); return }
+        await registerModelUrl({
+          stage,
+          materialType: stage === 2 ? materialKey : null,
+          versionTag,
+          modelUrl:    tmUrl.trim(),
+          classLabels: null,
+        })
+        toast.success('Model registered')
+        setTmUrl(''); setVersionTag('')
+      } else {
+        if (!modelFile) { toast.error('Select model.json first'); return }
+        await uploadModel({ stage, materialType: stage === 2 ? materialKey : null, versionTag, modelFile, metadataFile: metaFile })
+        toast.success('Model uploaded')
+        setModelFile(null); setMetaFile(null); setVersionTag('')
+        if (modelFileRef.current) modelFileRef.current.value = ''
+        if (metaFileRef.current) metaFileRef.current.value = ''
+      }
+    } catch (err) {
+      toast.error(err.message)
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  async function handleActivate(file) {
+    try {
+      await activateModel(file.id, file.stage, file.material_type)
+      // Immediately update Redux so ScanPage picks up without reload
+      dispatch(setAiConfig(
+        file.stage === 1
+          ? { tmStage1Url: file.model_url, stage1ClassLabels: file.class_labels ?? [], modelVersion: file.version_tag ?? 'custom' }
+          : { tmStage2Urls: { [file.material_type]: file.model_url } }
+      ))
+      toast.success('Model activated')
+    } catch (err) {
+      toast.error(err.message)
+    }
+  }
+
+  const stage1Files  = files.filter(f => f.stage === 1)
+  const stage2Files  = files.filter(f => f.stage === 2)
+
+  return (
+    <section className="flex flex-col gap-4 pt-2">
+      <div className="flex items-center gap-3">
+        <div className="flex-1 h-px bg-[var(--ink-4)]" />
+        <span className="font-data text-[11px] text-[var(--ink-3)] uppercase tracking-widest whitespace-nowrap">Model Registry</span>
+        <div className="flex-1 h-px bg-[var(--ink-4)]" />
+      </div>
+
+      {/* Upload / Register form */}
+      <Card className="flex flex-col gap-4">
+        <span className="font-data text-[12px] text-[var(--ink-2)] uppercase tracking-widest">Add Model</span>
+
+        {/* Stage selector */}
+        <div className="flex gap-2">
+          <button onClick={() => setStage(1)}
+            className={['flex-1 py-1.5 font-data text-[11px] uppercase tracking-widest border-[1.5px]',
+              stage === 1 ? 'bg-[var(--ink)] text-[var(--paper)] border-[var(--ink)]' : 'bg-transparent text-[var(--ink)] border-[var(--ink-4)] hover:border-[var(--ink)]'].join(' ')}>
+            Stage 1 — Classifier
+          </button>
+          <button onClick={() => setStage(2)}
+            className={['flex-1 py-1.5 font-data text-[11px] uppercase tracking-widest border-[1.5px]',
+              stage === 2 ? 'bg-[var(--ink)] text-[var(--paper)] border-[var(--ink)]' : 'bg-transparent text-[var(--ink)] border-[var(--ink-4)] hover:border-[var(--ink)]'].join(' ')}>
+            Stage 2 — Cleanliness
+          </button>
+        </div>
+
+        {/* Material select for stage 2 */}
+        {stage === 2 && (
+          <select
+            value={materialKey}
+            onChange={e => setMaterialKey(e.target.value)}
+            className="w-full px-3 py-2 border-[1.5px] border-[var(--ink)] bg-[var(--paper)] font-body text-[14px] text-[var(--ink)] outline-none"
+          >
+            <option value="">Select material class…</option>
+            {folders.map(k => <option key={k} value={k}>{k}</option>)}
+          </select>
+        )}
+
+        {/* Version tag */}
+        <input
+          type="text"
+          placeholder="Version tag (e.g. v1.0-jun26)"
+          value={versionTag}
+          onChange={e => setVersionTag(e.target.value)}
+          className="w-full px-3 py-2 border-[1.5px] border-[var(--ink-4)] bg-[var(--paper)] font-data text-[12px] text-[var(--ink)] outline-none focus:border-[var(--ink)] placeholder:text-[var(--ink-4)]"
+        />
+
+        {/* Mode toggle */}
+        <div className="flex gap-2">
+          <button onClick={() => setUploadMode('url')}
+            className={['flex-1 py-1 font-data text-[10px] uppercase tracking-widest border-[1px]',
+              uploadMode === 'url' ? 'border-[var(--green)] text-[var(--green)]' : 'border-[var(--ink-4)] text-[var(--ink-4)] hover:border-[var(--ink-3)]'].join(' ')}>
+            Paste URL
+          </button>
+          <button onClick={() => setUploadMode('file')}
+            className={['flex-1 py-1 font-data text-[10px] uppercase tracking-widest border-[1px]',
+              uploadMode === 'file' ? 'border-[var(--green)] text-[var(--green)]' : 'border-[var(--ink-4)] text-[var(--ink-4)] hover:border-[var(--ink-3)]'].join(' ')}>
+            Upload Files
+          </button>
+        </div>
+
+        {uploadMode === 'url' ? (
+          <div className="flex flex-col gap-1.5">
+            <input
+              type="text"
+              placeholder="https://teachablemachine.withgoogle.com/models/XXXX/model.json"
+              value={tmUrl}
+              onChange={e => setTmUrl(e.target.value)}
+              className="w-full px-3 py-2 border-[1.5px] border-[var(--ink-4)] bg-[var(--paper)] font-data text-[11px] text-[var(--ink)] outline-none focus:border-[var(--green)] placeholder:text-[var(--ink-4)]"
+            />
+            <span className="font-data text-[10px] text-[var(--ink-4)]">
+              Teachable Machine → Export → Shareable link → copy model.json URL
+            </span>
+          </div>
+        ) : (
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center gap-2">
+              <span className="font-data text-[10px] text-[var(--ink-3)] uppercase tracking-widest w-20">model.json</span>
+              <input ref={modelFileRef} type="file" accept=".json,application/json" className="hidden"
+                onChange={e => setModelFile(e.target.files?.[0] ?? null)} />
+              <button onClick={() => modelFileRef.current?.click()}
+                className="px-3 py-1 font-data text-[10px] uppercase tracking-widest border-[1px] border-[var(--ink-4)] hover:border-[var(--ink)] bg-transparent text-[var(--ink-3)] cursor-pointer">
+                {modelFile ? modelFile.name : '+ Select'}
+              </button>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="font-data text-[10px] text-[var(--ink-3)] uppercase tracking-widest w-20">metadata.json</span>
+              <input ref={metaFileRef} type="file" accept=".json,application/json" className="hidden"
+                onChange={e => setMetaFile(e.target.files?.[0] ?? null)} />
+              <button onClick={() => metaFileRef.current?.click()}
+                className="px-3 py-1 font-data text-[10px] uppercase tracking-widest border-[1px] border-[var(--ink-4)] hover:border-[var(--ink)] bg-transparent text-[var(--ink-3)] cursor-pointer">
+                {metaFile ? metaFile.name : '+ Select (optional)'}
+              </button>
+            </div>
+            <span className="font-data text-[10px] text-[var(--ink-4)]">
+              Upload weights.bin to the same Supabase storage folder manually (TM export zip)
+            </span>
+          </div>
+        )}
+
+        <Button variant="primary" onClick={handleRegister} disabled={busy || (stage === 2 && !materialKey)}>
+          {busy ? 'Saving…' : 'Register Model'}
+        </Button>
+      </Card>
+
+      {/* Uploaded models list */}
+      {loading ? (
+        <div className="h-12 bg-[var(--paper-2)] animate-pulse border-[1.5px] border-[var(--ink-4)]" />
+      ) : (
+        <div className="flex flex-col gap-3">
+          {/* Stage 1 */}
+          <span className="font-data text-[10px] text-[var(--ink-4)] uppercase tracking-widest">Stage 1 — Material Classifiers</span>
+          {stage1Files.length === 0 && (
+            <p className="font-data text-[11px] text-[var(--ink-4)] m-0">No models yet</p>
+          )}
+          {stage1Files.map(f => (
+            <Card key={f.id} className="flex items-center justify-between gap-3 flex-wrap">
+              <div className="flex flex-col gap-0.5 min-w-0">
+                <span className="font-data text-[12px] text-[var(--ink)] truncate">{f.version_tag ?? f.id.slice(0, 8)}</span>
+                <span className="font-data text-[10px] text-[var(--ink-4)] truncate">{f.model_url}</span>
+                {f.class_labels && (
+                  <span className="font-data text-[10px] text-[var(--ink-3)]">{(f.class_labels ?? []).join(' · ')}</span>
+                )}
+              </div>
+              <div className="flex items-center gap-2">
+                {activeByKey['__stage1__'] === f.id && (
+                  <span className="font-data text-[10px] text-[var(--green)] uppercase tracking-widest">● Active</span>
+                )}
+                <Button variant="secondary" onClick={() => handleActivate(f)}>
+                  {activeByKey['__stage1__'] === f.id ? 'Re-activate' : 'Activate'}
+                </Button>
+              </div>
+            </Card>
+          ))}
+
+          {/* Stage 2 */}
+          <span className="font-data text-[10px] text-[var(--ink-4)] uppercase tracking-widest mt-2">Stage 2 — Cleanliness Models (per material)</span>
+          {stage2Files.length === 0 && (
+            <p className="font-data text-[11px] text-[var(--ink-4)] m-0">No models yet</p>
+          )}
+          {stage2Files.map(f => (
+            <Card key={f.id} className="flex items-center justify-between gap-3 flex-wrap">
+              <div className="flex flex-col gap-0.5 min-w-0">
+                <div className="flex items-center gap-2">
+                  <span className="font-data text-[11px] text-[var(--ink-3)] uppercase tracking-widest">{f.material_type}</span>
+                  <span className="font-data text-[12px] text-[var(--ink)]">{f.version_tag ?? f.id.slice(0, 8)}</span>
+                </div>
+                <span className="font-data text-[10px] text-[var(--ink-4)] truncate">{f.model_url}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                {activeByKey[f.material_type] === f.id && (
+                  <span className="font-data text-[10px] text-[var(--green)] uppercase tracking-widest">● Active</span>
+                )}
+                <Button variant="secondary" onClick={() => handleActivate(f)}>
+                  {activeByKey[f.material_type] === f.id ? 'Re-activate' : 'Activate'}
+                </Button>
+              </div>
+            </Card>
+          ))}
+        </div>
+      )}
+    </section>
   )
 }
 
@@ -379,6 +629,8 @@ export function AdminPage() {
 
   function handleAddFolder(key) {
     setFolders(f => [...f, key])
+    setClassImages(prev => key in prev ? prev : { ...prev, [key]: 0 })
+    setUploadingClass(prev => key in prev ? prev : { ...prev, [key]: false })
     setShowNewFolder(false)
   }
   function handleRemoveFolder(key) {
@@ -499,23 +751,21 @@ export function AdminPage() {
                 <FolderCard
                   key={key}
                   materialKey={key}
-                  label={localName(key, language)}
-                  count={classImages[key]}
-                  enough={classImages[key] >= 3}
-                  uploading={uploadingClass[key]}
+                  label={key}
+                  count={classImages[key] ?? 0}
+                  enough={(classImages[key] ?? 0) >= 3}
+                  uploading={uploadingClass[key] ?? false}
                   onFiles={handleStage1Files}
                   onRemove={() => handleRemoveFolder(key)}
                 />
               ))}
-              {folders.length < MATERIAL_KEYS.length && (
-                <button
-                  onClick={() => setShowNewFolder(true)}
-                  className="flex flex-col items-center justify-center gap-2 p-4 border-[1.5px] border-dashed border-[var(--ink-4)] hover:border-[var(--ink)] bg-transparent cursor-pointer transition-colors min-h-[120px]"
-                >
-                  <span className="font-brand text-[28px] text-[var(--ink-3)] leading-none">+</span>
-                  <span className="font-data text-[10px] uppercase tracking-widest text-[var(--ink-4)]">New class</span>
-                </button>
-              )}
+              <button
+                onClick={() => setShowNewFolder(true)}
+                className="flex flex-col items-center justify-center gap-2 p-4 border-[1.5px] border-dashed border-[var(--ink-4)] hover:border-[var(--ink)] bg-transparent cursor-pointer transition-colors min-h-[120px]"
+              >
+                <span className="font-brand text-[28px] text-[var(--ink-3)] leading-none">+</span>
+                <span className="font-data text-[10px] uppercase tracking-widest text-[var(--ink-4)]">New class</span>
+              </button>
             </div>
             {folders.length === 0 && (
               <p className="font-data text-[11px] text-[var(--ink-4)] uppercase tracking-widest m-0">
@@ -591,6 +841,9 @@ export function AdminPage() {
 
           {/* Export manifest */}
           <Button variant="secondary" onClick={handleExportManifest}>{t.exportManifest}</Button>
+
+          {/* Model Registry */}
+          <ModelRegistrySection folders={folders} />
         </div>
       )}
 
@@ -650,8 +903,7 @@ export function AdminPage() {
         open={showNewFolder}
         onClose={() => setShowNewFolder(false)}
         onConfirm={handleAddFolder}
-        usedKeys={folders}
-        language={language}
+        usedLabels={folders}
       />
 
       {/* Reports tab */}
