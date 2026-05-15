@@ -144,9 +144,10 @@ export function SchedulePage() {
       </div>
 
       {loading && (
-        <span className="font-data text-[11px] text-[var(--ink-3)] uppercase tracking-widest animate-pulse self-center">
-          Loading...
-        </span>
+        <div className="flex flex-col gap-3">
+          <div className="h-24 bg-[var(--paper-2)] animate-pulse border-[1.5px] border-[var(--ink-4)]" />
+          <div className="h-24 bg-[var(--paper-2)] animate-pulse border-[1.5px] border-[var(--ink-4)]" />
+        </div>
       )}
 
       {!loading && slots.length === 0 && (

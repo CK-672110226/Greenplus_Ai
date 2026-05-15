@@ -2,9 +2,11 @@ import { useState } from 'react'
 import { toast } from 'sonner'
 import { useSelector } from 'react-redux'
 import { useT } from '../hooks/useT'
+import { useScanHistory } from '../hooks/useScanHistory'
 import { Card } from '../components/Card'
 import { Button } from '../components/Button'
 import { WASTE_ITEMS, localName } from '../data/wasteItems'
+import { supabase } from '../lib/supabase'
 
 function Avatar({ name }) {
   const initials = (name ?? 'U').slice(0, 2).toUpperCase()
@@ -15,14 +17,15 @@ function Avatar({ name }) {
   )
 }
 
-function UserProfile({ profile, session, t }) {
-  const totalValue = 0
-  const totalKg    = 0
-  const totalCo2   = (0).toFixed(1)
+function UserProfile({ profile, session, t, language }) {
+  const { scans, loading, totalKg, totalValue, totalCo2 } = useScanHistory()
+
+  const emptyMsg = language === 'th'
+    ? 'ยังไม่มีการสแกน ชี้กล้องไปที่วัสดุรีไซเคิลเพื่อเริ่มต้น'
+    : 'No scans yet. Point your camera at any recyclable item to start.'
 
   return (
     <>
-      {/* Identity */}
       <Card className="w-full max-w-sm flex flex-col gap-4">
         <div className="flex items-center gap-4">
           <Avatar name={profile?.display_name ?? session?.user?.email} />
@@ -56,7 +59,44 @@ function UserProfile({ profile, session, t }) {
       {/* Scan history */}
       <div className="w-full max-w-sm flex flex-col gap-2">
         <span className="font-data text-[12px] text-[var(--ink-2)] uppercase tracking-widest">{t.scanHistory}</span>
-        <p className="font-body text-[14px] text-[var(--ink-3)] m-0">{t.basketEmpty}</p>
+
+        {loading && (
+          <>
+            <div className="h-10 bg-[var(--paper-2)] animate-pulse border-[1.5px] border-[var(--ink-4)]" />
+            <div className="h-10 bg-[var(--paper-2)] animate-pulse border-[1.5px] border-[var(--ink-4)]" />
+            <div className="h-10 bg-[var(--paper-2)] animate-pulse border-[1.5px] border-[var(--ink-4)]" />
+          </>
+        )}
+
+        {!loading && scans.length === 0 && (
+          <div className="border-[1.5px] border-[var(--ink-4)] p-4">
+            <p className="font-data text-[11px] text-[var(--ink-3)] m-0 uppercase tracking-widest">{emptyMsg}</p>
+          </div>
+        )}
+
+        {!loading && scans.map(item => {
+          const value = item.calculated_value ?? 0
+          const date  = item.scanned_at ? new Date(item.scanned_at).toLocaleDateString() : '—'
+          return (
+            <div
+              key={item.id}
+              className="flex items-center justify-between border-[1.5px] border-[var(--ink-4)] px-3 py-2 gap-2"
+            >
+              <span className="font-data text-[11px] text-[var(--ink)] uppercase tracking-widest flex-1 truncate">
+                {localName(item.material_type, language)}
+              </span>
+              <span className="font-data text-[11px] text-[var(--ink-3)] whitespace-nowrap">
+                {(item.weight_kg ?? 0).toFixed(2)} kg
+              </span>
+              <span className="font-data text-[13px] text-[var(--green)] whitespace-nowrap">
+                ฿{value.toFixed(0)}
+              </span>
+              <span className="font-data text-[10px] text-[var(--ink-4)] whitespace-nowrap">
+                {date}
+              </span>
+            </div>
+          )
+        })}
       </div>
     </>
   )
@@ -69,8 +109,13 @@ function BuyerProfile({ profile, session, t, language }) {
     setAccepted(a => a.includes(mat) ? a.filter(m => m !== mat) : [...a, mat])
   }
 
-  function handleSave() {
-    toast.success('Accepted materials updated')
+  async function handleSave() {
+    if (!session?.user?.id) return
+    await supabase
+      .from('user_profiles')
+      .update({ accepted_materials: accepted })
+      .eq('id', session.user.id)
+    toast.success('Materials saved')
   }
 
   return (

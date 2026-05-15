@@ -29,7 +29,7 @@ function TabBtn({ active, onClick, children }) {
 
 const MATERIAL_KEYS = Object.keys(WASTE_ITEMS)
 
-function ClassUploadCard({ materialKey, label, count, enough, uploading, onFiles, t }) {
+function FolderCard({ materialKey, label, count, enough, uploading, onFiles, onRemove }) {
   const fileRef = useRef(null)
 
   function handleFiles(e) {
@@ -41,33 +41,104 @@ function ClassUploadCard({ materialKey, label, count, enough, uploading, onFiles
   return (
     <div
       className={[
-        'flex flex-col gap-2 p-3 border-[1.5px]',
+        'relative flex flex-col items-center gap-2 p-4 border-[1.5px] bg-[var(--paper)] cursor-default',
         enough ? 'border-[var(--green)]' : 'border-[var(--ink-4)]',
-        'bg-[var(--paper)]',
       ].join(' ')}
     >
-      <span className="font-body text-[13px] text-[var(--ink)] font-semibold truncate">{label}</span>
-      <span className={`font-data text-[12px] ${enough ? 'text-[var(--green)]' : 'text-[var(--ink-3)]'}`}>
-        {uploading
-          ? t.uploading
-          : count > 0 ? `${count} images` : t.noImagesYet}
-        {!uploading && enough ? ' ✓' : !uploading && count > 0 ? ` (need ${3 - count} more)` : ''}
+      {/* Remove button */}
+      <button
+        onClick={onRemove}
+        className="absolute top-1.5 right-1.5 w-5 h-5 flex items-center justify-center font-data text-[11px] text-[var(--ink-4)] hover:text-[var(--ink)] bg-transparent border-none cursor-pointer leading-none"
+        title="Remove class"
+      >
+        ×
+      </button>
+
+      {/* Folder icon */}
+      <svg width="32" height="28" viewBox="0 0 24 22" fill="none" stroke={enough ? 'var(--green)' : 'var(--ink-3)'} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M2 6a2 2 0 012-2h4l2 2h9a2 2 0 012 2v9a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" />
+      </svg>
+
+      {/* Label */}
+      <span className="font-data text-[11px] text-[var(--ink)] uppercase tracking-widest text-center leading-tight line-clamp-2 w-full">
+        {label}
       </span>
-      <input
-        ref={fileRef}
-        type="file"
-        accept="image/*"
-        multiple
-        className="hidden"
-        onChange={handleFiles}
-      />
+
+      {/* Count badge */}
+      <span className={`font-data text-[11px] ${enough ? 'text-[var(--green)]' : 'text-[var(--ink-3)]'}`}>
+        {uploading ? '…' : `${count} img${count !== 1 ? 's' : ''}`}
+        {!uploading && enough ? ' ✓' : ''}
+      </span>
+
+      {/* Upload trigger */}
+      <input ref={fileRef} type="file" accept="image/*" multiple className="hidden" onChange={handleFiles} />
       <button
         onClick={() => fileRef.current?.click()}
         disabled={uploading}
-        className="font-data text-[11px] uppercase tracking-widest px-2 py-1 border-[1px] border-[var(--ink-3)] text-[var(--ink-2)] hover:border-[var(--ink)] hover:bg-[var(--paper-2)] disabled:opacity-50"
+        className="mt-1 w-full font-data text-[10px] uppercase tracking-widest py-1 border-[1px] border-[var(--ink-4)] text-[var(--ink-3)] hover:border-[var(--ink)] hover:bg-[var(--paper-2)] disabled:opacity-50 bg-transparent cursor-pointer"
       >
-        {t.addImages}
+        + Add
       </button>
+    </div>
+  )
+}
+
+function NewFolderDialog({ open, onClose, onConfirm, usedKeys, language }) {
+  const [selected, setSelected] = useState('')
+  const available = MATERIAL_KEYS.filter(k => !usedKeys.includes(k))
+
+  function handleConfirm() {
+    if (!selected) return
+    onConfirm(selected)
+    setSelected('')
+  }
+  function handleClose() {
+    setSelected('')
+    onClose()
+  }
+
+  if (!open) return null
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#1A1A1Acc] px-4">
+      <div className="w-full max-w-xs bg-[var(--paper)] border-[2px] border-[var(--ink)] shadow-[4px_4px_0_var(--ink)] flex flex-col gap-4 p-5">
+        <span className="font-brand text-[20px] text-[var(--ink)] leading-tight">New Class Folder</span>
+
+        {available.length === 0 ? (
+          <p className="font-data text-[12px] text-[var(--ink-3)] uppercase tracking-widest m-0">
+            All material classes added
+          </p>
+        ) : (
+          <select
+            value={selected}
+            onChange={e => setSelected(e.target.value)}
+            className="w-full px-3 py-2 border-[1.5px] border-[var(--ink)] bg-[var(--paper)] font-data text-[12px] uppercase tracking-widest outline-none focus:border-[var(--green)]"
+          >
+            <option value="">Select material…</option>
+            {available.map(k => (
+              <option key={k} value={k}>
+                {localName(k, language)}
+              </option>
+            ))}
+          </select>
+        )}
+
+        <div className="flex gap-2">
+          <button
+            onClick={handleConfirm}
+            disabled={!selected}
+            className="flex-1 py-2 bg-[var(--ink)] text-[var(--paper)] font-data text-[11px] uppercase tracking-widest border-[1.5px] border-[var(--ink)] disabled:opacity-40 cursor-pointer disabled:cursor-not-allowed hover:bg-[var(--ink-2)] transition-colors"
+          >
+            Create
+          </button>
+          <button
+            onClick={handleClose}
+            className="flex-1 py-2 bg-transparent text-[var(--ink)] font-data text-[11px] uppercase tracking-widest border-[1.5px] border-[var(--ink-4)] hover:border-[var(--ink)] cursor-pointer transition-colors"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
     </div>
   )
 }
@@ -129,7 +200,10 @@ export function AdminPage() {
 
   const [tab, setTab]               = useState('shops')
   const [pending, setPending]       = useState([])
-  // Stage 1 upload state
+  // Folder-based class management
+  const [folders, setFolders]             = useState([]) // materialKeys the admin has created
+  const [showNewFolder, setShowNewFolder] = useState(false)
+  // Stage 1 upload state (keyed by materialKey, populated for all possible keys)
   const [classImages, setClassImages]       = useState(() => Object.fromEntries(MATERIAL_KEYS.map(k => [k, 0])))
   const [uploadingClass, setUploadingClass] = useState(() => Object.fromEntries(MATERIAL_KEYS.map(k => [k, false])))
 
@@ -162,11 +236,13 @@ export function AdminPage() {
 
         const s1 = {}
         const s2 = {}
+        const seen = new Set()
         MATERIAL_KEYS.forEach(k => { s1[k] = 0; s2[k] = { clean: 0, dirty: 0 } })
 
         data.forEach(row => {
           if (row.stage === 1 && s1[row.material_type] !== undefined) {
             s1[row.material_type]++
+            seen.add(row.material_type)
           }
           if (row.stage === 2 && s2[row.material_type] !== undefined) {
             if (row.label === 'clean') s2[row.material_type].clean++
@@ -175,6 +251,7 @@ export function AdminPage() {
         })
         setClassImages(s1)
         setStage2Counts(s2)
+        if (seen.size > 0) setFolders([...seen])
       } catch {
         // Supabase not configured — counts remain at 0
       }
@@ -256,7 +333,7 @@ export function AdminPage() {
   }, [session, language])
 
   function handleTrain() {
-    const classesReady = Object.values(classImages).filter(n => n >= 3).length
+    const classesReady = folders.filter(k => classImages[k] >= 3).length
     if (classesReady < 2) {
       toast.error('Upload ≥3 images for at least 2 classes first.')
       return
@@ -298,6 +375,14 @@ export function AdminPage() {
   function handleRejectShop(id) {
     setPending(p => p.filter(s => s.id !== id))
     toast.error('Shop rejected')
+  }
+
+  function handleAddFolder(key) {
+    setFolders(f => [...f, key])
+    setShowNewFolder(false)
+  }
+  function handleRemoveFolder(key) {
+    setFolders(f => f.filter(k => k !== key))
   }
 
   async function handleExportManifest() {
@@ -401,27 +486,42 @@ export function AdminPage() {
             <p className="font-body text-[13px] text-[var(--ink-3)] m-0">{t.studioHint}</p>
           </Card>
 
-          {/* Stage 1 — per-class image upload */}
+          {/* Stage 1 — folder-based class upload */}
           <section className="flex flex-col gap-3">
-            <span className="font-data text-[12px] text-[var(--ink-2)] uppercase tracking-widest">{t.trainingClasses}</span>
-            <div className="grid grid-cols-2 gap-3">
-              {MATERIAL_KEYS.map(key => {
-                const count  = classImages[key]
-                const enough = count >= 3
-                return (
-                  <ClassUploadCard
-                    key={key}
-                    materialKey={key}
-                    label={localName(key, language)}
-                    count={count}
-                    enough={enough}
-                    uploading={uploadingClass[key]}
-                    onFiles={handleStage1Files}
-                    t={t}
-                  />
-                )
-              })}
+            <div className="flex items-center justify-between gap-2">
+              <span className="font-data text-[12px] text-[var(--ink-2)] uppercase tracking-widest">{t.trainingClasses}</span>
+              <span className="font-data text-[11px] text-[var(--ink-4)]">
+                {folders.filter(k => classImages[k] >= 3).length}/{folders.length} ready
+              </span>
             </div>
+            <div className="grid grid-cols-3 gap-3">
+              {folders.map(key => (
+                <FolderCard
+                  key={key}
+                  materialKey={key}
+                  label={localName(key, language)}
+                  count={classImages[key]}
+                  enough={classImages[key] >= 3}
+                  uploading={uploadingClass[key]}
+                  onFiles={handleStage1Files}
+                  onRemove={() => handleRemoveFolder(key)}
+                />
+              ))}
+              {folders.length < MATERIAL_KEYS.length && (
+                <button
+                  onClick={() => setShowNewFolder(true)}
+                  className="flex flex-col items-center justify-center gap-2 p-4 border-[1.5px] border-dashed border-[var(--ink-4)] hover:border-[var(--ink)] bg-transparent cursor-pointer transition-colors min-h-[120px]"
+                >
+                  <span className="font-brand text-[28px] text-[var(--ink-3)] leading-none">+</span>
+                  <span className="font-data text-[10px] uppercase tracking-widest text-[var(--ink-4)]">New class</span>
+                </button>
+              )}
+            </div>
+            {folders.length === 0 && (
+              <p className="font-data text-[11px] text-[var(--ink-4)] uppercase tracking-widest m-0">
+                Press + to add a material class
+              </p>
+            )}
           </section>
 
           {/* Stage 2 — cleanliness dataset */}
@@ -545,6 +645,14 @@ export function AdminPage() {
           </div>
         </div>
       )}
+
+      <NewFolderDialog
+        open={showNewFolder}
+        onClose={() => setShowNewFolder(false)}
+        onConfirm={handleAddFolder}
+        usedKeys={folders}
+        language={language}
+      />
 
       {/* Reports tab */}
       {tab === 'reports' && (

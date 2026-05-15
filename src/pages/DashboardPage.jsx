@@ -97,9 +97,11 @@ export function DashboardPage() {
       {tab === 'orders' && (
         <div className="w-full max-w-xl flex flex-col gap-3">
           {loading && (
-            <span className="font-data text-[11px] text-[var(--ink-3)] uppercase tracking-widest animate-pulse self-center">
-              Loading...
-            </span>
+            <>
+              <div className="h-20 bg-[var(--paper-2)] animate-pulse border-[1.5px] border-[var(--ink-4)]" />
+              <div className="h-20 bg-[var(--paper-2)] animate-pulse border-[1.5px] border-[var(--ink-4)]" />
+              <div className="h-20 bg-[var(--paper-2)] animate-pulse border-[1.5px] border-[var(--ink-4)]" />
+            </>
           )}
           {!loading && bookings.length === 0 && (
             <Card className="flex items-center justify-center py-8">
