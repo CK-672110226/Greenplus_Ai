@@ -193,6 +193,7 @@ export const en = {
   prices:         'Prices',
 
   // Scan page
+  handlingGuide:      'Handling Guide',
   uploadImage:        'Upload image',
   uploadInstead:      'Upload image instead',
   startingCamera:     'Starting camera…',
