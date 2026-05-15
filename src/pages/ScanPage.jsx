@@ -5,6 +5,7 @@ import { useT } from '../hooks/useT'
 import { Button } from '../components/Button'
 import { GradeTag } from '../components/GradeTag'
 import { pricePerKg, localName, WASTE_ITEMS } from '../data/wasteItems'
+import { useResolvedName } from '../hooks/useResolvedName'
 import { getRulesFor, SEVERITY_COLOR } from '../data/wasteRules'
 import { addToBasket, setLastScan } from '../store/wasteSlice'
 import { twoStageInfer } from '../services/twoStageAI'
@@ -43,13 +44,14 @@ function ContaminationMeter({ score }) {
 }
 
 /* ── Batch queue item row ────────────────────────────────────── */
-function QueueRow({ item, language, onRemove }) {
+function QueueRow({ item, onRemove }) {
+  const resolve = useResolvedName()
   const value = pricePerKg(item.materialType, item.grade) * (item.weight ?? 0)
   return (
     <div className="flex items-center justify-between py-2.5 border-b-[1px] border-[var(--ink-4)] last:border-b-0">
       <div className="flex flex-col gap-0.5 min-w-0">
         <span className="font-body text-[14px] text-[var(--ink)] truncate">
-          {localName(item.materialType, language)}
+          {resolve(item.materialType)}
         </span>
         <span className="font-data text-[10px] text-[var(--ink-3)]">
           {(item.weight ?? 0).toFixed(2)} kg
@@ -77,6 +79,7 @@ export function ScanPage() {
   const language = useSelector(s => s.user.language)
   const aiConfig = useSelector(s => s.aiConfig)
   const basket   = useSelector(s => s.waste?.basket ?? [])
+  const resolve  = useResolvedName()
   const videoRef  = useRef(null)
   const streamRef = useRef(null)
   const fileRef   = useRef(null)
@@ -231,7 +234,7 @@ export function ScanPage() {
     const id = `${result.materialType}_${Date.now()}`
     dispatch(addToBasket({ id, materialType: result.materialType, grade: result.grade, weight: result.weight, pricePerKg: pricePerKg(result.materialType, result.grade) }))
     insertScan(result)
-    toast.success(`${localName(result.materialType, language)} added`)
+    toast.success(`${resolve(result.materialType)} added`)
     handleReset()
   }
 
@@ -242,7 +245,7 @@ export function ScanPage() {
     const id = `${result.materialType}_${Date.now()}`
     dispatch(addToBasket({ id, materialType: result.materialType, grade: result.grade, weight: result.weight, pricePerKg: pricePerKg(result.materialType, result.grade) }))
     insertScan(result)
-    toast.success(`${localName(result.materialType, language)} added`)
+    toast.success(`${resolve(result.materialType)} added`)
     handleReset()
   }
 
@@ -386,7 +389,7 @@ export function ScanPage() {
                   <span className="absolute bottom-0 right-0 w-5 h-5 border-b-2 border-r-2 border-[var(--green)]" style={{ bottom: '-2px', right: '-2px' }} />
                   <div className="absolute bottom-0 left-0 px-1.5 py-0.5 bg-[var(--green)]" style={{ bottom: '-22px' }}>
                     <span className="font-data text-[9px] text-[var(--paper)] uppercase tracking-widest">
-                      {localName(result.materialType, language)} · {(result.confidence * 100).toFixed(0)}%
+                      {resolve(result.materialType)} · {(result.confidence * 100).toFixed(0)}%
                     </span>
                   </div>
                 </div>
@@ -526,7 +529,7 @@ export function ScanPage() {
           <div className="flex flex-col flex-1 px-5 py-4 min-h-0 overflow-y-auto">
             {batchQueue.length > 0 ? (
               batchQueue.map(item => (
-                <QueueRow key={item.id} item={item} language={language} onRemove={handleRemoveFromQueue} />
+                <QueueRow key={item.id} item={item} onRemove={handleRemoveFromQueue} />
               ))
             ) : (
               <div className="flex flex-col items-center gap-2 py-10 text-center">
@@ -585,7 +588,7 @@ export function ScanPage() {
                 <div className="flex items-center gap-2">
                   <GradeTag grade={liveResult.grade} />
                   <span className="font-brand text-[18px] text-[var(--ink)] leading-tight">
-                    {localName(liveResult.materialType, language)}
+                    {resolve(liveResult.materialType)}
                   </span>
                   {liveResult.source === 'mock' && (
                     <span className="font-data text-[9px] text-[var(--ink-4)] border border-[var(--ink-4)] px-1 py-0.5 uppercase">demo</span>
@@ -685,7 +688,7 @@ export function ScanPage() {
             <div className="flex items-center gap-2">
               <GradeTag grade={result.grade} />
               <span className="font-body text-[17px] text-[var(--ink)] font-semibold">
-                {localName(result.materialType, language)}
+                {resolve(result.materialType)}
               </span>
             </div>
             {(result.source === 'mock' || result.source === 'mock-fallback') && (
