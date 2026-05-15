@@ -127,7 +127,8 @@ export function ScanPage() {
     handleReset()
   }
 
-  const isMockMode   = !aiConfig.tmStage1Url && !aiConfig.onnxStage1Url && !aiConfig.vertexStage1Endpoint
+  const isMockMode   = !aiConfig.yoloEndpoint && !aiConfig.tmStage1Url && !aiConfig.onnxStage1Url && !aiConfig.vertexStage1Endpoint
+  const activeSource = aiConfig.yoloEndpoint ? 'yolo' : aiConfig.tmStage1Url ? 'tfjs' : aiConfig.onnxStage1Url ? 'onnx' : aiConfig.vertexStage1Endpoint ? 'vertex' : 'demo'
   const activeBasket = basket.filter(i => !i.skipped)
   const basketTotal  = activeBasket.reduce((s, i) => s + pricePerKg(i.materialType, i.grade) * (i.weight ?? 0), 0)
   const queueTotal   = batchQueue.reduce((s, i) => s + pricePerKg(i.materialType, i.grade) * (i.weight ?? 0), 0)
@@ -160,14 +161,15 @@ export function ScanPage() {
     setPhase('analyzing')
     try {
       const infer = await twoStageInfer(source, {
-        confidenceThreshold: aiConfig.confidenceThreshold,
-        tmStage1Url:         aiConfig.tmStage1Url       || null,
-        stage1ClassLabels:   aiConfig.stage1ClassLabels ?? [],
-        tmStage2Urls:        aiConfig.tmStage2Urls      ?? {},
-        onnxStage1Url:       aiConfig.onnxStage1Url     || null,
-        onnxStage2Url:       aiConfig.onnxStage2Url     || null,
-        vertexStage1Endpoint: aiConfig.vertexStage1Endpoint || null,
-        vertexStage2Endpoint: aiConfig.vertexStage2Endpoint || null,
+        confidenceThreshold:  aiConfig.confidenceThreshold,
+        yoloEndpoint:         aiConfig.yoloEndpoint          || null,
+        tmStage1Url:          aiConfig.tmStage1Url           || null,
+        stage1ClassLabels:    aiConfig.stage1ClassLabels     ?? [],
+        tmStage2Urls:         aiConfig.tmStage2Urls          ?? {},
+        onnxStage1Url:        aiConfig.onnxStage1Url         || null,
+        onnxStage2Url:        aiConfig.onnxStage2Url         || null,
+        vertexStage1Endpoint: aiConfig.vertexStage1Endpoint  || null,
+        vertexStage2Endpoint: aiConfig.vertexStage2Endpoint  || null,
       })
       if (infer.troll || infer.lowConfidence) { setPhase('troll'); return }
 
@@ -336,7 +338,7 @@ export function ScanPage() {
                 {phase === 'analyzing' ? 'analyzing' : phase === 'idle' ? 'live · ready' : phase}
               </span>
               <span className={`font-data text-[9px] border-[1.5px] px-1.5 py-0.5 uppercase ${isMockMode ? 'border-[var(--ink-4)] text-[var(--ink-4)]' : 'border-[var(--green)] text-[var(--green)]'}`}>
-                {isMockMode ? 'demo' : 'onnx'}
+                {activeSource}
               </span>
             </div>
           </div>

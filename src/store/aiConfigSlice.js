@@ -17,6 +17,8 @@ const aiConfigSlice = createSlice({
     onnxStage1Url:        saved.onnxStage1Url        ?? '',
     onnxStage2Url:        saved.onnxStage2Url        ?? '',
     modelVersion:         saved.modelVersion         ?? 'v0-mock',
+    // YOLO FastAPI backend (highest priority when set)
+    yoloEndpoint:         saved.yoloEndpoint         ?? '',   // e.g. http://localhost:8000
     // Vertex AI (fallback)
     vertexProjectId:      saved.vertexProjectId      ?? '',
     vertexLocation:       saved.vertexLocation       ?? 'us-central1',

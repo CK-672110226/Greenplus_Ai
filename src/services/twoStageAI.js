@@ -7,6 +7,7 @@ import { WASTE_ITEMS } from '../data/wasteItems'
 import { runOnnx, softmax } from './onnxInference'
 import { vertexStage1, vertexStage2, imageToBase64 } from './vertexAI'
 import { tmStage1, tmStage2 } from './tmInference'
+import { yoloStage1 } from './yoloAPI'
 
 const MATERIALS = Object.keys(WASTE_ITEMS)
 
@@ -95,6 +96,7 @@ async function onnxStage2(imageSource, modelUrl, _materialType) {
 export async function twoStageInfer(imageSource, config = {}) {
   const {
     confidenceThreshold    = 0.6,
+    yoloEndpoint           = null,
     tmStage1Url            = null,
     stage1ClassLabels      = [],
     tmStage2Urls           = {},
@@ -107,10 +109,15 @@ export async function twoStageInfer(imageSource, config = {}) {
   const b64 = imageToBase64(imageSource)
 
   // ── Stage 1: material classifier ────────────────────────────
+  // Priority: YOLO → TF.js (TM) → ONNX → Vertex AI → Mock
   let s1Raw = null
   let aiSource = 'mock'
 
-  if (tmStage1Url && stage1ClassLabels.length > 0) {
+  if (yoloEndpoint) {
+    s1Raw = await yoloStage1(imageSource, yoloEndpoint)
+    if (s1Raw) aiSource = 'yolo'
+  }
+  if (!s1Raw && tmStage1Url && stage1ClassLabels.length > 0) {
     s1Raw = await tmStage1(tmStage1Url, stage1ClassLabels, imageSource)
     if (s1Raw) aiSource = 'tfjs'
   }

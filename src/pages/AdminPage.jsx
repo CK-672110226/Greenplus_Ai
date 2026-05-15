@@ -400,6 +400,43 @@ export function AdminPage() {
             </div>
             <p className="font-body text-[13px] text-[var(--ink-3)] m-0">{t.studioHint}</p>
           </Card>
+
+          {/* YOLO Backend config */}
+          <Card className="flex flex-col gap-4">
+            <div className="flex items-center gap-2">
+              <span className="font-data text-[12px] text-[var(--ink-2)] uppercase tracking-widest">YOLO Backend</span>
+              {aiConfig.yoloEndpoint ? (
+                <span className="font-data text-[9px] border-[1.5px] border-[var(--green)] text-[var(--green)] px-1.5 py-0.5 uppercase">active</span>
+              ) : (
+                <span className="font-data text-[9px] border-[1.5px] border-[var(--ink-4)] text-[var(--ink-4)] px-1.5 py-0.5 uppercase">off</span>
+              )}
+            </div>
+            <p className="font-body text-[13px] text-[var(--ink-3)] m-0">
+              Run <code className="font-data text-[12px]">uvicorn yolo_server:app</code> in <code className="font-data text-[12px]">backend/</code> then paste the URL below.
+              When set, YOLO takes priority over all other Stage 1 providers.
+            </p>
+            <div className="flex flex-col gap-1.5">
+              <label className="font-data text-[10px] uppercase tracking-widest text-[var(--ink-3)]">
+                Server URL
+              </label>
+              <input
+                type="url"
+                placeholder="http://localhost:8000"
+                value={aiConfig.yoloEndpoint ?? ''}
+                onChange={e => dispatch(setAiConfig({ yoloEndpoint: e.target.value }))}
+                className="w-full px-3 py-2 border-[1.5px] border-[var(--ink)] bg-[var(--paper)] font-data text-[13px] outline-none focus:border-[var(--green)] transition-colors"
+              />
+            </div>
+            {aiConfig.yoloEndpoint && (
+              <button
+                onClick={() => dispatch(setAiConfig({ yoloEndpoint: '' }))}
+                className="self-start font-data text-[10px] uppercase tracking-widest text-[var(--ink-4)] hover:text-[var(--orange)] bg-transparent border-none cursor-pointer p-0 transition-colors"
+              >
+                clear endpoint
+              </button>
+            )}
+          </Card>
+
           <ModelRegistrySection />
         </div>
       )}
