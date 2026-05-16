@@ -19,7 +19,7 @@ GreenPlus Ai is a **bilingual (Thai / English) waste-to-value platform** built f
 
 ## Key Features
 
-- **2-Stage AI Scanner** — Stage 1 detects object type (PET bottle, aluminium can, cardboard…); Stage 2 scores cleanliness and assigns Grade A / B / C for fair pricing
+- **2-Stage AI Scanner** — Stage 1 detects object type (PET bottle, aluminium can, cardboard…); Stage 2 scores cleanliness (Clean / Dirty) for fair pricing
 - **Edge AI Processing** — All image analysis runs in the browser; no user photos are uploaded to any server (Privacy First)
 - **Real-time Valuation** — Formula-based pricing engine using Chiang Mai market reference rates (May 2026)
 - **Smart Basket** — Accumulate scan results, adjust weights, then find the nearest shop that accepts everything — or get a multi-stop route plan sorted by distance
@@ -29,6 +29,8 @@ GreenPlus Ai is a **bilingual (Thai / English) waste-to-value platform** built f
 - **Marketplace** — High-density list view for buying / selling recyclables with grade filtering
 - **Role Profiles** — Per-role profile pages: User (scan history + Eco-Points), Buyer (shop info + accepted materials), Admin (pending actions + platform stats)
 - **Buyer Calendar Dashboard** — Buyers toggle Open/Closed for each day of the week to manage routing availability
+- **Live Booking Notifications** — Buyers receive real-time alerts via Supabase Realtime when new bookings arrive; open-days and accepted-materials settings persist across devices
+- **Waste Handling Rules** — Per-material rule cards (reject / warning / info / dispose) guide users on preparation, correct bins, and drop-off points for all 8 material types
 - **Eco-Points (Impact Points)** — Gamification layer rewarding verified recycling activity
 - **Anti-Troll System** — Detects humans / living things in the scanner and responds with a playful message
 - **Dark Mode** — Full token-based dark-mode support
@@ -91,7 +93,7 @@ The application fully supports both viewports. Layout rules differ by page and r
 
 | Table | Key Columns |
 |-------|-------------|
-| `waste_items` | `id`, `name`, `unit`, `base_weight`, `price_grade_a/b/c` |
+| `waste_items` | `id`, `name`, `unit`, `base_weight`, `base_price` (dirty = base_price × 0.7) |
 | `shops` | `id`, `owner_id`, `name`, `lat`, `lng`, `accepts[]`, `openDays[]`, `verified`, `status` |
 | `marketplace_posts` | `id`, `user_id`, `title`, `material_type`, `status` |
 | `user_profiles` | `id`, `role`, `language_pref`, `eco_points` |
@@ -102,17 +104,22 @@ The application fully supports both viewports. Layout rules differ by page and r
 
 ---
 
-## Pricing Reference — Chiang Mai Market (May 2026)
+## Pricing Reference — In-App Base Rates (May 2026)
 
-| Material | Grade A | Grade B (×0.75) | Grade C (×0.40) |
-|----------|---------|-----------------|-----------------|
-| Aluminium cans | ฿62/kg | ฿46.5/kg | not accepted |
-| PET bottle (clear) | ฿8–10/kg | ฿6–7.5/kg | ฿3.2–4/kg |
-| Copper (clean) | ฿380–385/kg | — | — |
-| Used cooking oil | ฿20/kg | — | — |
-| Cardboard | ฿4.50/kg | — | — |
+Clean = base price. Dirty = base price × 0.7.
 
-*Sources: วงษ์พาณิชย์, Recycle Station ตลาดจริงใจ, ปั๊มบางจาก (ทอดไม่ทิ้ง)*
+| Material | Clean (base) | Dirty (×0.70) |
+|----------|-------------|---------------|
+| PET bottle (clear) | ฿8/kg | ฿5.60/kg |
+| Aluminium can | ฿40/kg | ฿28/kg |
+| Cardboard | ฿3/kg | ฿2.10/kg |
+| Newspaper | ฿2/kg | ฿1.40/kg |
+| Mixed plastic | ฿5/kg | ฿3.50/kg |
+| Copper | ฿200/kg | ฿140/kg |
+| Glass | ฿1/kg | ฿0.70/kg |
+| Used cooking oil | ฿12/kg | ฿8.40/kg |
+
+*Reference rates derived from Chiang Mai scrap-shop surveys (วงษ์พาณิชย์, ปั๊มบางจาก ทอดไม่ทิ้ง, Recycle Station ตลาดจริงใจ)*
 
 ---
 

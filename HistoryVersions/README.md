@@ -23,9 +23,13 @@ This folder stores canonical implementation history for the repository.
 
 - `Feature/SupabaseConnect/` — `.00` initial client setup; `.01` basket booking + buyer pricing dual-write to Supabase
 - `Feature/SuthepShopsSeed/` — `.00` self-contained SQL seed for 6 Chiang Mai recycling shops with shop_pricing rows
+- `Feature/SupabaseRealtime/` — `.00` Supabase Realtime booking notifications for buyers + openDays/acceptedMaterials persistence to user_profiles
 - `Fix/AIStudioStage2/` — `.00` multi-object YOLO detection returning full array + concurrent stage-2 per detection
 - `Fix/MapPageNavigation/` — `.00` replace directions `<a href>` with `window.open` button for iOS Leaflet popup compatibility
 - `Fix/PricingCleanDirty/` — `.00` remove A/B/C grades; replace with two-level Clean/Dirty pricing system
 - `Fix/LocalModelsSlugKeys/` — `.00` change YOLO + TM class label arrays from Thai strings to WASTE_ITEMS English slug keys so pricePerKg() lookups return correct prices
 - `Feature/LiveAnalysisHandlingGuide/` — `.00` add "แนวทางการจัดการ" section header to Live Analysis rules panel in ScanPage
-- `Feature/ExpandedWasteRules/` — `.00` expand WASTE_RULES from 1–2 to 3–4 rules per material (reject/warning/info) for all 8 materials
+- `Feature/ExpandedWasteRules/` — `.00` expand WASTE_RULES from 1–2 to 3–4 rules per material (reject/warning/info/dispose) for all 8 materials
+- `Feature/FeatureInventory/` — `.00` create NowProject/FEATURES_AND_DATAFLOW.md covering all 26 features with Mermaid dataflows; update both READMEs
+- `Feature/SupabaseEmailTemplates/` — `.00` custom branded HTML email templates (confirm-signup, reset-password, change-email, magic-link) + Supabase dashboard setup guide
+- `Feature/ForgotPasswordFlow/` — `.00` full forgot-password + recovery flow in LoginPage: forgot / forgot-sent / reset modes, onAuthStateChange handler, i18n keys (EN + TH)
