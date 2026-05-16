@@ -314,7 +314,22 @@ export function MarketplacePage() {
                 : 'no shop pricing data yet'}
             </span>
             <div className="flex items-center gap-4">
-              <button onClick={() => toast.info('CSV export coming soon')} className="font-data text-[10px] text-[var(--ink-3)] hover:text-[var(--ink)] bg-transparent border-none cursor-pointer transition-colors uppercase tracking-wide">
+              <button
+                onClick={() => {
+                  const header = 'material,shop,price_per_kg,grade\n'
+                  const rows   = shopPricing.map(p =>
+                    `${p.material_type},${p.shop_name ?? p.shop_id},${p.price_per_kg},${p.grade ?? ''}`
+                  ).join('\n')
+                  const blob = new Blob([header + rows], { type: 'text/csv' })
+                  const url  = URL.createObjectURL(blob)
+                  const a    = document.createElement('a')
+                  a.href     = url
+                  a.download = `greenplus-prices-${new Date().toISOString().slice(0, 10)}.csv`
+                  a.click()
+                  URL.revokeObjectURL(url)
+                }}
+                className="font-data text-[10px] text-[var(--ink-3)] hover:text-[var(--ink)] bg-transparent border-none cursor-pointer transition-colors uppercase tracking-wide"
+              >
                 ↓ export CSV
               </button>
               <button onClick={() => toast.info('Price alerts coming soon')} className="font-data text-[10px] text-[var(--ink-3)] hover:text-[var(--ink)] bg-transparent border-none cursor-pointer transition-colors uppercase tracking-wide">

@@ -25,6 +25,7 @@ const SchedulePage      = lazy(() => import('./pages/SchedulePage').then(m => ({
 const PricingPage       = lazy(() => import('./pages/PricingPage').then(m => ({ default: m.PricingPage })))
 const NotificationsPage = lazy(() => import('./pages/NotificationsPage').then(m => ({ default: m.NotificationsPage })))
 const AdminPage         = lazy(() => import('./pages/AdminPage').then(m => ({ default: m.AdminPage })))
+const EcoPointsPage  = lazy(() => import('./pages/EcoPointsPage').then(m => ({ default: m.EcoPointsPage })))
 const SettingsPage   = lazy(() => import('./pages/SettingsPage').then(m => ({ default: m.SettingsPage })))
 const ProfilePage    = lazy(() => import('./pages/ProfilePage').then(m => ({ default: m.ProfilePage })))
 
@@ -93,6 +94,7 @@ function App() {
               <Route path="/admin" element={<ProtectedRoute requiredRole="admin"><AdminPage /></ProtectedRoute>} />
 
               {/* All authenticated roles */}
+              <Route path="/eco"         element={<ProtectedRoute requiredRole="user"><EcoPointsPage /></ProtectedRoute>} />
               <Route path="/marketplace" element={<ProtectedRoute><MarketplacePage /></ProtectedRoute>} />
               <Route path="/settings"    element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
               <Route path="/profile"     element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />

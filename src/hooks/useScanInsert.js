@@ -1,7 +1,8 @@
 import { useCallback } from 'react'
+import { useDispatch, useSelector } from 'react-redux'
 import { supabase } from '../lib/supabase'
-import { useSelector } from 'react-redux'
 import { pricePerKg } from '../data/wasteItems'
+import { setProfile } from '../store/userSlice'
 
 function getGPS() {
   return new Promise(resolve => {
@@ -15,7 +16,9 @@ function getGPS() {
 }
 
 export function useScanInsert() {
-  const session = useSelector(s => s.user.session)
+  const dispatch = useDispatch()
+  const session  = useSelector(s => s.user.session)
+  const profile  = useSelector(s => s.user.profile)
 
   const insertScan = useCallback(async (scan) => {
     if (!session?.user?.id) return
@@ -37,10 +40,19 @@ export function useScanInsert() {
         lat:              gps?.lat ?? null,
         lng:              gps?.lng ?? null,
       })
+      // Award eco-points: 10 pts/kg, minimum 1 pt per scan
+      const earned = Math.max(1, Math.round((scan.weight ?? 0) * 10))
+      const { data: newTotal } = await supabase.rpc('increment_eco_points', {
+        user_id_param: session.user.id,
+        points_param:  earned,
+      })
+      if (newTotal != null && profile) {
+        dispatch(setProfile({ ...profile, eco_points: newTotal }))
+      }
     } catch {
       // Supabase may not be configured yet — fail silently
     }
-  }, [session])
+  }, [session, profile, dispatch])
 
   return insertScan
 }
