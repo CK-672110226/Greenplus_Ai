@@ -77,7 +77,7 @@ export function DashboardPage() {
 
   const pending   = bookings.filter(b => b.status === 'pending').length
   const completed = bookings.filter(b => b.status === 'accepted').length
-  const revenue   = bookings.filter(b => b.status === 'accepted').reduce((s, b) => s + (b.totalKg ?? 0) * 10, 0)
+  const revenue   = bookings.filter(b => b.status === 'accepted').reduce((s, b) => s + (b.estValue ?? 0), 0)
 
   return (
     <main className="flex flex-col items-center px-4 py-10 gap-6">

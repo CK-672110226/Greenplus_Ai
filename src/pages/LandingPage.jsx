@@ -34,18 +34,40 @@ export function LandingPage() {
   const { session, profile, loading, language } = useSelector(s => s.user)
 
   const [activeShops, setActiveShops] = useState(null)
+  const [totalKgRecycled, setTotalKgRecycled] = useState(null)
+  const [totalPaidOut, setTotalPaidOut] = useState(null)
+
   useEffect(() => {
     supabase.from('shops').select('id', { count: 'exact', head: true }).eq('status', 'active')
       .then(({ count }) => setActiveShops(count ?? 0))
+
+    supabase.from('scan_history').select('weight_kg')
+      .then(({ data }) => {
+        if (data) setTotalKgRecycled(data.reduce((s, r) => s + (r.weight_kg ?? 0), 0))
+      })
+
+    supabase.from('scan_history').select('calculated_value')
+      .then(({ data }) => {
+        if (data) setTotalPaidOut(data.reduce((s, r) => s + (r.calculated_value ?? 0), 0))
+      })
   }, [])
 
   if (!loading && session && profile?.role) {
     return <Navigate to={ROLE_DEST[profile.role] ?? '/scan'} replace />
   }
 
+  function fmtKg(v) {
+    if (v == null) return '—'
+    return v >= 1000 ? `${(v / 1000).toFixed(1)}t` : `${Math.round(v)}`
+  }
+  function fmtBaht(v) {
+    if (v == null) return '—'
+    return v >= 1000 ? `฿${(v / 1000).toFixed(1)}k` : `฿${Math.round(v)}`
+  }
+
   const stats = [
-    { n: '—',                                      l: 'kg recycled' },
-    { n: '—',                                      l: 'paid out' },
+    { n: fmtKg(totalKgRecycled),   l: 'kg recycled' },
+    { n: fmtBaht(totalPaidOut),    l: 'paid out' },
     { n: activeShops != null ? `${activeShops}` : '—', l: 'active buyers' },
   ]
 
