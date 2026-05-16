@@ -35,3 +35,5 @@ This folder stores canonical implementation history for the repository.
 - `Feature/ForgotPasswordFlow/` — `.00` full forgot-password + recovery flow in LoginPage: forgot / forgot-sent / reset modes, onAuthStateChange handler, i18n keys (EN + TH)
 - `Feature/SqlAggregations/` — `.00` replace hardcoded stats with real Supabase queries on LandingPage (kg/฿ totals), fix DashboardPage revenue formula, fix AdminProfile counts, remove ×0.63 payout multiplier on HomePage
 - `Feature/RealtimeIsolation/` — `.00` add shop_id filter to useRealtimeNotifications Realtime subscription + migration 009 for notifications table
+- `Feature/NotificationPersistence/` — `.00` persist notifications to Supabase: load on mount, INSERT on arrival, sync read/dismiss back to DB
+- `Feature/AdminDataPersistence/` — `.00` shop approval and moderation persistence: live pending shops, approve/reject write shops.status; flag/remove write marketplace_posts; migration 010 adds flagged column

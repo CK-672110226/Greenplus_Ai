@@ -1,16 +1,16 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { toast } from 'sonner'
 import { useDispatch, useSelector } from 'react-redux'
 import { useT } from '../hooks/useT'
 import { Card } from '../components/Card'
 import { Button } from '../components/Button'
 import { GradeTag } from '../components/GradeTag'
-import { removePost, flagPost } from '../store/marketplaceSlice'
 import { useResolvedName } from '../hooks/useResolvedName'
 import { useUserReports } from '../hooks/useUserReports'
 import { useShops } from '../hooks/useShops'
 import { setAiConfig } from '../store/aiConfigSlice'
 import { useModelRegistry } from '../hooks/useModelRegistry'
+import { supabase } from '../lib/supabase'
 
 
 function TabBtn({ active, onClick, children }) {
@@ -300,26 +300,95 @@ function ModelRegistrySection() {
 
 export function AdminPage() {
   const t        = useT()
-  const dispatch = useDispatch()
   const aiConfig = useSelector(s => s.aiConfig)
-  const posts    = useSelector(s => s.marketplace.posts)
   const resolve  = useResolvedName()
 
   const { shops: allShops } = useShops()
 
-  const [tab, setTab]     = useState('shops')
-  const [pending, setPending] = useState([])
+  const [tab, setTab]           = useState('shops')
+  const [pending, setPending]   = useState([])
+  const [modPosts, setModPosts] = useState([])
+  const [modLoading, setModLoading] = useState(true)
 
   const { reports, loading: reportsLoading, approveReport, rejectReport } = useUserReports()
   const pendingCount = reports.length
 
-  function handleApprove(id) {
-    setPending(p => p.filter(s => s.id !== id))
-    toast.success('Shop approved')
+  // Load pending shops on mount
+  useEffect(() => {
+    supabase
+      .from('shops')
+      .select('*, owner:owner_id(display_name)')
+      .eq('status', 'pending')
+      .then(({ data }) => { if (data) setPending(data) })
+  }, [])
+
+  // Load all marketplace posts for admin moderation
+  useEffect(() => {
+    supabase
+      .from('marketplace_posts')
+      .select('*')
+      .neq('status', 'removed')
+      .order('created_at', { ascending: false })
+      .then(({ data }) => {
+        if (data) setModPosts(data.map(p => ({
+          id:           p.id,
+          materialType: p.material_type,
+          grade:        p.grade,
+          qty:          p.quantity_kg,
+          pricePerKg:   p.price_per_kg,
+          shop:         p.user_id?.slice(0, 8) ?? '—',
+          flagged:      p.flagged ?? false,
+          status:       p.status,
+        })))
+      })
+      .finally(() => setModLoading(false))
+  }, [])
+
+  async function handleApprove(id) {
+    const { error } = await supabase.from('shops').update({ status: 'active' }).eq('id', id)
+    if (!error) {
+      setPending(p => p.filter(s => s.id !== id))
+      toast.success('Shop approved')
+    } else {
+      toast.error('Failed to approve shop')
+    }
   }
-  function handleRejectShop(id) {
-    setPending(p => p.filter(s => s.id !== id))
-    toast.error('Shop rejected')
+
+  async function handleRejectShop(id) {
+    const { error } = await supabase.from('shops').update({ status: 'rejected' }).eq('id', id)
+    if (!error) {
+      setPending(p => p.filter(s => s.id !== id))
+      toast.error('Shop rejected')
+    } else {
+      toast.error('Failed to reject shop')
+    }
+  }
+
+  async function handleFlag(post) {
+    const next = !post.flagged
+    const { error } = await supabase
+      .from('marketplace_posts')
+      .update({ flagged: next })
+      .eq('id', post.id)
+    if (!error) {
+      setModPosts(ps => ps.map(p => p.id === post.id ? { ...p, flagged: next } : p))
+      toast.info(next ? 'Flagged' : 'Unflagged')
+    } else {
+      toast.error('Update failed')
+    }
+  }
+
+  async function handleRemovePost(id) {
+    const { error } = await supabase
+      .from('marketplace_posts')
+      .update({ status: 'removed' })
+      .eq('id', id)
+    if (!error) {
+      setModPosts(ps => ps.filter(p => p.id !== id))
+      toast.error('Post removed')
+    } else {
+      toast.error('Remove failed')
+    }
   }
 
   return (
@@ -351,7 +420,9 @@ export function AdminPage() {
               <Card key={s.id} className="flex items-center justify-between flex-wrap gap-3">
                 <div>
                   <p className="font-body text-[15px] text-[var(--ink)] m-0 font-semibold">{s.name}</p>
-                  <p className="font-data text-[11px] text-[var(--ink-3)] m-0">{s.owner} · {s.area}</p>
+                  <p className="font-data text-[11px] text-[var(--ink-3)] m-0">
+                    {s.owner?.display_name ?? s.owner_id?.slice(0, 8) ?? '—'}{s.area ? ` · ${s.area}` : ''}
+                  </p>
                 </div>
                 <div className="flex gap-2">
                   <Button variant="primary" onClick={() => handleApprove(s.id)}>{t.approveShop}</Button>
@@ -409,17 +480,21 @@ export function AdminPage() {
       {tab === 'moderation' && (
         <div className="w-full max-w-2xl flex flex-col gap-4">
           <span className="font-data text-[12px] text-[var(--ink-2)] uppercase tracking-widest">
-            {t.moderation} ({posts.length} {t.totalPosts})
+            {t.moderation} ({modPosts.length} {t.totalPosts})
           </span>
 
-          {posts.length === 0 && (
+          {modLoading && (
+            <div className="h-12 bg-[var(--paper-2)] animate-pulse border-[1.5px] border-[var(--ink-4)]" />
+          )}
+
+          {!modLoading && modPosts.length === 0 && (
             <Card className="flex items-center justify-center py-8">
               <p className="font-body text-[15px] text-[var(--ink-3)] m-0">{t.noListings}</p>
             </Card>
           )}
 
           <div className="flex flex-col gap-3">
-            {posts.map(post => (
+            {modPosts.map(post => (
               <Card
                 key={post.id}
                 className={`flex flex-col gap-2 ${post.flagged ? 'border-[var(--orange)]' : ''}`}
@@ -440,13 +515,13 @@ export function AdminPage() {
                 <div className="flex gap-2 pt-1">
                   <Button
                     variant={post.flagged ? 'primary' : 'secondary'}
-                    onClick={() => { dispatch(flagPost(post.id)); toast.info(post.flagged ? 'Unflagged' : 'Flagged') }}
+                    onClick={() => handleFlag(post)}
                   >
                     {post.flagged ? t.unflagPost : t.flagPost}
                   </Button>
                   <Button
                     variant="ghost"
-                    onClick={() => { dispatch(removePost(post.id)); toast.error('Post removed') }}
+                    onClick={() => handleRemovePost(post.id)}
                   >
                     {t.removePostLabel}
                   </Button>

@@ -5,6 +5,7 @@ import { Button } from '../components/Button'
 import { SectionDivider } from '../components/SectionDivider'
 import { markRead, markAllRead, dismiss, selectUnreadCount } from '../store/notificationSlice'
 import { useRealtimeNotifications } from '../hooks/useRealtimeNotifications'
+import { supabase } from '../lib/supabase'
 
 const TYPE_ICON = {
   new_order:       '📦',
@@ -19,12 +20,12 @@ function formatTime(iso) {
   return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
 }
 
-function NotifCard({ item, dispatch }) {
+function NotifCard({ item, onRead, onDismiss }) {
   const isFlagged = item.type === 'flagged_item'
   return (
     <Card
       className={`relative flex flex-col gap-1 cursor-pointer ${isFlagged && !item.read ? 'flagged-pulse' : ''}`}
-      onClick={() => dispatch(markRead(item.id))}
+      onClick={() => onRead(item.id)}
       style={isFlagged
         ? { borderLeft: '3px solid var(--orange)' }
         : { borderLeft: item.read ? '3px solid transparent' : '3px solid var(--green)' }
@@ -32,7 +33,7 @@ function NotifCard({ item, dispatch }) {
     >
       <button
         type="button"
-        onClick={e => { e.stopPropagation(); dispatch(dismiss(item.id)) }}
+        onClick={e => { e.stopPropagation(); onDismiss(item.id) }}
         className="absolute top-3 right-3 font-body text-[16px] text-[var(--ink-3)] hover:text-[var(--ink)] bg-transparent border-none cursor-pointer p-0 leading-none"
         aria-label="dismiss"
       >
@@ -63,16 +64,34 @@ function NotifCard({ item, dispatch }) {
 }
 
 export function NotificationsPage() {
-  const t          = useT()
-  const dispatch   = useDispatch()
-  const items      = useSelector(s => s.notifications.items)
-  const unread     = useSelector(selectUnreadCount)
+  const t        = useT()
+  const dispatch = useDispatch()
+  const session  = useSelector(s => s.user.session)
+  const items    = useSelector(s => s.notifications.items)
+  const unread   = useSelector(selectUnreadCount)
 
   useRealtimeNotifications()
 
+  async function handleRead(id) {
+    dispatch(markRead(id))
+    await supabase.from('notifications').update({ read: true }).eq('id', id)
+  }
+
+  async function handleDismiss(id) {
+    dispatch(dismiss(id))
+    await supabase.from('notifications').delete().eq('id', id)
+  }
+
+  async function handleMarkAllRead() {
+    dispatch(markAllRead())
+    if (session?.user?.id) {
+      await supabase.from('notifications').update({ read: true }).eq('user_id', session.user.id)
+    }
+  }
+
   const TODAY   = new Date().toISOString().slice(0, 10)
-  const today   = items.filter(n => n.createdAt.startsWith(TODAY))
-  const earlier = items.filter(n => !n.createdAt.startsWith(TODAY))
+  const today   = items.filter(n => n.createdAt?.startsWith(TODAY))
+  const earlier = items.filter(n => !n.createdAt?.startsWith(TODAY))
 
   return (
     <main className="px-4 py-8 flex flex-col gap-6">
@@ -89,7 +108,7 @@ export function NotificationsPage() {
           )}
         </div>
         {unread > 0 && (
-          <Button variant="secondary" onClick={() => dispatch(markAllRead())}>
+          <Button variant="secondary" onClick={handleMarkAllRead}>
             {t.markAllRead}
           </Button>
         )}
@@ -103,7 +122,7 @@ export function NotificationsPage() {
         <div className="flex flex-col gap-3">
           <SectionDivider label={t.notifToday} />
           {today.map(n => (
-            <NotifCard key={n.id} item={n} dispatch={dispatch} />
+            <NotifCard key={n.id} item={n} onRead={handleRead} onDismiss={handleDismiss} />
           ))}
         </div>
       )}
@@ -112,7 +131,7 @@ export function NotificationsPage() {
         <div className="flex flex-col gap-3">
           <SectionDivider label={t.notifEarlier} />
           {earlier.map(n => (
-            <NotifCard key={n.id} item={n} dispatch={dispatch} />
+            <NotifCard key={n.id} item={n} onRead={handleRead} onDismiss={handleDismiss} />
           ))}
         </div>
       )}
