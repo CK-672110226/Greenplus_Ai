@@ -27,7 +27,7 @@ export function useSupabaseMarketplace() {
             qty:          p.quantity_kg,
             pricePerKg:   p.price_per_kg,
             shop:         p.user?.display_name ?? '',
-            flagged:      false,
+            flagged:      p.flagged ?? false,
             distanceKm:   null,
           })))
         }
