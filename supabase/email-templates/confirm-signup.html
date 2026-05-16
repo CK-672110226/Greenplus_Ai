@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Confirm your GreenPlus AI account</title>
+</head>
+<body style="margin:0;padding:0;background-color:#FAFAF7;font-family:Arial,'Helvetica Neue',sans-serif;color:#1A1A1A;">
+
+  <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#FAFAF7;padding:40px 16px;">
+    <tr>
+      <td align="center">
+        <table width="520" cellpadding="0" cellspacing="0" border="0" style="max-width:520px;width:100%;">
+
+          <!-- Logo header -->
+          <tr>
+            <td align="center" style="padding-bottom:28px;">
+              <table cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td style="
+                    background-color:#22C55E;
+                    border:2px solid #1A1A1A;
+                    border-radius:50%;
+                    width:44px;height:44px;
+                    text-align:center;
+                    vertical-align:middle;
+                    font-weight:900;
+                    font-size:18px;
+                    color:#1A1A1A;
+                    line-height:44px;
+                  ">G+</td>
+                  <td style="padding-left:10px;font-size:22px;font-weight:800;letter-spacing:-0.5px;color:#1A1A1A;">
+                    GreenPlus <span style="color:#22C55E;">AI</span>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Card -->
+          <tr>
+            <td style="
+              background-color:#FFFFFF;
+              border:2px solid #1A1A1A;
+              box-shadow:4px 4px 0 #1A1A1A;
+              padding:40px 36px;
+            ">
+
+              <!-- Icon -->
+              <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td align="center" style="padding-bottom:24px;">
+                    <div style="
+                      display:inline-block;
+                      background-color:#22C55E;
+                      border:2px solid #1A1A1A;
+                      border-radius:50%;
+                      width:56px;height:56px;
+                      text-align:center;
+                      line-height:56px;
+                      font-size:26px;
+                    ">✉</div>
+                  </td>
+                </tr>
+
+                <!-- Title -->
+                <tr>
+                  <td align="center" style="padding-bottom:8px;">
+                    <p style="margin:0;font-size:22px;font-weight:800;color:#1A1A1A;letter-spacing:-0.3px;">
+                      Confirm your email
+                    </p>
+                    <p style="margin:4px 0 0;font-size:13px;color:#7A7A7A;">
+                      ยืนยันอีเมลของคุณ
+                    </p>
+                  </td>
+                </tr>
+
+                <!-- Divider -->
+                <tr>
+                  <td style="padding:20px 0;">
+                    <div style="border-top:1.5px solid #1A1A1A;"></div>
+                  </td>
+                </tr>
+
+                <!-- Body text -->
+                <tr>
+                  <td style="padding-bottom:8px;">
+                    <p style="margin:0;font-size:15px;line-height:1.6;color:#1A1A1A;">
+                      Thank you for joining <strong>GreenPlus AI</strong> — the platform that turns your recyclable waste into real value for yourself and the community.
+                    </p>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding-bottom:28px;">
+                    <p style="margin:0;font-size:13px;line-height:1.6;color:#7A7A7A;">
+                      ขอบคุณที่สมัครใช้งาน GreenPlus AI — แพลตฟอร์มที่เปลี่ยนขยะรีไซเคิลของคุณให้มีมูลค่า เพื่อตัวคุณและชุมชน
+                    </p>
+                  </td>
+                </tr>
+
+                <!-- CTA button -->
+                <tr>
+                  <td align="center" style="padding-bottom:28px;">
+                    <a href="{{ .ConfirmationURL }}"
+                       style="
+                         display:inline-block;
+                         background-color:#22C55E;
+                         color:#1A1A1A;
+                         text-decoration:none;
+                         font-weight:800;
+                         font-size:15px;
+                         padding:14px 36px;
+                         border:2px solid #1A1A1A;
+                         box-shadow:3px 3px 0 #1A1A1A;
+                         letter-spacing:0.2px;
+                       ">
+                      ✓ &nbsp;Confirm my account
+                    </a>
+                  </td>
+                </tr>
+
+                <!-- Fallback URL -->
+                <tr>
+                  <td style="
+                    background-color:#F1EFE8;
+                    border:1.5px solid #B8B8B8;
+                    padding:14px 16px;
+                    margin-bottom:24px;
+                  ">
+                    <p style="margin:0 0 4px;font-size:11px;font-weight:700;color:#7A7A7A;text-transform:uppercase;letter-spacing:0.8px;">
+                      Or copy this link into your browser
+                    </p>
+                    <p style="margin:0;font-size:11px;color:#3A3A3A;word-break:break-all;">
+                      {{ .ConfirmationURL }}
+                    </p>
+                  </td>
+                </tr>
+
+                <!-- Divider -->
+                <tr>
+                  <td style="padding:24px 0 16px;">
+                    <div style="border-top:1.5px solid #B8B8B8;"></div>
+                  </td>
+                </tr>
+
+                <!-- Footer note -->
+                <tr>
+                  <td>
+                    <p style="margin:0;font-size:12px;color:#7A7A7A;line-height:1.6;">
+                      This link expires in <strong>24 hours</strong>. If you did not create an account, you can safely ignore this email.
+                    </p>
+                    <p style="margin:6px 0 0;font-size:11px;color:#B8B8B8;">
+                      ลิงก์นี้จะหมดอายุภายใน 24 ชั่วโมง หากคุณไม่ได้สมัครสมาชิก กรุณาเพิกเฉยต่ออีเมลนี้
+                    </p>
+                  </td>
+                </tr>
+
+              </table>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td align="center" style="padding-top:28px;">
+              <p style="margin:0;font-size:11px;color:#B8B8B8;">
+                GreenPlus AI &nbsp;·&nbsp; CMU Rear Zone, Tambon Suthep, Chiang Mai
+              </p>
+              <p style="margin:4px 0 0;font-size:11px;color:#B8B8B8;">
+                เปลี่ยนขยะจากสิ่งไร้ค่า สู่สินทรัพย์ที่มีมูลค่า
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+
+</body>
+</html>

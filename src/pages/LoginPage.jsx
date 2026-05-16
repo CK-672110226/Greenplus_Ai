@@ -5,6 +5,7 @@ import { supabase } from '../lib/supabase'
 import { Button } from '../components/Button'
 import { Logo, LogoWordmark } from '../components/Logo'
 import { useT } from '../hooks/useT'
+import { toast } from 'sonner'
 
 const ROLE_DEST = { user: '/scan', buyer: '/dashboard', admin: '/admin' }
 
@@ -42,23 +43,41 @@ export function LoginPage() {
   const { session, profile } = useSelector(s => s.user)
   const darkMode             = useSelector(s => s.user.darkMode)
 
-  const [mode, setMode]           = useState('signin')
-  const [email, setEmail]         = useState('')
-  const [password, setPassword]   = useState('')
-  const [showPass, setShowPass]   = useState(false)
-  const [error, setError]         = useState(null)
-  const [loading, setLoading]     = useState(false)
-  const [unverified, setUnverified] = useState(false)
-  const emailId    = useId()
-  const passwordId = useId()
+  const [mode, setMode]               = useState('signin')
+  const [email, setEmail]             = useState('')
+  const [password, setPassword]       = useState('')
+  const [newPassword, setNewPassword] = useState('')
+  const [confirmPass, setConfirmPass] = useState('')
+  const [showPass, setShowPass]       = useState(false)
+  const [showNewPass, setShowNewPass] = useState(false)
+  const [showConfirmPass, setShowConfirmPass] = useState(false)
+  const [error, setError]             = useState(null)
+  const [loading, setLoading]         = useState(false)
+  const [unverified, setUnverified]   = useState(false)
+  const [recoverySession, setRecoverySession] = useState(false)
+  const emailId      = useId()
+  const passwordId   = useId()
+  const newPassId    = useId()
+  const confirmPassId = useId()
 
   useEffect(() => {
-    if (session && profile) {
+    if (session && profile && !recoverySession) {
       const from = location.state?.from?.pathname
       const dest = from && from !== '/login' ? from : (ROLE_DEST[profile.role] ?? '/scan')
       navigate(dest, { replace: true })
     }
-  }, [session, profile, navigate, location])
+  }, [session, profile, recoverySession, navigate, location])
+
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'PASSWORD_RECOVERY') {
+        setRecoverySession(true)
+        setMode('reset')
+        setError(null)
+      }
+    })
+    return () => subscription.unsubscribe()
+  }, [])
 
   async function doSignUp() {
     const { data, error: authErr } = await supabase.auth.signUp({
@@ -120,6 +139,37 @@ export function LoginPage() {
     if (authErr) { setError(authErr.message); setLoading(false) }
   }
 
+  async function handleForgotPassword(e) {
+    e.preventDefault()
+    setError(null)
+    setLoading(true)
+    const { error: err } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/login`,
+    })
+    setLoading(false)
+    if (err) setError(err.message)
+    else setMode('forgot-sent')
+  }
+
+  async function handleSetNewPassword(e) {
+    e.preventDefault()
+    if (newPassword.length < 6) { setError(t.passwordTooShort ?? 'Password must be at least 6 characters'); return }
+    if (newPassword !== confirmPass) { setError(t.passwordMismatch ?? 'Passwords do not match'); return }
+    setError(null)
+    setLoading(true)
+    const { error: err } = await supabase.auth.updateUser({ password: newPassword })
+    setLoading(false)
+    if (err) {
+      setError(err.message)
+    } else {
+      setRecoverySession(false)
+      setNewPassword('')
+      setConfirmPass('')
+      toast.success(t.passwordUpdated ?? 'Password updated — you can now sign in.')
+      setMode('signin')
+    }
+  }
+
   const roleColor = role === 'buyer' ? 'var(--ink)' : 'var(--green-ink)'
 
   return (
@@ -134,11 +184,17 @@ export function LoginPage() {
           </div>
           <div className="flex flex-col gap-0.5">
             <span className="font-data text-[11px] text-[var(--ink-3)] uppercase tracking-widest">
-              sign in
+              {mode === 'forgot' || mode === 'forgot-sent' ? 'password recovery'
+               : mode === 'reset' ? 'set new password'
+               : 'sign in'}
             </span>
             <h1 className="font-brand text-[26px] m-0 leading-tight" style={{ color: 'var(--ink)' }}>
-              Welcome back —<br />
-              <span style={{ color: roleColor }}>continue as {role}</span>
+              {mode === 'forgot' || mode === 'forgot-sent'
+                ? <>{t.resetPassword ?? 'Reset password'}</>
+                : mode === 'reset'
+                ? <>{t.setNewPassword ?? 'Set new password'}</>
+                : <>Welcome back —<br /><span style={{ color: roleColor }}>continue as {role}</span></>
+              }
             </h1>
           </div>
           {/* Role badge */}
@@ -149,7 +205,7 @@ export function LoginPage() {
         </div>
 
         {/* Email-not-verified state */}
-        {unverified && (
+        {unverified && (mode === 'signin' || mode === 'signup') && (
           <div className="flex flex-col gap-3 border-[1.5px] border-[var(--orange)] p-4">
             <p className="font-body text-[14px] text-[var(--orange)] m-0">
               {t.emailNotVerified ?? 'กรุณายืนยันอีเมลก่อนเข้าสู่ระบบ — เช็กกล่องจดหมายของคุณ'}
@@ -164,7 +220,170 @@ export function LoginPage() {
           </div>
         )}
 
-        {!unverified && (
+        {/* ── Forgot password form ── */}
+        {mode === 'forgot' && (
+          <form onSubmit={handleForgotPassword} className="flex flex-col gap-4">
+            <div className="flex flex-col gap-0.5">
+              <span className="font-data text-[11px] text-[var(--ink-3)] uppercase tracking-widest">
+                {t.resetPassword ?? 'Reset password'}
+              </span>
+              <p className="font-body text-[14px] text-[var(--ink-2)] m-0">
+                {t.resetPasswordSub ?? "Enter your email and we'll send you a reset link."}
+              </p>
+            </div>
+
+            <Field label={t.email ?? 'Email'} id={emailId}>
+              <input
+                id={emailId}
+                type="email"
+                required
+                autoComplete="username"
+                placeholder="you@example.com"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                className="w-full px-3 py-2.5 border-[1.5px] border-[var(--ink)] bg-[var(--paper)] font-body text-[17px] outline-none focus:border-[var(--green)]"
+              />
+            </Field>
+
+            {error && <p className="font-body text-[14px] text-[var(--orange)] m-0">{error}</p>}
+
+            <Button type="submit" variant="primary" fullWidth disabled={loading}
+              style={{ height: 48, fontSize: 18 }}>
+              {loading ? '...' : (t.sendResetLink ?? 'Send reset link')}
+            </Button>
+
+            <button
+              type="button"
+              onClick={() => { setMode('signin'); setError(null) }}
+              className="font-data text-[11px] text-[var(--ink-3)] uppercase tracking-widest bg-transparent border-none cursor-pointer p-0 hover:opacity-75 text-center"
+            >
+              ← {t.backToSignIn ?? 'Back to sign in'}
+            </button>
+          </form>
+        )}
+
+        {/* ── Reset link sent ── */}
+        {mode === 'forgot-sent' && (
+          <div className="flex flex-col gap-5">
+            <div className="border-[1.5px] border-[var(--green)] bg-[var(--green-soft)] p-4 flex flex-col gap-2">
+              <p className="font-data text-[12px] text-[var(--green-ink)] uppercase tracking-widest m-0">
+                {t.checkInbox ?? 'Check your inbox'}
+              </p>
+              <p className="font-body text-[14px] text-[var(--ink)] m-0">
+                {t.resetLinkSent ?? 'We sent a reset link to'}{' '}
+                <strong>{email}</strong>.
+              </p>
+              <p className="font-body text-[13px] text-[var(--ink-3)] m-0">
+                ลิงก์จะหมดอายุใน 1 ชั่วโมง · Link expires in 1 hour.
+              </p>
+            </div>
+
+            <div className="font-data text-[11px] text-[var(--ink-3)] uppercase tracking-widest text-center">
+              {t.didntReceive ?? "Didn't receive it?"}{' '}
+              <button
+                type="button"
+                onClick={() => setMode('forgot')}
+                className="text-[var(--green-ink)] bg-transparent border-none cursor-pointer p-0 font-data text-[11px] uppercase tracking-widest hover:opacity-75"
+              >
+                {t.resendLink ?? 'Resend'}
+              </button>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => { setMode('signin'); setError(null) }}
+              className="font-data text-[11px] text-[var(--ink-3)] uppercase tracking-widest bg-transparent border-none cursor-pointer p-0 hover:opacity-75 text-center"
+            >
+              ← {t.backToSignIn ?? 'Back to sign in'}
+            </button>
+          </div>
+        )}
+
+        {/* ── Set new password (recovery session) ── */}
+        {mode === 'reset' && (
+          <form onSubmit={handleSetNewPassword} className="flex flex-col gap-4">
+            <div className="flex flex-col gap-0.5">
+              <span className="font-data text-[11px] text-[var(--ink-3)] uppercase tracking-widest">
+                {t.setNewPassword ?? 'Set new password'}
+              </span>
+              <p className="font-body text-[14px] text-[var(--ink-2)] m-0">
+                {t.setNewPasswordSub ?? 'Choose a strong password for your account.'}
+              </p>
+            </div>
+
+            <Field label={t.newPassword ?? 'New password'} id={newPassId}>
+              <div className="relative">
+                <input
+                  id={newPassId}
+                  type={showNewPass ? 'text' : 'password'}
+                  required
+                  autoComplete="new-password"
+                  placeholder="••••••••"
+                  value={newPassword}
+                  onChange={e => setNewPassword(e.target.value)}
+                  className="w-full pl-3 pr-10 py-2.5 border-[1.5px] border-[var(--ink)] bg-[var(--paper)] font-body text-[17px] outline-none focus:border-[var(--green)]"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowNewPass(v => !v)}
+                  tabIndex={-1}
+                  aria-label={showNewPass ? 'Hide password' : 'Show password'}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--ink-3)] hover:text-[var(--ink)] transition-colors bg-transparent border-none cursor-pointer p-0"
+                >
+                  <EyeIcon open={showNewPass} />
+                </button>
+              </div>
+            </Field>
+
+            <Field label={t.confirmNewPassword ?? 'Confirm new password'} id={confirmPassId}>
+              <div className="relative">
+                <input
+                  id={confirmPassId}
+                  type={showConfirmPass ? 'text' : 'password'}
+                  required
+                  autoComplete="new-password"
+                  placeholder="••••••••"
+                  value={confirmPass}
+                  onChange={e => setConfirmPass(e.target.value)}
+                  className="w-full pl-3 pr-10 py-2.5 border-[1.5px] border-[var(--ink)] bg-[var(--paper)] font-body text-[17px] outline-none focus:border-[var(--green)]"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPass(v => !v)}
+                  tabIndex={-1}
+                  aria-label={showConfirmPass ? 'Hide password' : 'Show password'}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--ink-3)] hover:text-[var(--ink)] transition-colors bg-transparent border-none cursor-pointer p-0"
+                >
+                  <EyeIcon open={showConfirmPass} />
+                </button>
+              </div>
+            </Field>
+
+            {/* Strength hint */}
+            {newPassword.length > 0 && (
+              <div className="flex gap-1 -mt-2">
+                {[1,2,3,4].map(n => (
+                  <div key={n} className="flex-1 h-1 border-[1px] border-[var(--ink-4)]"
+                    style={{
+                      backgroundColor: newPassword.length >= n * 3
+                        ? (newPassword.length >= 10 ? 'var(--green)' : 'var(--orange)')
+                        : 'transparent'
+                    }}
+                  />
+                ))}
+              </div>
+            )}
+
+            {error && <p className="font-body text-[14px] text-[var(--orange)] m-0">{error}</p>}
+
+            <Button type="submit" variant="primary" fullWidth disabled={loading}
+              style={{ height: 48, fontSize: 18 }}>
+              {loading ? '...' : (t.setNewPassword ?? 'Set new password') + ' →'}
+            </Button>
+          </form>
+        )}
+
+        {!unverified && (mode === 'signin' || mode === 'signup') && (
           <>
             {/* Email / Password form */}
             <form onSubmit={handleSubmit} className="flex flex-col gap-4">
@@ -217,9 +436,10 @@ export function LoginPage() {
                 </label>
                 <button
                   type="button"
+                  onClick={() => { setMode('forgot'); setError(null); setUnverified(false) }}
                   className="font-data text-[11px] text-[var(--green-ink)] uppercase tracking-widest bg-transparent border-none cursor-pointer p-0 hover:opacity-75 transition-opacity"
                 >
-                  Forgot password?
+                  {t.forgotPassword ?? 'Forgot password?'}
                 </button>
               </div>
 
