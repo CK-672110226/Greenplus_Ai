@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { toast } from 'sonner'
 import { useDispatch, useSelector } from 'react-redux'
+import { MapContainer, TileLayer, CircleMarker, Tooltip } from 'react-leaflet'
 import { useT } from '../hooks/useT'
 import { Card } from '../components/Card'
 import { Button } from '../components/Button'
@@ -11,6 +12,7 @@ import { useShops } from '../hooks/useShops'
 import { setAiConfig } from '../store/aiConfigSlice'
 import { useModelRegistry } from '../hooks/useModelRegistry'
 import { supabase } from '../lib/supabase'
+import 'leaflet/dist/leaflet.css'
 
 
 function TabBtn({ active, onClick, children }) {
@@ -305,10 +307,14 @@ export function AdminPage() {
 
   const { shops: allShops } = useShops()
 
-  const [tab, setTab]           = useState('shops')
-  const [pending, setPending]   = useState([])
-  const [modPosts, setModPosts] = useState([])
+  const darkMode = useSelector(s => s.user.darkMode)
+
+  const [tab, setTab]               = useState('shops')
+  const [pending, setPending]       = useState([])
+  const [modPosts, setModPosts]     = useState([])
   const [modLoading, setModLoading] = useState(true)
+  const [scanPoints, setScanPoints] = useState([])
+  const [heatLoading, setHeatLoading] = useState(true)
 
   const { reports, loading: reportsLoading, approveReport, rejectReport } = useUserReports()
   const pendingCount = reports.length
@@ -320,6 +326,18 @@ export function AdminPage() {
       .select('*, owner:owner_id(display_name)')
       .eq('status', 'pending')
       .then(({ data }) => { if (data) setPending(data) })
+  }, [])
+
+  // Load scan points for heatmap
+  useEffect(() => {
+    supabase
+      .from('scan_history')
+      .select('lat, lng, material_type, scanned_at')
+      .not('lat', 'is', null)
+      .order('scanned_at', { ascending: false })
+      .limit(500)
+      .then(({ data }) => { if (data) setScanPoints(data) })
+      .finally(() => setHeatLoading(false))
   }, [])
 
   // Load all marketplace posts for admin moderation
@@ -450,14 +468,72 @@ export function AdminPage() {
 
       {/* Heatmap tab */}
       {tab === 'heatmap' && (
-        <div className="w-full max-w-2xl flex flex-col gap-4">
-          <span className="font-data text-[11px] text-[var(--ink-3)] uppercase tracking-widest">Scan Density by District — Chiang Mai</span>
-          <Card className="flex flex-col items-center gap-3 py-12">
-            <span className="font-data text-[13px] text-[var(--ink-3)] uppercase tracking-widest">No scan data yet</span>
-            <span className="font-data text-[11px] text-[var(--ink-4)]">
-              Heatmap requires aggregate scan_history data (milestone A-05)
+        <div className="w-full max-w-2xl flex flex-col gap-3">
+          <div className="flex items-center justify-between">
+            <span className="font-data text-[11px] text-[var(--ink-3)] uppercase tracking-widest">
+              Scan density · Chiang Mai pilot
             </span>
-          </Card>
+            <span className="font-data text-[11px] text-[var(--ink-4)]">
+              {heatLoading ? 'loading…' : `${scanPoints.length} scan${scanPoints.length !== 1 ? 's' : ''} with GPS`}
+            </span>
+          </div>
+
+          <div className="border-[1.5px] border-[var(--ink)] overflow-hidden" style={{ height: 420 }}>
+            {heatLoading ? (
+              <div className="w-full h-full bg-[var(--paper-2)] animate-pulse flex items-center justify-center">
+                <span className="font-data text-[11px] text-[var(--ink-4)] uppercase tracking-widest">Loading map…</span>
+              </div>
+            ) : (
+              <MapContainer
+                center={[18.796, 98.979]}
+                zoom={13}
+                style={{ width: '100%', height: '100%' }}
+                scrollWheelZoom={false}
+              >
+                <TileLayer
+                  attribution='&copy; <a href="https://carto.com/">CARTO</a>'
+                  url={darkMode
+                    ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
+                    : 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png'}
+                />
+                {scanPoints.map((p, i) => (
+                  <CircleMarker
+                    key={i}
+                    center={[p.lat, p.lng]}
+                    radius={7}
+                    pathOptions={{
+                      color:       '#1A1A1A',
+                      weight:      1,
+                      fillColor:   '#22C55E',
+                      fillOpacity: 0.7,
+                    }}
+                  >
+                    <Tooltip>
+                      <span className="font-data text-[11px]">
+                        {p.material_type} · {new Date(p.scanned_at).toLocaleDateString()}
+                      </span>
+                    </Tooltip>
+                  </CircleMarker>
+                ))}
+                {scanPoints.length === 0 && allShops.map(s => s.lat && s.lng ? (
+                  <CircleMarker
+                    key={s.id}
+                    center={[s.lat, s.lng]}
+                    radius={6}
+                    pathOptions={{ color: '#1A1A1A', weight: 1, fillColor: '#F59E0B', fillOpacity: 0.6 }}
+                  >
+                    <Tooltip><span className="font-data text-[11px]">{s.name}</span></Tooltip>
+                  </CircleMarker>
+                ) : null)}
+              </MapContainer>
+            )}
+          </div>
+
+          {scanPoints.length === 0 && !heatLoading && (
+            <p className="font-data text-[11px] text-[var(--ink-4)] m-0">
+              No scans with GPS yet — showing active shop locations. Scan dots will appear as users scan with location permission enabled.
+            </p>
+          )}
         </div>
       )}
 

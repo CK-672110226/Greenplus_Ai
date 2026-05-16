@@ -37,3 +37,5 @@ This folder stores canonical implementation history for the repository.
 - `Feature/RealtimeIsolation/` — `.00` add shop_id filter to useRealtimeNotifications Realtime subscription + migration 009 for notifications table
 - `Feature/NotificationPersistence/` — `.00` persist notifications to Supabase: load on mount, INSERT on arrival, sync read/dismiss back to DB
 - `Feature/AdminDataPersistence/` — `.00` shop approval and moderation persistence: live pending shops, approve/reject write shops.status; flag/remove write marketplace_posts; migration 010 adds flagged column
+- `Feature/SettingsExportPrefs/` — `.00` notification prefs persist to user_profiles JSONB; Export my data downloads JSON of scan_history + bookings; migration 011 adds notification_prefs column
+- `Feature/AdminHeatmap/` — `.00` live scan-density Leaflet map in admin heatmap tab; GPS capture added to useScanInsert; migration 011 adds lat/lng to scan_history

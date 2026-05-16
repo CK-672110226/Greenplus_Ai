@@ -3,15 +3,27 @@ import { supabase } from '../lib/supabase'
 import { useSelector } from 'react-redux'
 import { pricePerKg } from '../data/wasteItems'
 
+function getGPS() {
+  return new Promise(resolve => {
+    if (!navigator.geolocation) return resolve(null)
+    navigator.geolocation.getCurrentPosition(
+      pos => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+      ()  => resolve(null),
+      { timeout: 3000, maximumAge: 60000 },
+    )
+  })
+}
+
 export function useScanInsert() {
   const session = useSelector(s => s.user.session)
 
   const insertScan = useCallback(async (scan) => {
     if (!session?.user?.id) return
-    const clean       = scan.clean ?? scan.stage2Pass ?? true
-    const grade       = clean ? 'A' : 'C'
-    const unitPrice   = pricePerKg(scan.materialType, clean)
-    const calcValue   = unitPrice * (scan.weight ?? 0)
+    const clean     = scan.clean ?? scan.stage2Pass ?? true
+    const grade     = clean ? 'A' : 'C'
+    const unitPrice = pricePerKg(scan.materialType, clean)
+    const calcValue = unitPrice * (scan.weight ?? 0)
+    const gps       = await getGPS()
     try {
       await supabase.from('scan_history').insert({
         user_id:          session.user.id,
@@ -22,6 +34,8 @@ export function useScanInsert() {
         calculated_value: calcValue,
         confidence:       scan.confidence ?? null,
         ai_source:        scan.source ?? 'unknown',
+        lat:              gps?.lat ?? null,
+        lng:              gps?.lng ?? null,
       })
     } catch {
       // Supabase may not be configured yet — fail silently
