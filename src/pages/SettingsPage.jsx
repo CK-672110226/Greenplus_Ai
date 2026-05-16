@@ -1,8 +1,8 @@
-import { useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import { setLanguage, toggleDarkMode } from '../store/userSlice'
+import { setLanguage, toggleDarkMode, setProfile } from '../store/userSlice'
 import { useT } from '../hooks/useT'
 import { SectionDivider } from '../components/SectionDivider'
+import { supabase } from '../lib/supabase'
 
 function LangBtn({ active, onClick, children }) {
   return (
@@ -41,14 +41,46 @@ function Toggle({ on, onToggle, label }) {
   )
 }
 
+const DEFAULT_PREFS = { price_alerts: true, pickup_reminders: true, marketing: false }
+
 export function SettingsPage() {
   const dispatch = useDispatch()
-  const { profile, language, darkMode } = useSelector(s => s.user)
+  const { profile, session, language, darkMode } = useSelector(s => s.user)
   const t = useT()
 
-  const [priceAlerts, setPriceAlerts]       = useState(true)
-  const [pickupReminders, setPickupReminders] = useState(true)
-  const [marketing, setMarketing]           = useState(false)
+  const prefs = { ...DEFAULT_PREFS, ...(profile?.notification_prefs ?? {}) }
+
+  async function togglePref(key) {
+    const next = { ...prefs, [key]: !prefs[key] }
+    dispatch(setProfile({ ...profile, notification_prefs: next }))
+    if (session?.user?.id) {
+      await supabase
+        .from('user_profiles')
+        .update({ notification_prefs: next })
+        .eq('id', session.user.id)
+    }
+  }
+
+  async function handleExport() {
+    if (!session?.user?.id) return
+    const [{ data: scans }, { data: bookings }] = await Promise.all([
+      supabase.from('scan_history').select('*').eq('user_id', session.user.id).order('scanned_at', { ascending: false }),
+      supabase.from('bookings').select('*').eq('seller_id', session.user.id).order('created_at', { ascending: false }),
+    ])
+    const payload = {
+      exported_at: new Date().toISOString(),
+      user_id:     session.user.id,
+      scan_history: scans ?? [],
+      bookings:     bookings ?? [],
+    }
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' })
+    const url  = URL.createObjectURL(blob)
+    const a    = document.createElement('a')
+    a.href     = url
+    a.download = `greenplus-export-${new Date().toISOString().slice(0, 10)}.json`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
 
   return (
     <main className="flex flex-col px-4 py-6 gap-4 max-w-xl mx-auto w-full">
@@ -72,9 +104,9 @@ export function SettingsPage() {
       {/* Notifications */}
       <section className="flex flex-col gap-1">
         <SectionDivider label="notifications" />
-        <Toggle on={priceAlerts}      onToggle={() => setPriceAlerts(v => !v)}      label="Price alerts" />
-        <Toggle on={pickupReminders}  onToggle={() => setPickupReminders(v => !v)}  label="Pickup reminders" />
-        <Toggle on={marketing}        onToggle={() => setMarketing(v => !v)}        label="Promotions & marketing" />
+        <Toggle on={prefs.price_alerts}      onToggle={() => togglePref('price_alerts')}      label="Price alerts" />
+        <Toggle on={prefs.pickup_reminders}  onToggle={() => togglePref('pickup_reminders')}  label="Pickup reminders" />
+        <Toggle on={prefs.marketing}         onToggle={() => togglePref('marketing')}         label="Promotions & marketing" />
       </section>
 
       {/* Account */}
@@ -93,7 +125,7 @@ export function SettingsPage() {
             <button
               type="button"
               className="flex items-center justify-between py-3 bg-transparent border-none cursor-pointer text-left w-full"
-              onClick={() => {}}
+              onClick={handleExport}
             >
               <span className="font-body text-[15px] text-[var(--ink)]">Export my data</span>
               <span className="font-data text-[11px] text-[var(--ink-3)]">→</span>
