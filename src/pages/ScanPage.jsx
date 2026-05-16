@@ -713,7 +713,7 @@ export function ScanPage() {
                     {getRulesFor(liveResult.materialType).map((rule, i) => (
                       <div key={i} className="flex items-start gap-1.5">
                         <span className="font-data text-[10px] shrink-0 leading-relaxed" style={{ color: SEVERITY_COLOR[rule.severity] }}>
-                          {rule.severity === 'reject' ? '✕' : rule.severity === 'warning' ? '!' : '·'}
+                          {rule.severity === 'reject' ? '✕' : rule.severity === 'warning' ? '!' : rule.severity === 'dispose' ? '♻' : '·'}
                         </span>
                         <p className="font-data text-[10px] m-0 leading-relaxed" style={{ color: SEVERITY_COLOR[rule.severity] }}>
                           {language === 'th' ? rule.titleTh : rule.titleEn}
