@@ -39,5 +39,4 @@ This folder stores canonical implementation history for the repository.
 - `Feature/AdminDataPersistence/` — `.00` shop approval and moderation persistence: live pending shops, approve/reject write shops.status; flag/remove write marketplace_posts; migration 010 adds flagged column
 - `Feature/SettingsExportPrefs/` — `.00` notification prefs persist to user_profiles JSONB; Export my data downloads JSON of scan_history + bookings; migration 011 adds notification_prefs column
 - `Feature/AdminHeatmap/` — `.00` live scan-density Leaflet map in admin heatmap tab; GPS capture added to useScanInsert; migration 011 adds lat/lng to scan_history
-- `Feature/EcoPoints/` — `.00` atomic increment_eco_points SQL fn (migration 012); award pts on scan in useScanInsert; new /eco page with balance + history; sidebar nav entry
 - `Feature/MarketplaceCsvExport/` — `.00` replace CSV export toast stub with real Blob download of shopPricing data

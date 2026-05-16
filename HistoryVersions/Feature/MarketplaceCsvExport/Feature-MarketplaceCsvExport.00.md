@@ -27,4 +27,4 @@ The button existed with `toast.info('CSV export coming soon')` as a placeholder.
 
 ## Notes
 
-- Export reflects the currently visible category filter (all `shopPricing` rows regardless of `catFilter`), giving users a full snapshot.
+- Export reflects all `shopPricing` rows regardless of current category filter, giving a full snapshot.
