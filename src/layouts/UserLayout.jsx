@@ -36,9 +36,6 @@ function IconSun() {
 function IconMoon() {
   return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" /></svg>
 }
-function IconLeaf() {
-  return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 22c1.25-1.25 2.5-2.5 3.5-4C7 16 9 13 11 10c2-3 3.5-6.5 3-9C10.5 2 7 5 5 8 3 11 2 14.5 2 18c0 1.5.5 3 0 4z" /><path d="M2 22c2.5-2 5-4 8-5.5" /></svg>
-}
 
 /* ── Sidebar nav link (desktop) ──────────────────────────────── */
 function SideLink({ to, icon, label, badge }) {
@@ -122,7 +119,6 @@ export function UserLayout() {
     { to: '/scan',         icon: <IconScan />,    label: 'AI Scanner' },
     { to: '/marketplace',  icon: <IconMarket />,  label: t.marketplace },
     { to: '/map',          icon: <IconMap />,     label: t.map },
-    { to: '/eco',          icon: <IconLeaf />,    label: t.ecoPoints },
   ]
 
   const mobileNav = [
