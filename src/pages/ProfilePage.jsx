@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { toast } from 'sonner'
 import { useSelector } from 'react-redux'
 import { useT } from '../hooks/useT'
@@ -156,6 +156,19 @@ function BuyerProfile({ profile, session, t, language }) {
 }
 
 function AdminProfile({ profile, session, t }) {
+  const [pending, setPending]   = useState(null)
+  const [active, setActive]     = useState(null)
+  const [flagged, setFlagged]   = useState(null)
+
+  useEffect(() => {
+    supabase.from('shops').select('id', { count: 'exact', head: true }).eq('status', 'pending')
+      .then(({ count }) => setPending(count ?? 0))
+    supabase.from('shops').select('id', { count: 'exact', head: true }).eq('status', 'active')
+      .then(({ count }) => setActive(count ?? 0))
+    supabase.from('marketplace_posts').select('id', { count: 'exact', head: true }).eq('flagged', true)
+      .then(({ count }) => setFlagged(count ?? 0))
+  }, [])
+
   return (
     <Card className="w-full max-w-sm flex flex-col gap-4">
       <div className="flex items-center gap-4">
@@ -173,15 +186,15 @@ function AdminProfile({ profile, session, t }) {
       <div className="grid grid-cols-3 gap-3 border-t-[1.5px] border-[var(--ink-4)] pt-3">
         <div className="flex flex-col gap-0.5 items-center">
           <span className="font-data text-[10px] text-[var(--ink-3)] uppercase tracking-widest text-center">{t.shopsToApprove}</span>
-          <span className="font-brand text-[24px] text-[var(--orange)] leading-none">0</span>
+          <span className="font-brand text-[24px] text-[var(--orange)] leading-none">{pending ?? '—'}</span>
         </div>
         <div className="flex flex-col gap-0.5 items-center">
           <span className="font-data text-[10px] text-[var(--ink-3)] uppercase tracking-widest text-center">{t.activeShops}</span>
-          <span className="font-brand text-[24px] text-[var(--green)] leading-none">0</span>
+          <span className="font-brand text-[24px] text-[var(--green)] leading-none">{active ?? '—'}</span>
         </div>
         <div className="flex flex-col gap-0.5 items-center">
           <span className="font-data text-[10px] text-[var(--ink-3)] uppercase tracking-widest text-center">Flagged</span>
-          <span className="font-brand text-[24px] text-[var(--ink)] leading-none">0</span>
+          <span className="font-brand text-[24px] text-[var(--ink)] leading-none">{flagged ?? '—'}</span>
         </div>
       </div>
     </Card>

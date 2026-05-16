@@ -33,3 +33,5 @@ This folder stores canonical implementation history for the repository.
 - `Feature/FeatureInventory/` — `.00` create NowProject/FEATURES_AND_DATAFLOW.md covering all 26 features with Mermaid dataflows; update both READMEs
 - `Feature/SupabaseEmailTemplates/` — `.00` custom branded HTML email templates (confirm-signup, reset-password, change-email, magic-link) + Supabase dashboard setup guide
 - `Feature/ForgotPasswordFlow/` — `.00` full forgot-password + recovery flow in LoginPage: forgot / forgot-sent / reset modes, onAuthStateChange handler, i18n keys (EN + TH)
+- `Feature/SqlAggregations/` — `.00` replace hardcoded stats with real Supabase queries on LandingPage (kg/฿ totals), fix DashboardPage revenue formula, fix AdminProfile counts, remove ×0.63 payout multiplier on HomePage
+- `Feature/RealtimeIsolation/` — `.00` add shop_id filter to useRealtimeNotifications Realtime subscription + migration 009 for notifications table

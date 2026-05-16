@@ -2,21 +2,24 @@ import { useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { supabase } from '../lib/supabase'
 import { addNotification } from '../store/notificationSlice'
+import { useMyShop } from './useMyShop'
 
 export function useRealtimeNotifications() {
   const dispatch = useDispatch()
   const session = useSelector(s => s.user.session)
   const profile = useSelector(s => s.user.profile)
+  const { shop } = useMyShop()
 
   useEffect(() => {
-    if (!session?.user?.id || profile?.role !== 'buyer') return
+    if (!session?.user?.id || profile?.role !== 'buyer' || !shop?.id) return
 
     const channel = supabase
-      .channel('buyer-bookings')
+      .channel(`buyer-bookings-${shop.id}`)
       .on('postgres_changes', {
         event: 'INSERT',
         schema: 'public',
         table: 'bookings',
+        filter: `shop_id=eq.${shop.id}`,
       }, (payload) => {
         const b = payload.new
         dispatch(addNotification({
@@ -28,5 +31,5 @@ export function useRealtimeNotifications() {
       .subscribe()
 
     return () => { supabase.removeChannel(channel) }
-  }, [session, profile, dispatch])
+  }, [session, profile, shop, dispatch])
 }

@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useSelector } from 'react-redux'
 import { useT } from '../hooks/useT'
@@ -66,6 +67,8 @@ export function HomePage() {
   const lastScan  = useSelector(s => s.waste?.lastScan)
 
   const { shops } = useShops()
+
+  const [lastRefresh] = useState(() => new Date())
 
   const activeItems  = basket.filter(i => !i.skipped)
   const totalValue   = activeItems.reduce((sum, i) => sum + pricePerKg(i.materialType, i.clean ?? true) * (i.weight ?? 0), 0)
@@ -139,7 +142,9 @@ const { salute, name: displayName } = greeting(profile?.display_name)
           {totalValue > 0 && (
             <span className="font-data text-[11px] text-[var(--green-ink)]">▲ ฿{totalValue.toFixed(0)} this week</span>
           )}
-          <span className="font-data text-[10px] text-[var(--ink-4)]">pending payout ฿{(totalValue * 0.63).toFixed(0)}</span>
+          {totalValue > 0 && (
+            <span className="font-data text-[10px] text-[var(--ink-4)]">basket value ฿{totalValue.toFixed(0)}</span>
+          )}
         </div>
       </div>
 
@@ -153,7 +158,7 @@ const { salute, name: displayName } = greeting(profile?.display_name)
           <div className="px-6 lg:px-10 py-6 border-b-[1.5px] border-[var(--ink)]">
             <div className="flex items-center justify-between mb-3">
               <SectionDivider label="Weekly impact · 7 days" />
-              <span className="font-data text-[10px] text-[var(--ink-4)]">last refresh 4m</span>
+              <span className="font-data text-[10px] text-[var(--ink-4)]">refreshed {lastRefresh.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
             </div>
             <div className="border-[1.5px] border-[var(--ink)] px-4 pt-4 pb-2 bg-[var(--paper-2)]">
               <HatchBarChart data={weeklyData} />
