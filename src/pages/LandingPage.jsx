@@ -149,6 +149,9 @@ export function LandingPage() {
         {/* Right — role chooser */}
         <div className="relative z-10 flex flex-col gap-5 px-6 md:px-10 py-10 md:py-16">
           <div>
+            <div className="font-data text-[10px] uppercase tracking-[0.12em] text-[var(--ink-3)] mb-2">
+              FIRST: choose your role
+            </div>
             <h2 className="font-brand text-[26px] text-[var(--ink)] m-0">Pick your side</h2>
             <p className="font-data text-[11px] text-[var(--ink-3)] uppercase tracking-widest m-0 mt-1">
               Two roles. Two layouts. Same backend.

@@ -72,3 +72,12 @@ ruvector.db
 
 # Local development overrides
 .docs/
+
+# Design
+GreenplusDesign/
+
+# Now Project
+NowProject/
+
+# Notebooks
+notebooks/

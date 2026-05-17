@@ -15,7 +15,7 @@ export function useShops() {
       try {
         const { data, error } = await supabase
           .from('shops')
-          .select('*, shop_pricing(material_type, price_grade_a, price_grade_b, price_grade_c)')
+          .select('*, shop_pricing(material_type, price_per_kg, cap_kg)')
           .eq('status', 'active')
         if (!error && data) {
           setShops(data.map(s => ({ ...s, distanceKm: null })))

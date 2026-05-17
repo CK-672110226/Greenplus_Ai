@@ -12,7 +12,7 @@ export function useMarketPricing() {
       try {
         const { data, error } = await supabase
           .from('shop_pricing')
-          .select('shop_id, material_type, price_grade_a, price_grade_b, price_grade_c')
+          .select('shop_id, material_type, price_per_kg, cap_kg')
         if (error || !data) { setLoading(false); return }
 
         setShopPricing(data)
@@ -20,17 +20,13 @@ export function useMarketPricing() {
         const agg = {}
         for (const row of data) {
           const m = row.material_type
-          if (!agg[m]) agg[m] = { A: [], C: [] }
-          if (row.price_grade_a != null) agg[m].A.push(Number(row.price_grade_a))
-          if (row.price_grade_c != null) agg[m].C.push(Number(row.price_grade_c))
+          if (!agg[m]) agg[m] = []
+          if (row.price_per_kg != null) agg[m].push(Number(row.price_per_kg))
         }
         const result = {}
-        for (const [m, grades] of Object.entries(agg)) {
-          result[m] = {}
-          for (const g of ['A', 'C']) {
-            if (grades[g].length > 0) {
-              result[m][g] = Math.round((grades[g].reduce((s, v) => s + v, 0) / grades[g].length) * 100) / 100
-            }
+        for (const [m, prices] of Object.entries(agg)) {
+          if (prices.length > 0) {
+            result[m] = Math.round((prices.reduce((s, v) => s + v, 0) / prices.length) * 100) / 100
           }
         }
         setPricing(result)
@@ -43,17 +39,15 @@ export function useMarketPricing() {
     load()
   }, [])
 
-  // clean=true → use grade A pricing, clean=false → grade C pricing
+  // Returns the market average price_per_kg for a material type
   function marketPrice(materialType, clean = true) {
-    const grade = clean === false ? 'C' : 'A'
-    return pricing[materialType]?.[grade] ?? pricePerKg(materialType, clean)
+    return pricing[materialType] ?? pricePerKg(materialType, clean)
   }
 
-  function shopPrice(shopId, materialType, clean = true) {
+  function shopPrice(shopId, materialType) {
     const row = shopPricing.find(r => r.shop_id === shopId && r.material_type === materialType)
     if (!row) return null
-    const key = clean === false ? 'price_grade_c' : 'price_grade_a'
-    return row[key] != null ? Number(row[key]) : null
+    return row.price_per_kg != null ? Number(row.price_per_kg) : null
   }
 
   return { pricing, shopPricing, loading, marketPrice, shopPrice }

@@ -3,12 +3,17 @@ import { toast } from 'sonner'
 import { useT } from '../hooks/useT'
 import { Card } from '../components/Card'
 import { Button } from '../components/Button'
+import { EmptyState } from '../components/EmptyState'
+import { ScheduleCalendar } from '../components/ScheduleCalendar'
+import { SlotCreatePopup } from '../components/SlotCreatePopup'
+import SmartRouteMap from '../components/SmartRouteMap'
 
 import { useSelector, useDispatch } from 'react-redux'
 import { localName, WASTE_ITEMS } from '../data/wasteItems'
 import { setBookings } from '../store/bookingSlice'
 import { toggleMaterial, setOpenDays } from '../store/buyerSlice'
 import { useSupabaseBookings } from '../hooks/useSupabaseBookings'
+import { useMyShop } from '../hooks/useMyShop'
 import { supabase } from '../lib/supabase'
 
 function TabBtn({ active, onClick, children }) {
@@ -16,7 +21,7 @@ function TabBtn({ active, onClick, children }) {
     <button
       onClick={onClick}
       className={[
-        'px-4 py-2 font-data text-[11px] uppercase tracking-widest border-[1.5px] border-[var(--ink)]',
+        'px-4 py-2 font-data text-[11px] uppercase tracking-widest border-[1.5px] border-[var(--ink)] cursor-pointer',
         active ? 'bg-[var(--ink)] text-[var(--paper)]' : 'bg-[var(--paper)] text-[var(--ink)] hover:bg-[var(--paper-2)]',
       ].join(' ')}
     >
@@ -36,6 +41,10 @@ export function DashboardPage() {
 
   const [tab, setTab]                     = useState('orders')
   const [openDays, setOpenDays_local]     = useState(savedOpenDays)
+  const [materialsSaved, setMaterialsSaved] = useState(false)
+  const [slotPopup, setSlotPopup]         = useState(null) // { date, hour }
+
+  const { shop } = useMyShop()
 
   const { bookings, loading, acceptBooking, rejectBooking } = useSupabaseBookings()
 
@@ -64,6 +73,19 @@ export function DashboardPage() {
       // fail silently
     }
     toast.success(language === 'th' ? 'บันทึกวันเปิดทำการแล้ว' : 'Calendar saved successfully')
+  }
+
+  async function handleSaveMaterials() {
+    const { error } = await supabase
+      .from('user_profiles')
+      .update({ accepted_materials: acceptedMaterials })
+      .eq('id', session.user.id)
+    if (error) {
+      toast.error(language === 'th' ? 'บันทึกไม่สำเร็จ' : 'Failed to save materials')
+    } else {
+      toast.success(language === 'th' ? 'บันทึกแล้ว' : 'Materials saved')
+      setMaterialsSaved(true)
+    }
   }
 
   function handleAccept(id) {
@@ -101,7 +123,9 @@ export function DashboardPage() {
       {/* Tabs */}
       <div className="w-full max-w-xl flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
         <TabBtn active={tab === 'orders'}    onClick={() => setTab('orders')}>{t.recentBookings}</TabBtn>
-        <TabBtn active={tab === 'calendar'}  onClick={() => setTab('calendar')}>{language === 'th' ? 'ปฏิทินร้าน' : 'Shop Calendar'}</TabBtn>
+        <TabBtn active={tab === 'schedule'}  onClick={() => setTab('schedule')}>{language === 'th' ? 'ตารางนัด' : 'Schedule'}</TabBtn>
+        <TabBtn active={tab === 'route'}     onClick={() => setTab('route')}>{language === 'th' ? 'เส้นทางวันนี้' : 'Smart Route'}</TabBtn>
+        <TabBtn active={tab === 'calendar'}  onClick={() => setTab('calendar')}>{language === 'th' ? 'ปฏิทินร้าน' : 'Shop Days'}</TabBtn>
         <TabBtn active={tab === 'materials'} onClick={() => setTab('materials')}>{language === 'th' ? 'วัสดุที่รับ' : 'Materials'}</TabBtn>
       </div>
 
@@ -116,9 +140,13 @@ export function DashboardPage() {
             </>
           )}
           {!loading && bookings.length === 0 && (
-            <Card className="flex items-center justify-center py-8">
-              <p className="font-body text-[15px] text-[var(--ink-3)] m-0">No bookings yet.</p>
-            </Card>
+            <EmptyState
+              icon="📋"
+              title="No bookings yet today"
+              body="When a recycler books a pickup, it'll appear here."
+              primaryCta="Adjust prices →"
+              onPrimary={() => setTab('materials')}
+            />
           )}
           {bookings.map(b => (
             <Card key={b.id} className="flex flex-col gap-2">
@@ -150,6 +178,32 @@ export function DashboardPage() {
         </div>
       )}
 
+      {/* Schedule tab */}
+      {tab === 'schedule' && (
+        <div className="w-full max-w-4xl flex flex-col gap-3">
+          <ScheduleCalendar
+            bookings={bookings}
+            onSlotCreate={(date, hour) => setSlotPopup({ date, hour })}
+          />
+          {slotPopup && (
+            <SlotCreatePopup
+              date={slotPopup.date}
+              hour={slotPopup.hour}
+              shopId={shop?.id}
+              onClose={() => setSlotPopup(null)}
+              onCreated={() => { setSlotPopup(null); toast.success(language === 'th' ? 'สร้างช่วงเวลาแล้ว' : 'Slot created') }}
+            />
+          )}
+        </div>
+      )}
+
+      {/* Smart Route tab */}
+      {tab === 'route' && (
+        <div className="w-full max-w-2xl">
+          <SmartRouteMap />
+        </div>
+      )}
+
       {/* Calendar tab */}
       {tab === 'calendar' && (
         <div className="w-full max-w-xl flex flex-col gap-4">
@@ -170,7 +224,7 @@ export function DashboardPage() {
                     <span className="font-body text-[15px] text-[var(--ink)]">{dayName}</span>
                     <button
                       onClick={() => handleToggleDay(index)}
-                      className={`font-data text-[11px] uppercase tracking-widest px-3 py-1.5 border-[1.5px] transition-colors ${
+                      className={`font-data text-[11px] uppercase tracking-widest px-3 py-1.5 border-[1.5px] transition-colors cursor-pointer ${
                         isOpen
                           ? 'bg-[var(--green)] border-[var(--green-ink)] text-[var(--ink)]'
                           : 'bg-[var(--paper-2)] border-[var(--ink-4)] text-[var(--ink-3)]'
@@ -207,8 +261,8 @@ export function DashboardPage() {
                 return (
                   <button
                     key={key}
-                    onClick={() => dispatch(toggleMaterial(key))}
-                    className={`py-3 px-4 font-body text-[14px] border-[1.5px] text-left transition-colors ${
+                    onClick={() => { dispatch(toggleMaterial(key)); setMaterialsSaved(false) }}
+                    className={`py-3 px-4 font-body text-[14px] border-[1.5px] text-left transition-colors cursor-pointer ${
                       isOn
                         ? 'bg-[var(--green)] border-[var(--ink)] text-[var(--ink)]'
                         : 'bg-[var(--paper-2)] border-[var(--ink-4)] text-[var(--ink-3)]'
@@ -219,24 +273,20 @@ export function DashboardPage() {
                 )
               })}
             </div>
-            <Button
-              variant="primary"
-              onClick={async () => {
-                try {
-                  if (session?.user?.id) {
-                    await supabase
-                      .from('user_profiles')
-                      .update({ accepted_materials: acceptedMaterials })
-                      .eq('id', session.user.id)
-                  }
-                } catch {
-                  // fail silently
-                }
-                toast.success(language === 'th' ? 'บันทึกแล้ว' : 'Saved')
-              }}
-            >
-              {language === 'th' ? 'บันทึก' : 'Save'}
-            </Button>
+            <div className="flex items-center gap-3">
+              <Button
+                variant="primary"
+                onClick={handleSaveMaterials}
+                disabled={!session?.user?.id}
+              >
+                {language === 'th' ? 'บันทึก' : 'Save'}
+              </Button>
+              {materialsSaved && (
+                <span className="font-data text-[11px] text-[var(--green-ink)] uppercase tracking-widest">
+                  ● {language === 'th' ? 'บันทึกแล้ว' : 'saved'}
+                </span>
+              )}
+            </div>
           </Card>
         </div>
       )}

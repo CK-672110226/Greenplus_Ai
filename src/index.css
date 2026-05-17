@@ -26,6 +26,8 @@
   --green-ink:  #0F7A3A;
   --orange:     #F59E0B;
   --blue:       #5BC0BE;
+  --line:       var(--ink-4);
+  --shadow:     var(--ink);
 }
 
 .dark {
@@ -91,4 +93,23 @@ body {
   animation: flagged-pulse 1.3s ease-in-out infinite;
   border-color: var(--orange);
 }
+
+/* ── Skeleton shimmer ────────────────────────────────── */
+@keyframes shimmer {
+  from { background-position: 200% center; }
+  to   { background-position: -200% center; }
+}
+.skeleton {
+  background: linear-gradient(90deg, var(--paper-2) 25%, var(--ink-4) 50%, var(--paper-2) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s ease-in-out infinite;
+}
+
+/* ── Cursor utilities ────────────────────────────────── */
+.cursor-pointer    { cursor: pointer !important; }
+.cursor-wait       { cursor: wait !important; }
+.cursor-not-allowed { cursor: not-allowed !important; }
+.cursor-grab       { cursor: grab !important; }
+.cursor-grabbing   { cursor: grabbing !important; }
+.cursor-loading    { cursor: progress !important; }
 

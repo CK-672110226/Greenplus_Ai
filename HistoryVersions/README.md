@@ -40,3 +40,9 @@ This folder stores canonical implementation history for the repository.
 - `Feature/SettingsExportPrefs/` — `.00` notification prefs persist to user_profiles JSONB; Export my data downloads JSON of scan_history + bookings; migration 011 adds notification_prefs column
 - `Feature/AdminHeatmap/` — `.00` live scan-density Leaflet map in admin heatmap tab; GPS capture added to useScanInsert; migration 011 adds lat/lng to scan_history
 - `Feature/MarketplaceCsvExport/` — `.00` replace CSV export toast stub with real Blob download of shopPricing data
+- `Feature/LogisticsOnboardingMigrations/` — `.00` five Supabase SQL migrations (013–016 + 013b) for on-demand logistics, buyer onboarding, chat, admin training-image workflow, and rider location RLS
+- `Feature/OnDemandLogistics/` — `.00` code scaffold (logisticsSlice, useRealtimeLogistics, RiderDashboardPage, UserTrackingPanel, ChatPage stub, BuyerOnboardingPage stub, App.jsx routes); `.01` planning documents (TASK_BREAKDOWN, SPRINT_PLAN, user-flow Section 10)
+- `Feature/ChatFeature/` — real-time 1:1 chat between sellers and buyer shops via Supabase Realtime; chatSlice, useChat hook, ChatPage, migration 014_chat
+- `Feature/M7Components/` — M7 shared UI components and milestone-7 deliverables
+- `Feature/ScheduleCalendarSlotPopup/` — slot popup / detail modal on the SchedulePage calendar view
+- `Feature/SmartRouteMap/` — smart multi-stop route optimisation overlay on MapPage (TSP + haversine)

@@ -1,8 +1,12 @@
+import { useState, useEffect } from 'react'
 import { Outlet, NavLink, useNavigate } from 'react-router-dom'
 import { useSelector, useDispatch } from 'react-redux'
 import { setLanguage, toggleDarkMode } from '../store/userSlice'
+import { selectUnreadCount } from '../store/notificationSlice'
 import { useT } from '../hooks/useT'
 import { Logo } from '../components/Logo'
+import { NotificationDrawer } from '../components/NotificationDrawer'
+import { GlobalSearch } from '../components/GlobalSearch'
 import { supabase } from '../lib/supabase'
 
 /* ── Icons ──────────────────────────────────────────────────── */
@@ -69,7 +73,7 @@ function SideLink({ to, icon, label, badge }) {
 }
 
 /* ── Mobile bottom tab ──────────────────────────────────────── */
-function Tab({ to, icon, label, badge }) {
+function Tab({ to, icon, label, badge, isHero }) {
   return (
     <NavLink
       to={to}
@@ -78,15 +82,21 @@ function Tab({ to, icon, label, badge }) {
         (isActive ? 'text-[var(--green)]' : 'text-[var(--ink-3)] hover:text-[var(--ink)]')
       }
     >
-      <span className="relative">
-        {icon}
-        {badge > 0 && (
-          <span className="absolute -top-1 -right-1.5 flex items-center justify-center min-w-[14px] h-[14px] px-0.5 bg-[var(--green)] text-[var(--paper)] font-data text-[9px] rounded-full leading-none">
-            {badge}
-          </span>
-        )}
-      </span>
-      <span className="font-data text-[10px] uppercase tracking-wide leading-none">{label}</span>
+      {isHero ? (
+        <span className="relative flex items-center justify-center w-12 h-12 -mt-5 border-[2px] border-[var(--ink)] bg-[var(--green)] text-[var(--paper)] shadow-[2px_2px_0_var(--ink)] rounded-full transition-transform hover:scale-105 cursor-pointer">
+          {icon}
+        </span>
+      ) : (
+        <span className="relative">
+          {icon}
+          {badge > 0 && (
+            <span className="absolute -top-1 -right-1.5 flex items-center justify-center min-w-[14px] h-[14px] px-0.5 bg-[var(--green)] text-[var(--paper)] font-data text-[9px] rounded-full leading-none">
+              {badge}
+            </span>
+          )}
+        </span>
+      )}
+      <span className={`font-data text-[10px] uppercase tracking-wide leading-none ${isHero ? 'text-[var(--green-ink)] font-bold mt-1' : ''}`}>{label}</span>
     </NavLink>
   )
 }
@@ -97,9 +107,23 @@ export function UserLayout() {
   const dispatch = useDispatch()
   const { language, profile, darkMode } = useSelector(s => s.user)
   const basket = useSelector(s => s.waste?.basket ?? [])
+  const unreadCount = useSelector(selectUnreadCount)
   const t = useT()
+  const [drawerOpen, setDrawerOpen] = useState(false)
+  const [searchOpen, setSearchOpen] = useState(false)
 
   const activeCount = basket.filter(i => !i.skipped).length
+
+  useEffect(() => {
+    function onKey(e) {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault()
+        setSearchOpen(true)
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [])
 
   function toggleLang() {
     dispatch(setLanguage(language === 'th' ? 'en' : 'th'))
@@ -122,11 +146,11 @@ export function UserLayout() {
   ]
 
   const mobileNav = [
-    { to: '/home',    icon: <IconHome />,    label: t.home },
-    { to: '/scan',    icon: <IconScan />,    label: t.scan },
-    { to: '/basket',  icon: <IconBasket />,  label: t.basket, badge: activeCount },
-    { to: '/map',     icon: <IconMap />,     label: t.map },
-    { to: '/profile', icon: <IconProfile />, label: t.profile },
+    { to: '/home',        icon: <IconHome />,    label: t.home },
+    { to: '/marketplace', icon: <IconMarket />,  label: t.marketplace },
+    { to: '/scan',        icon: <IconScan />,    label: 'AI', badge: 0 },
+    { to: '/basket',      icon: <IconBasket />,  label: t.basket, badge: activeCount },
+    { to: '/map',         icon: <IconMap />,     label: t.map },
   ]
 
   // Avatar initial
@@ -235,6 +259,18 @@ export function UserLayout() {
               {language === 'th' ? 'EN' : 'TH'}
             </button>
             <button
+              onClick={() => setDrawerOpen(true)}
+              className="relative flex items-center justify-center w-8 h-8 bg-transparent border-none cursor-pointer text-[var(--ink)] hover:text-[var(--green)] transition-colors"
+              aria-label="Notifications"
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+              {unreadCount > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 flex items-center justify-center min-w-[14px] h-[14px] px-0.5 bg-[var(--green)] text-[var(--paper)] font-data text-[9px] rounded-full leading-none">
+                  {unreadCount}
+                </span>
+              )}
+            </button>
+            <button
               onClick={() => navigate('/basket')}
               className="relative flex items-center justify-center w-8 h-8 bg-transparent border-none cursor-pointer text-[var(--ink)] hover:text-[var(--green)] transition-colors"
             >
@@ -255,11 +291,14 @@ export function UserLayout() {
 
         {/* Mobile bottom tab bar */}
         <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 flex items-stretch bg-[var(--paper)] border-t-[1.5px] border-[var(--ink)]">
-          {mobileNav.map(item => (
-            <Tab key={item.to} {...item} />
+          {mobileNav.map((item, i) => (
+            <Tab key={item.to} {...item} isHero={i === 2} />
           ))}
         </nav>
       </div>
+
+      <NotificationDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} />
+      <GlobalSearch isOpen={searchOpen} onClose={() => setSearchOpen(false)} />
     </div>
   )
 }

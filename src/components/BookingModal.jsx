@@ -1,3 +1,5 @@
+import { useState } from 'react'
+import { toast } from 'sonner'
 import { pricePerKg, localName } from '../data/wasteItems'
 import { Button } from './Button'
 
@@ -8,10 +10,12 @@ import { Button } from './Button'
  *   shop     { id, name, dist, area }
  *   basket   array of waste basket items from Redux wasteSlice
  *   language 'th' | 'en'
- *   onConfirm(shop) — called when user taps Confirm; parent dispatches addBooking
- *   onClose()       — called when user taps Cancel or backdrop
+ *   onConfirm(shop, selectedTime) — called when user taps Confirm; parent dispatches addBooking
+ *   onClose()                     — called when user taps Cancel or backdrop
  */
 export function BookingModal({ shop, basket, language, onConfirm, onClose }) {
+  const [selectedTime, setSelectedTime] = useState('')
+
   if (!shop) return null
 
   // Only include items the user has not skipped
@@ -22,16 +26,23 @@ export function BookingModal({ shop, basket, language, onConfirm, onClose }) {
   }, 0)
 
   const label = {
-    summary: language === 'th' ? 'สรุปการจอง' : 'Booking Summary',
-    confirm: language === 'th' ? 'ยืนยัน' : 'Confirm',
-    cancel:  language === 'th' ? 'ยกเลิก' : 'Cancel',
-    total:   language === 'th' ? 'มูลค่าโดยประมาณ' : 'Estimated Total',
-    empty:   language === 'th' ? 'ตะกร้าว่าง' : 'Basket is empty',
-    dist:    language === 'th' ? 'กม.' : 'km',
+    summary:  language === 'th' ? 'สรุปการจอง' : 'Booking Summary',
+    confirm:  language === 'th' ? 'ยืนยัน' : 'Confirm',
+    cancel:   language === 'th' ? 'ยกเลิก' : 'Cancel',
+    total:    language === 'th' ? 'มูลค่าโดยประมาณ' : 'Estimated Total',
+    empty:    language === 'th' ? 'ตะกร้าว่าง' : 'Basket is empty',
+    dist:     language === 'th' ? 'กม.' : 'km',
+    pickTime: language === 'th' ? 'เลือกเวลานัดหมาย' : 'Pick-up time',
   }
 
   function handleConfirm() {
-    onConfirm(shop)
+    const badItem = activeItems.find(item => (item.weight ?? 0) <= 0 || (item.weight ?? 0) > 10000)
+    if (badItem) {
+      toast.error(language === 'th' ? 'น้ำหนักไม่ถูกต้อง (0–10,000 kg)' : 'Invalid weight — must be 1 g – 10,000 kg')
+      return
+    }
+    if (activeItems.length === 0) return
+    onConfirm(shop, selectedTime)
     onClose()
   }
 
@@ -98,6 +109,17 @@ export function BookingModal({ shop, basket, language, onConfirm, onClose }) {
             })}
           </ul>
         )}
+
+        {/* Time picker */}
+        <div className="flex flex-col gap-1">
+          <span className="font-data uppercase text-[11px] text-[var(--ink-3)] tracking-widest">{label.pickTime}</span>
+          <input
+            type="time"
+            value={selectedTime}
+            onChange={e => setSelectedTime(e.target.value)}
+            className="border-[1.5px] border-[var(--ink)] px-3 py-2 font-data text-[14px] bg-[var(--paper)] cursor-pointer w-full outline-none focus:border-[var(--green)] transition-colors"
+          />
+        </div>
 
         {/* Total */}
         <div className="flex items-center justify-between border-t border-[var(--ink-4)] pt-3">

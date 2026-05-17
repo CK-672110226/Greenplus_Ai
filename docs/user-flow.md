@@ -307,3 +307,135 @@ SmartLayout (ครอบทุก route)
 5. **เพิ่ม i18n key** ใน `src/i18n/en.js` และ `src/i18n/th.js`
 6. **อัปเดต** section Page Composition ในไฟล์นี้
 7. **สร้าง history file** ตาม PROJECT_AI_WORKING_RULES.md
+
+---
+
+## 10. On-Demand Logistics Flow
+
+Added in M6 sprint (16 May 2026). Implements a Grab-inspired 3-sided real-time pickup system.
+
+### New Routes
+
+| Route | Role | Component | Status |
+|-------|------|-----------|--------|
+| /rider | buyer | RiderDashboardPage | Building (M6) |
+| /onboarding | buyer | BuyerOnboardingPage | Building (M6/M7) |
+| /chat | all-auth | ChatPage | M8 |
+| /chat/:roomId | all-auth | ChatPage | M8 |
+
+---
+
+### User (Seller) Flow
+
+```
+[/basket]
+   │  basket has items → "Call On-Demand Rider" button appears
+   │  tap button → dispatch createBooking(status=searching)
+   ▼
+[/basket] with UserTrackingPanel visible
+   │  status = searching → panel: "Looking for a rider near you…"
+   │  status = accepted  → panel: rider name + ETA + live map dot
+   │  status = arrived   → panel: "Your rider has arrived — meet them outside"
+   │  status = completed → panel: receipt (actualWeight, actualValue) for 5 s then dismisses
+   │  status = cancelled → panel: error + "Try again" CTA
+   │
+   └── UserTrackingPanel reads logisticsSlice.activeBooking (Supabase Realtime)
+```
+
+### Buyer (Rider) Flow
+
+```
+[/rider] RiderDashboardPage
+   │  Toggle "Go Online" → dispatch setIsOnline(true) → UPDATE user_profiles.is_online
+   │  GPS polling starts → dispatch setRiderLocation({ lat, lng }) every 10 s
+   │  nearbyOrders updates — haversine(riderLat, orderLat) <= shop.pickup_radius_km (default 5 km)
+   │
+   │  Nearby Orders list shows: seller name, estimated weight, material types, distance
+   │  tap "Accept" → dispatch acceptOrder → UPDATE bookings.status = accepted
+   │
+   │  Active Order panel shows:
+   │    - Seller address + "Navigate" button (Google Maps external link)
+   │    - "I've Arrived" button → UPDATE bookings.status = arrived, bookings.arrived_at
+   │
+   │  Weight Verification inputs:
+   │    - actualWeight (kg) input — validates > 0 and < 10,000
+   │    - actualValue (THB) auto-calculated from shop_pricing
+   │
+   │  "Complete & Pay" button → UPDATE bookings.status = completed,
+   │    bookings.completed_at, bookings.actual_weight, bookings.actual_value
+   │
+   └── Toggle "Go Offline" → dispatch setIsOnline(false)
+```
+
+### Admin Flow
+
+```
+[/admin] → Tab: Heatmap
+   │  existing CircleMarkers from scan_history (lat/lng added in AdminHeatmap feature)
+   │  new: density overlay showing pickup request clusters
+   │  new: filter toggle — "Show scan density" / "Show pickup requests"
+   └── reads bookings table WHERE status IN (completed, arrived) for pickup heatmap layer
+```
+
+### Booking Status State Machine
+
+```
+                    ┌──────────────────────────────────────┐
+                    │                                      ▼
+pending ──► searching ──► accepted ──► arrived ──► completed
+   │            │              │
+   │            ▼              ▼
+   └──► rejected        cancelled
+```
+
+| Status | Set by | Meaning |
+|--------|--------|---------|
+| pending | BasketPage (schedule booking) | Traditional scheduled booking, awaiting buyer action |
+| searching | BasketPage (on-demand) | Broadcast to nearby riders, waiting for acceptance |
+| accepted | RiderDashboardPage | Rider accepted, en route to seller |
+| arrived | RiderDashboardPage | Rider at seller location, verifying weight |
+| completed | RiderDashboardPage | Transaction closed, weight + value recorded |
+| rejected | DashboardPage (buyer) | Traditional booking rejected by buyer |
+| cancelled | BasketPage or timeout | User cancelled or no rider found within timeout |
+
+### Redux Slices (new)
+
+| Slice | Key State | Reads | Writes |
+|-------|-----------|-------|--------|
+| `logisticsSlice` | activeBooking, nearbyOrders, riderLocation, isOnline | RiderDashboardPage, UserTrackingPanel, BasketPage | RiderDashboardPage (online toggle, accept, arrived, complete), BasketPage (create on-demand booking) |
+| `chatSlice` | rooms, messages | ChatPage (M8) | ChatPage (M8) |
+
+### Page Composition — new pages
+
+#### RiderDashboardPage `/rider` _(buyer role only)_
+
+| Component | Detail |
+|-----------|--------|
+| Components | `<Card>`, `<Button>`, `<EmptyState>`, `<Skeleton>` |
+| Redux read | `logistics.isOnline`, `logistics.nearbyOrders`, `logistics.activeBooking`, `logistics.riderLocation`, `user.profile` |
+| Redux write | `setIsOnline`, `setNearbyOrders`, `setActiveBooking`, `setRiderLocation` |
+| Hooks | `useRealtimeLogistics`, `useGPS` |
+| Guard | `<ProtectedRoute requiredRole="buyer">` |
+| Services | Supabase UPDATE `user_profiles` (is_online, lat/lng), UPDATE `bookings` (status transitions) |
+
+#### BuyerOnboardingPage `/onboarding` _(buyer role only)_
+
+| Component | Detail |
+|-----------|--------|
+| Components | `<Card>`, `<Button>`, `<ProgressBar>` |
+| Local state | currentStep (1–3), formData |
+| Step 1 | Shop name, phone (Thai format), Line ID |
+| Step 2 | Accepted materials (checkbox list) |
+| Step 3 | Pickup radius + base pricing per material |
+| Services | Supabase UPDATE `shops` + UPDATE `user_profiles.onboarding_complete = true` |
+| Guard | `<ProtectedRoute requiredRole="buyer">` |
+| Post-complete | redirect → `/dashboard` |
+
+#### ChatPage `/chat` and `/chat/:roomId` _(all authenticated roles — M8)_
+
+| Component | Detail |
+|-----------|--------|
+| Status | Stub route only in M6; full implementation M8 |
+| Components | `<Card>` stub |
+| Redux read | `chat.rooms`, `chat.messages` (M8) |
+| Guard | `<ProtectedRoute>` (any authenticated role) |

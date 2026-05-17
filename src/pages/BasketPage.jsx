@@ -1,10 +1,12 @@
 import { useState } from 'react'
 import { toast } from 'sonner'
 import { useDispatch, useSelector } from 'react-redux'
+import { useNavigate } from 'react-router-dom'
 import { useT } from '../hooks/useT'
 import { Card } from '../components/Card'
 import { Button } from '../components/Button'
 import { GradeTag } from '../components/GradeTag'
+import { EmptyState } from '../components/EmptyState'
 import { localName, WASTE_ITEMS } from '../data/wasteItems'
 import { removeFromBasket, updateWeight, toggleSkip, clearBasket, addToBasket } from '../store/wasteSlice'
 import { useGPS } from '../hooks/useGPS'
@@ -150,6 +152,7 @@ function ManualAddPanel({ t, language, onAdd }) {
 export function BasketPage() {
   const t        = useT()
   const dispatch = useDispatch()
+  const navigate = useNavigate()
   const basket   = useSelector(s => s.waste.basket)
   const language = useSelector(s => s.user.language)
 
@@ -202,7 +205,10 @@ export function BasketPage() {
   }
 
   function openMaps(shop) {
-    window.open(`https://www.google.com/maps/search/?api=1&query=${shop.lat},${shop.lng}`, '_blank')
+    const url = gps.lat
+      ? `https://www.openstreetmap.org/directions?from=${gps.lat},${gps.lng}&to=${shop.lat},${shop.lng}`
+      : `https://www.openstreetmap.org/?mlat=${shop.lat}&mlon=${shop.lng}`
+    window.open(url, '_blank')
   }
 
   return (
@@ -251,9 +257,17 @@ export function BasketPage() {
       )}
 
       {basket.length === 0 && !showManual ? (
-        <Card className="w-full max-w-5xl flex flex-col items-center py-10 gap-2">
-          <p className="font-body text-[15px] text-[var(--ink-3)] m-0 text-center">{t.basketEmpty}</p>
-        </Card>
+        <div className="flex flex-col min-h-[60vh] items-center justify-center w-full max-w-5xl">
+          <EmptyState
+            icon="🧺"
+            title="Your basket is empty"
+            body="Scan an item to add it. The AI will weigh and price it in seconds."
+            primaryCta="+ Scan an item"
+            onPrimary={() => navigate('/scan')}
+            secondaryCta="See today's prices"
+            onSecondary={() => navigate('/marketplace')}
+          />
+        </div>
       ) : (
         <div className="w-full max-w-5xl grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
 

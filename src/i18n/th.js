@@ -278,4 +278,37 @@ export const th = {
   selectMaterial:    'เลือกวัสดุ',
   selectGrade:       'เกรด',
   addItem:           'เพิ่ม',
+
+  // Pricing page — new single-price columns (migration 013b)
+  pricePerKgCol:     'ราคา (฿/กก.)',
+  capKgCol:          'จำกัด (กก./วัน)',
+  statusLabel:       'สถานะ',
+  statusActive:      'เปิดรับ',
+  statusOff:         'ปิด',
+
+  // On-Demand Logistics
+  riderMode:         'โหมดไรเดอร์',
+  goOnline:          'เปิดรับงาน',
+  goOffline:         'ปิดรับงาน',
+  onlineStatus:      'ออนไลน์',
+  offlineStatus:     'ออฟไลน์',
+  searchingRider:    'กำลังหาไรเดอร์...',
+  riderFound:        'พบไรเดอร์แล้ว!',
+  riderAccepted:     'ไรเดอร์รับงานของคุณแล้ว',
+  riderArrived:      'ไรเดอร์มาถึงแล้ว',
+  orderCompleted:    'งานเสร็จสมบูรณ์',
+  nearbyPickups:     'งานรับซื้อใกล้เคียง',
+  acceptPickup:      'รับงาน',
+  verifyWeights:     'ตรวจสอบน้ำหนัก',
+  completeAndPay:    'เสร็จ & ชำระ',
+  cancelOrder:       'ยกเลิกงาน',
+  estimatedValue:    'มูลค่าประมาณ',
+  actualWeight:      'น้ำหนักจริง',
+  actualValue:       'มูลค่าจริง',
+
+  // Onboarding
+  tellUsAboutShop:   'บอกเราเกี่ยวกับร้านของคุณ',
+  materialsYouBuy:   'วัสดุที่คุณรับซื้อ',
+  locationAndHours:  'ที่ตั้งและเวลาทำการ',
+  finishSetup:       'เสร็จสิ้นการตั้งค่า',
 }
