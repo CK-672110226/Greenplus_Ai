@@ -278,18 +278,18 @@ export function BasketPage() {
               const unitPrice = marketPrice(item.materialType, item.clean ?? true)
               const lineTotal = unitPrice * (item.weight ?? 0)
               return (
-                <Card key={item.id} className={`flex flex-col gap-3 ${item.skipped ? 'opacity-50' : ''}`}>
+                <Card key={item.id} className={`flex flex-col gap-3 ${item.skipped ? 'opacity-40' : ''}`}>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <GradeTag clean={item.clean} />
-                      <span className="font-body text-[15px] text-[var(--ink)]">
+                      <span className={`font-body text-[15px] text-[var(--ink)]${item.skipped ? ' line-through' : ''}`}>
                         {localName(item.materialType, language)}
                       </span>
                       {item.source === 'manual' && (
                         <span className="font-data text-[9px] uppercase border-[1px] border-[var(--ink-4)] px-1 text-[var(--ink-3)]">manual</span>
                       )}
                     </div>
-                    <span className="font-data text-[13px] text-[var(--green)] font-bold">฿{lineTotal.toFixed(2)}</span>
+                    <span className={`font-data text-[13px] text-[var(--green)] font-bold${item.skipped ? ' line-through' : ''}`}>฿{lineTotal.toFixed(2)}</span>
                   </div>
 
                   <div className="flex items-center gap-3">

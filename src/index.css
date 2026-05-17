@@ -113,3 +113,10 @@ body {
 .cursor-grabbing   { cursor: grabbing !important; }
 .cursor-loading    { cursor: progress !important; }
 
+/* Global cursor states */
+input, textarea, select { cursor: text; }
+button:disabled, [disabled] { cursor: not-allowed !important; }
+.leaflet-container { cursor: grab !important; }
+.leaflet-container:active { cursor: grabbing !important; }
+[data-loading="true"], [data-loading="true"] * { cursor: wait !important; }
+

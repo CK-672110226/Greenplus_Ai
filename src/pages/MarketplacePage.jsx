@@ -193,6 +193,7 @@ export function MarketplacePage() {
 
   const [catFilter, setCatFilter] = useState('all')
   const [isPosting, setIsPosting] = useState(false)
+  const [mktTab, setMktTab] = useState('listings')
 
   const basketMaterials = new Set(basket.filter(i => !i.skipped).map(i => i.materialType))
   const basketCount     = basket.filter(i => !i.skipped).length
@@ -384,46 +385,91 @@ export function MarketplacePage() {
                 ↓ Export CSV
               </button>
             </div>
+
+            {/* Listings / Buy Requests tab bar */}
+            <div className="flex gap-0 border-[1.5px] border-[var(--ink)] w-fit mt-4">
+              {['listings', 'requests'].map(tab => (
+                <button
+                  key={tab}
+                  onClick={() => setMktTab(tab)}
+                  className={[
+                    'px-4 py-1.5 font-data text-[11px] uppercase tracking-widest cursor-pointer border-none',
+                    mktTab === tab
+                      ? 'bg-[var(--ink)] text-[var(--paper)]'
+                      : 'bg-[var(--paper)] text-[var(--ink)] hover:bg-[var(--paper-2)]'
+                  ].join(' ')}
+                >
+                  {tab === 'listings' ? 'Listings' : 'Buy Requests'}
+                </button>
+              ))}
+            </div>
           </div>
 
-          {/* Shop cards */}
-          <div className="flex flex-col gap-3 px-5 py-5 flex-1 overflow-y-auto">
-            {visibleShops.length === 0 ? (
-              <div className="flex items-center justify-center py-10">
-                <span className="font-data text-[11px] text-[var(--ink-4)] uppercase tracking-widest">
-                  {t.noShopsNear ?? 'No shops found'}
-                </span>
+          {/* Shop cards — Listings tab */}
+          {mktTab === 'listings' && (
+            <>
+              <div className="flex flex-col gap-3 px-5 py-5 flex-1 overflow-y-auto">
+                {visibleShops.length === 0 ? (
+                  <div className="flex items-center justify-center py-10">
+                    <span className="font-data text-[11px] text-[var(--ink-4)] uppercase tracking-widest">
+                      {t.noShopsNear ?? 'No shops found'}
+                    </span>
+                  </div>
+                ) : (
+                  visibleShops.map(shop => (
+                    <ShopCard
+                      key={shop.id}
+                      shop={shop}
+                      language={language}
+                      t={t}
+                      marketPrice={marketPrice}
+                    />
+                  ))
+                )}
               </div>
-            ) : (
-              visibleShops.map(shop => (
-                <ShopCard
-                  key={shop.id}
-                  shop={shop}
-                  language={language}
-                  t={t}
-                  marketPrice={marketPrice}
-                />
-              ))
-            )}
-          </div>
 
-          {/* Post Ad section */}
-          <div className="px-5 pb-5 border-t-[1.5px] border-[var(--ink)] pt-4">
-            {isPosting ? (
-              <PostAdForm
-                onClose={() => setIsPosting(false)}
-                onAdd={supabaseAddPost}
-                marketPrice={marketPrice}
-              />
-            ) : (
-              <button
-                onClick={() => setIsPosting(true)}
-                className="w-full py-3 font-data text-[12px] uppercase tracking-widest border-[1.5px] border-[var(--ink)] bg-transparent cursor-pointer hover:bg-[var(--ink)] hover:text-[var(--paper)] transition-colors shadow-[3px_3px_0_var(--ink)] active:shadow-none active:translate-x-[3px] active:translate-y-[3px]"
-              >
-                + {t.postAd}
-              </button>
-            )}
-          </div>
+              {/* Post Ad section */}
+              <div className="px-5 pb-5 border-t-[1.5px] border-[var(--ink)] pt-4">
+                {isPosting ? (
+                  <PostAdForm
+                    onClose={() => setIsPosting(false)}
+                    onAdd={supabaseAddPost}
+                    marketPrice={marketPrice}
+                  />
+                ) : (
+                  <button
+                    onClick={() => setIsPosting(true)}
+                    className="w-full py-3 font-data text-[12px] uppercase tracking-widest border-[1.5px] border-[var(--ink)] bg-transparent cursor-pointer hover:bg-[var(--ink)] hover:text-[var(--paper)] transition-colors shadow-[3px_3px_0_var(--ink)] active:shadow-none active:translate-x-[3px] active:translate-y-[3px]"
+                  >
+                    + {t.postAd}
+                  </button>
+                )}
+              </div>
+            </>
+          )}
+
+          {/* Community buy requests — Requests tab */}
+          {mktTab === 'requests' && (
+            <div className="flex flex-col gap-2 px-5 py-5 flex-1 overflow-y-auto">
+              {posts.length === 0 ? (
+                <div className="flex items-center justify-center py-10">
+                  <span className="font-data text-[11px] text-[var(--ink-4)] uppercase tracking-widest">
+                    No buy requests yet
+                  </span>
+                </div>
+              ) : (
+                posts.map((post, idx) => (
+                  <div key={post.id ?? idx} className="border-[1.5px] border-[var(--ink-4)] p-3 flex items-center justify-between">
+                    <div>
+                      <span className="font-data text-[11px] text-[var(--ink)] uppercase tracking-widest">{post.material} · {post.weight_kg}kg</span>
+                      <span className="font-data text-[10px] text-[var(--ink-3)] block">฿{post.price_per_kg}/kg · {post.shop_name}</span>
+                    </div>
+                    <span className="font-data text-[11px] text-[var(--green-ink)]">฿{((post.weight_kg ?? 0) * (post.price_per_kg ?? 0)).toFixed(0)}</span>
+                  </div>
+                ))
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>

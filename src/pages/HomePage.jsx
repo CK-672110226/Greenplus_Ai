@@ -146,7 +146,30 @@ const { salute, name: displayName } = greeting(profile?.display_name)
             <span className="font-data text-[10px] text-[var(--ink-4)]">basket value ฿{totalValue.toFixed(0)}</span>
           )}
         </div>
+
+        {/* Impact pts */}
+        <div className="flex flex-col gap-1.5 px-6 lg:px-10 py-5 border-t-[1.5px] sm:border-t-0 border-[var(--ink)]">
+          <span className="font-data text-[9px] text-[var(--ink-4)] uppercase tracking-[0.15em]">
+            Impact pts
+          </span>
+          <div className="flex flex-col gap-0.5">
+            <span className="font-data text-[9px] text-[var(--ink-3)] uppercase tracking-widest sr-only">Impact pts</span>
+            <span className="font-brand text-[40px] text-[var(--green-ink)] leading-none">{profile?.eco_points ?? 0}</span>
+          </div>
+          <span className="font-data text-[11px] text-[var(--ink-3)]">lifetime earned</span>
+        </div>
       </div>
+
+      {/* ── Buyer alert banner ─────────────────────────────────── */}
+      {shops?.length > 0 && (
+        <div className="border-b-[1.5px] border-[var(--green)] bg-[var(--green-soft)] px-6 lg:px-10 py-3 flex items-center justify-between">
+          <div>
+            <span className="font-data text-[10px] text-[var(--green-ink)] uppercase tracking-widest block">Buyers near you</span>
+            <span className="font-body text-[15px] text-[var(--ink)]">{shops[0]?.name} · Best deal nearby</span>
+          </div>
+          <span className="font-data text-[12px] text-[var(--green-ink)]">→</span>
+        </div>
+      )}
 
       {/* ── Main body (2-col on desktop) ───────────────────────── */}
       <div className="flex flex-col lg:flex-row flex-1">

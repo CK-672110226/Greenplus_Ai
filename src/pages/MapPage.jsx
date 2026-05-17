@@ -214,6 +214,11 @@ export function MapPage() {
                 <button onClick={() => setRouteTo(null)} className="font-data text-[11px] text-[var(--ink-3)] bg-transparent border-none cursor-pointer hover:text-[var(--ink)]">✕ clear</button>
               </div>
             )}
+            {routeTo && (
+              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-[1000] px-4 py-2 bg-[var(--paper)] border-[1.5px] border-[var(--ink)] shadow-[2px_2px_0_var(--ink)]" style={{ whiteSpace: 'nowrap' }}>
+                <span className="font-data text-[12px] uppercase tracking-widest text-[var(--ink)]">→ Walk to {routeTo.name}</span>
+              </div>
+            )}
             <MapContainer
               center={mapCenter}
               zoom={mapZoom}
@@ -250,7 +255,7 @@ export function MapPage() {
                 <Polyline
                   positions={[userCenter, [routeTo.lat, routeTo.lng]]}
                   pathOptions={{
-                    color: '#22C55E',
+                    color: 'var(--green)',
                     weight: 3,
                     opacity: 0.85,
                     dashArray: '8 5',

@@ -933,6 +933,12 @@ export function ScanPage() {
             </span>
           </div>
 
+          {result && (
+            <span className="font-data text-[13px] text-[var(--green-ink)]">
+              +{Math.max(1, Math.round((result.weight_kg ?? result.weight ?? 0.5) * 10))} impact pts
+            </span>
+          )}
+
           <div className="flex items-center justify-between pt-4 pb-2 px-2 border-t-[1.5px] border-[var(--ink-4)]">
             <div
               className="flex flex-col items-center flex-1 cursor-pointer hover:bg-[var(--paper-2)] py-2 transition-colors"
