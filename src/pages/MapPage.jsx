@@ -242,13 +242,7 @@ export function MapPage() {
                 <Circle
                   center={userCenter}
                   radius={5000}
-                  pathOptions={{
-                    color: '#22C55E',
-                    weight: 1.5,
-                    dashArray: '6 4',
-                    fillColor: '#22C55E',
-                    fillOpacity: 0.04,
-                  }}
+                  pathOptions={{ color: 'var(--ink)', weight: 1, fillOpacity: 0, dashArray: '6 4' }}
                 />
               )}
 
@@ -273,10 +267,11 @@ export function MapPage() {
                       <div style={{ fontFamily: 'monospace', minWidth: 180 }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                           <strong style={{ fontSize: 14 }}>{shop.name}</strong>
-                          {openStatus !== null && (
-                            <span style={{ fontSize: 10, padding: '1px 5px', background: openStatus ? '#22C55E' : '#E53E3E', color: '#fff', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
-                              {openStatus ? 'open' : 'closed'}
-                            </span>
+                          {openStatus === true && (
+                            <span className="font-data text-[9px] border-[1.5px] border-[var(--green)] text-[var(--green-ink)] px-1.5 py-0.5 uppercase tracking-widest">open</span>
+                          )}
+                          {openStatus === false && (
+                            <span className="font-data text-[9px] border-[1.5px] border-[var(--ink-4)] text-[var(--ink-4)] px-1.5 py-0.5 uppercase tracking-widest">closed</span>
                           )}
                         </div>
                         {shop.opens_at && shop.closes_at && (
