@@ -6,16 +6,17 @@ describe('wasteItems', () => {
     expect(Object.keys(WASTE_ITEMS).length).toBe(8)
   })
 
-  it('grade A gives 1.2x base price', () => {
-    expect(pricePerKg('aluminum_can', 'A')).toBe(48)
+  it('returns base price', () => {
+    expect(pricePerKg('aluminum_can')).toBe(40)
   })
 
-  it('grade B gives base price', () => {
-    expect(pricePerKg('aluminum_can', 'B')).toBe(40)
+  it('returns same price regardless of any extra arg', () => {
+    expect(pricePerKg('aluminum_can', false)).toBe(40)
+    expect(pricePerKg('aluminum_can', true)).toBe(40)
   })
 
-  it('grade C gives 0.7x base price', () => {
-    expect(pricePerKg('cardboard', 'C')).toBeCloseTo(2.1, 1)
+  it('cardboard base price is 3', () => {
+    expect(pricePerKg('cardboard')).toBe(3)
   })
 
   it('localName returns Thai for th', () => {
@@ -27,6 +28,12 @@ describe('wasteItems', () => {
   })
 
   it('returns 0 for unknown materialType', () => {
-    expect(pricePerKg('unknown_material', 'A')).toBe(0)
+    expect(pricePerKg('unknown_material')).toBe(0)
+  })
+
+  it('all 8 materials have positive base prices', () => {
+    Object.values(WASTE_ITEMS).forEach(item => {
+      expect(item.basePrice).toBeGreaterThan(0)
+    })
   })
 })

@@ -4,10 +4,7 @@ import { WASTE_ITEMS, pricePerKg } from '../data/wasteItems'
 function buildDefaultPrices() {
   const prices = {}
   Object.keys(WASTE_ITEMS).forEach(mat => {
-    prices[mat] = {
-      clean: pricePerKg(mat, true),
-      dirty: pricePerKg(mat, false),
-    }
+    prices[mat] = pricePerKg(mat)
   })
   return prices
 }
@@ -17,9 +14,9 @@ function loadFromStorage() {
     const raw = localStorage.getItem('gp_pricing')
     if (raw) {
       const parsed = JSON.parse(raw)
-      // Discard stale A/B/C format so users get fresh clean/dirty defaults
+      // Discard stale A/B/C or clean/dirty format — expect flat number per key
       const firstMat = Object.values(parsed)[0]
-      if (firstMat?.A !== undefined) {
+      if (firstMat?.A !== undefined || firstMat?.clean !== undefined) {
         localStorage.removeItem('gp_pricing')
         localStorage.removeItem('gp_pricing_savedAt')
         return null

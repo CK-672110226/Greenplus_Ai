@@ -9,6 +9,7 @@ import { hourBangkok, weeklyBuckets } from '../utils/time'
 
 /* ── Hatch bar chart ───────────────────────────────────────── */
 function HatchBarChart({ data }) {
+  const isEmpty = data.every(d => d.val === 0)
   const max = Math.max(...data.map(d => d.val), 0.1)
   const W = 420
   const barW = 40
@@ -24,30 +25,51 @@ function HatchBarChart({ data }) {
           <line x1="0" y1="4" x2="4" y2="0" stroke="var(--ink-4)" strokeWidth="1"/>
         </pattern>
       </defs>
+      {/* Day-label axis — always rendered */}
       {data.map((d, i) => {
-        const isMax = d.val === max && d.val > 0
-        const barH = Math.max(6, (d.val / max) * 70)
         const x = gap + i * (barW + gap)
-        const y = 80 - barH
         return (
-          <g key={i}>
-            <rect
-              x={x} y={y} width={barW} height={barH}
-              fill={isMax ? 'url(#hatch)' : 'url(#hatch-dim)'}
-              stroke={isMax ? 'var(--ink)' : 'var(--ink-4)'}
-              strokeWidth={isMax ? '1.5' : '1'}
-            />
-            <text x={x + barW / 2} y={95} textAnchor="middle" fontSize="9" fill="var(--ink-3)" fontFamily="var(--font-data)">
-              {d.label}
-            </text>
-            {d.val > 0 && (
-              <text x={x + barW / 2} y={y - 4} textAnchor="middle" fontSize="8" fill={isMax ? 'var(--green-ink)' : 'var(--ink-4)'} fontFamily="var(--font-data)">
-                {d.val.toFixed(1)}
-              </text>
-            )}
-          </g>
+          <text key={i} x={x + barW / 2} y={95} textAnchor="middle" fontSize="9" fill="var(--ink-3)" fontFamily="var(--font-data)">
+            {d.label}
+          </text>
         )
       })}
+      {isEmpty ? (
+        /* Empty state: centered "NO DATA YET" label */
+        <text
+          x={W / 2} y={48}
+          textAnchor="middle"
+          fontSize="10"
+          fill="var(--ink-3)"
+          fontFamily="var(--font-data)"
+          letterSpacing="0.15em"
+        >
+          NO DATA YET
+        </text>
+      ) : (
+        /* Normal bar rendering */
+        data.map((d, i) => {
+          const isMax = d.val === max && d.val > 0
+          const barH = Math.max(6, (d.val / max) * 70)
+          const x = gap + i * (barW + gap)
+          const y = 80 - barH
+          return (
+            <g key={i}>
+              <rect
+                x={x} y={y} width={barW} height={barH}
+                fill={isMax ? 'url(#hatch)' : 'url(#hatch-dim)'}
+                stroke={isMax ? 'var(--ink)' : 'var(--ink-4)'}
+                strokeWidth={isMax ? '1.5' : '1'}
+              />
+              {d.val > 0 && (
+                <text x={x + barW / 2} y={y - 4} textAnchor="middle" fontSize="8" fill={isMax ? 'var(--green-ink)' : 'var(--ink-4)'} fontFamily="var(--font-data)">
+                  {d.val.toFixed(1)}
+                </text>
+              )}
+            </g>
+          )
+        })
+      )}
     </svg>
   )
 }

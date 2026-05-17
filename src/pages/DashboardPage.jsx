@@ -52,7 +52,7 @@ function StatusChip({ status }) {
   return null
 }
 
-function BookingRow({ b, language, t, onAccept, onReject }) {
+function BookingRow({ b, language, t, onAccept, onReject, onComplete, onCancel }) {
   const sellerName = b.seller ?? b.shopName ?? '—'
   const materials  = (b.materials ?? (b.materialType ? [b.materialType] : [])).map(m => localName(m, language)).join(', ')
   const kg         = b.totalKg ?? b.weight ?? 0
@@ -83,6 +83,22 @@ function BookingRow({ b, language, t, onAccept, onReject }) {
           <Button variant="secondary" onClick={() => onReject(b.id)}>{t.rejectOrder}</Button>
         </div>
       )}
+      {b.status === 'accepted' && (
+        <div className="flex gap-2 pl-12">
+          <button
+            onClick={() => onComplete(b.id)}
+            className="font-data text-[10px] uppercase tracking-[0.1em] px-3 py-1 border-[1.5px] border-[var(--green)] text-[var(--green)] bg-[var(--paper)] cursor-pointer transition-colors duration-150 hover:bg-[var(--green-soft)] active:scale-[0.97]"
+          >
+            COMPLETE
+          </button>
+          <button
+            onClick={() => onCancel(b.id)}
+            className="font-data text-[10px] uppercase tracking-[0.1em] px-3 py-1 border-[1.5px] border-[var(--ink-2)] text-[var(--ink-2)] bg-[var(--paper)] cursor-pointer transition-colors duration-150 hover:bg-[var(--paper-2)] active:scale-[0.97]"
+          >
+            CANCEL
+          </button>
+        </div>
+      )}
     </div>
   )
 }
@@ -102,7 +118,7 @@ export function DashboardPage() {
   const [slotPopup, setSlotPopup]           = useState(null)
 
   const { shop } = useMyShop()
-  const { bookings, loading, acceptBooking, rejectBooking } = useSupabaseBookings()
+  const { bookings, loading, acceptBooking, rejectBooking, completeBooking, cancelBooking } = useSupabaseBookings()
 
   useEffect(() => {
     dispatch(setBookings(bookings))
@@ -162,8 +178,10 @@ export function DashboardPage() {
     }
   }
 
-  function handleAccept(id) { acceptBooking(id); toast.success('Order accepted') }
-  function handleReject(id) { rejectBooking(id); toast.error('Order rejected') }
+  function handleAccept(id)   { acceptBooking(id);   toast.success('Order accepted') }
+  function handleReject(id)   { rejectBooking(id);   toast.error('Order rejected') }
+  function handleComplete(id) { completeBooking(id); toast.success('Order marked as completed') }
+  function handleCancel(id)   { cancelBooking(id);   toast.error('Order cancelled') }
 
   const pending   = bookings.filter(b => b.status === 'pending').length
   const accepted  = bookings.filter(b => b.status === 'accepted').length
@@ -260,6 +278,8 @@ export function DashboardPage() {
               t={t}
               onAccept={handleAccept}
               onReject={handleReject}
+              onComplete={handleComplete}
+              onCancel={handleCancel}
             />
           ))}
         </div>

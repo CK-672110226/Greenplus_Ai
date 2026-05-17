@@ -1,13 +1,15 @@
 import { useState, useEffect } from 'react'
 import { MapContainer, TileLayer, Marker, Popup, Circle, Polyline, useMap } from 'react-leaflet'
 import L from 'leaflet'
+import { useNavigate } from 'react-router-dom'
 import { useT } from '../hooks/useT'
 import { WASTE_ITEMS, localName } from '../data/wasteItems'
 import { useShops } from '../hooks/useShops'
 import { useGPS } from '../hooks/useGPS'
 import { useSelector } from 'react-redux'
 import { haversineKm } from '../utils/haversine'
-import 'leaflet/dist/leaflet.css'
+import { Button } from '../components/Button'
+import { useChat } from '../hooks/useChat'
 
 import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png'
 import markerIcon   from 'leaflet/dist/images/marker-icon.png'
@@ -83,6 +85,7 @@ function IconPin() {
 
 export function MapPage() {
   const t          = useT()
+  const navigate   = useNavigate()
   const language   = useSelector(s => s.user.language)
   const darkMode   = useSelector(s => s.user.darkMode)
   const basket     = useSelector(s => s.waste?.basket ?? [])
@@ -91,6 +94,12 @@ export function MapPage() {
   const { shops, loading }    = useShops()
   const gps = useGPS()
   const { request: requestGPS } = gps
+  const { openOrCreateRoom } = useChat()
+
+  async function handleChat(shopId) {
+    await openOrCreateRoom(shopId)
+    navigate('/chat')
+  }
 
   const basketMaterials = new Set(basket.filter(i => !i.skipped).map(i => i.materialType))
 
@@ -299,20 +308,28 @@ export function MapPage() {
                           <em>{t.shopAccepts}:</em>{' '}
                           {(shop.accepts ?? []).map(a => localName(a, language)).join(', ')}
                         </div>
-                        <button
-                          onClick={() => {
-                            const from = gps.lat ? `${gps.lat},${gps.lng}` : ''
-                            const to   = `${shop.lat},${shop.lng}`
-                            const url  = from
-                              ? `https://www.openstreetmap.org/directions?from=${from}&to=${to}`
-                              : `https://www.openstreetmap.org/?mlat=${shop.lat}&mlon=${shop.lng}`
-                            window.open(url, '_blank')
-                            setRouteTo(shop)
-                          }}
-                          style={{ fontSize: 12, color: '#22C55E', background: 'none', border: 'none', cursor: 'pointer', padding: 0, marginTop: 6, display: 'block' }}
-                        >
-                          Navigate →
-                        </button>
+                        <div style={{ display: 'flex', gap: 8, marginTop: 6 }}>
+                          <button
+                            onClick={() => {
+                              const from = gps.lat ? `${gps.lat},${gps.lng}` : ''
+                              const to   = `${shop.lat},${shop.lng}`
+                              const url  = from
+                                ? `https://www.openstreetmap.org/directions?from=${from}&to=${to}`
+                                : `https://www.openstreetmap.org/?mlat=${shop.lat}&mlon=${shop.lng}`
+                              window.open(url, '_blank')
+                              setRouteTo(shop)
+                            }}
+                            style={{ fontSize: 12, color: '#22C55E', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+                          >
+                            Navigate →
+                          </button>
+                          <button
+                            onClick={() => handleChat(shop.id)}
+                            style={{ fontSize: 12, color: '#0F7A3A', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+                          >
+                            Chat →
+                          </button>
+                        </div>
                       </div>
                     </Popup>
                   </Marker>
@@ -350,12 +367,21 @@ export function MapPage() {
                         {(shop.accepts ?? []).map(a => localName(a, language)).join(' · ')}
                       </span>
                     )}
-                    <div className="flex gap-2 mt-0.5">
+                    <div className="flex gap-2 mt-0.5 flex-wrap">
                       <button
                         onClick={() => setRouteTo(shop)}
                         className="font-data text-[11px] uppercase tracking-widest px-3 py-1 border-[1.5px] border-[var(--ink)] bg-transparent hover:bg-[var(--ink)] hover:text-[var(--paper)] transition-colors cursor-pointer"
                       >
                         Directions ↗
+                      </button>
+                      <Button variant="primary" onClick={() => navigate('/basket')}>
+                        BOOK PICKUP →
+                      </Button>
+                      <button
+                        onClick={() => handleChat(shop.id)}
+                        className="font-data text-[11px] uppercase tracking-widest px-3 py-1 border-[1.5px] border-[var(--green)] text-[var(--green-ink)] bg-transparent hover:bg-[var(--green-soft)] transition-colors cursor-pointer"
+                      >
+                        CHAT →
                       </button>
                     </div>
                   </div>

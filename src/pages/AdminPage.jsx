@@ -12,7 +12,6 @@ import { useShops } from '../hooks/useShops'
 import { setAiConfig } from '../store/aiConfigSlice'
 import { useModelRegistry } from '../hooks/useModelRegistry'
 import { supabase } from '../lib/supabase'
-import 'leaflet/dist/leaflet.css'
 
 
 function TabBtn({ active, onClick, children }) {
@@ -410,6 +409,135 @@ function RiderAssignmentPanel() {
 }
 
 
+// ── AI Studio Tab ─────────────────────────────────────────────────
+function AiStudioTab({ aiConfig }) {
+  const dispatch    = useDispatch()
+  const t           = useT()
+  const onnxFileRef = useRef(null)
+  const [modelType, setModelType] = useState(
+    aiConfig.modelType ?? 'teachable-machine'
+  )
+
+  async function handleOnnxUpload(e) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const url = URL.createObjectURL(file)
+    dispatch(setAiConfig({
+      modelType:    'onnx',
+      onnxStage1Url: url,
+      modelVersion: file.name.replace(/\.onnx$/i, ''),
+    }))
+    toast.success(`ONNX model loaded: ${file.name}`)
+  }
+
+  function handleSelectModelType(type) {
+    setModelType(type)
+    dispatch(setAiConfig({ modelType: type }))
+  }
+
+  return (
+    <div className="w-full max-w-2xl flex flex-col gap-6">
+      {/* Active version banner */}
+      <Card className="flex flex-col gap-2">
+        <div className="flex items-center justify-between flex-wrap gap-2">
+          <span className="font-data text-[12px] text-[var(--ink-2)] uppercase tracking-widest">{t.studioActiveVer}</span>
+          <span className="font-data text-[13px] text-[var(--green)]">{aiConfig.modelVersion ?? '—'}</span>
+        </div>
+        <p className="font-body text-[13px] text-[var(--ink-3)] m-0">{t.studioHint}</p>
+      </Card>
+
+      {/* Model type selector */}
+      <Card className="flex flex-col gap-3">
+        <span className="font-data text-[12px] text-[var(--ink-2)] uppercase tracking-widest">Backend Format</span>
+
+        <div className="flex gap-0">
+          <button
+            onClick={() => handleSelectModelType('teachable-machine')}
+            className={[
+              'flex-1 py-2 font-data text-[11px] uppercase tracking-widest border-[1.5px] border-[var(--ink)]',
+              modelType === 'teachable-machine'
+                ? 'bg-[var(--green-soft)] text-[var(--ink)] border-r-0'
+                : 'bg-[var(--paper)] text-[var(--ink-3)] hover:bg-[var(--paper-2)] border-r-0',
+            ].join(' ')}
+          >
+            Teachable Machine
+          </button>
+          <button
+            onClick={() => handleSelectModelType('onnx')}
+            className={[
+              'flex-1 py-2 font-data text-[11px] uppercase tracking-widest border-[1.5px] border-[var(--ink)]',
+              modelType === 'onnx'
+                ? 'bg-[var(--green-soft)] text-[var(--ink)]'
+                : 'bg-[var(--paper)] text-[var(--ink-3)] hover:bg-[var(--paper-2)]',
+            ].join(' ')}
+          >
+            ONNX Model
+          </button>
+        </div>
+
+        {/* ONNX upload section */}
+        {modelType === 'onnx' && (
+          <div className="flex flex-col gap-3 pt-1">
+            <span className="font-data text-[10px] text-[var(--ink-4)] uppercase tracking-widest">
+              Upload ONNX stage-1 classifier
+            </span>
+
+            <div className="flex flex-col gap-1.5">
+              <div className="flex items-center gap-3">
+                <input
+                  ref={onnxFileRef}
+                  type="file"
+                  accept=".onnx"
+                  onChange={handleOnnxUpload}
+                  className="hidden"
+                />
+                <button
+                  onClick={() => onnxFileRef.current?.click()}
+                  className="px-4 py-2 font-data text-[11px] uppercase tracking-widest border-[1.5px] border-[var(--ink)] bg-[var(--paper)] text-[var(--ink)] hover:bg-[var(--paper-2)] cursor-pointer"
+                >
+                  + Select .onnx file
+                </button>
+                {aiConfig.onnxStage1Url && (
+                  <span className="font-data text-[10px] text-[var(--green)] uppercase tracking-widest">
+                    ● Loaded
+                  </span>
+                )}
+              </div>
+
+              <label className="font-data text-[10px] text-[var(--ink-4)]">
+                Upload ONNX model (.onnx) — ONNX Runtime Web stage-1 object classifier
+              </label>
+
+              {aiConfig.onnxStage1Url && (
+                <div className="flex flex-col gap-0.5 mt-1">
+                  <span className="font-data text-[10px] text-[var(--ink-3)] uppercase tracking-widest">Active ONNX model</span>
+                  <span className="font-data text-[10px] text-[var(--ink-4)] truncate max-w-xs">
+                    {aiConfig.modelVersion ?? aiConfig.onnxStage1Url}
+                  </span>
+                </div>
+              )}
+            </div>
+
+            {aiConfig.onnxStage2Url && (
+              <div className="flex flex-col gap-1.5 pt-1 border-t-[1px] border-[var(--ink-4)]">
+                <span className="font-data text-[10px] text-[var(--ink-4)] uppercase tracking-widest">
+                  Stage-2 cleanliness (ONNX)
+                </span>
+                <span className="font-data text-[10px] text-[var(--green)] uppercase tracking-widest">● Loaded</span>
+                <span className="font-data text-[10px] text-[var(--ink-4)] truncate max-w-xs">{aiConfig.onnxStage2Url}</span>
+              </div>
+            )}
+          </div>
+        )}
+      </Card>
+
+      {/* Teachable Machine model registry (shown when TM selected) */}
+      {modelType === 'teachable-machine' && <ModelRegistrySection />}
+    </div>
+  )
+}
+
+
 export function AdminPage() {
   const t        = useT()
   const aiConfig = useSelector(s => s.aiConfig)
@@ -747,16 +875,7 @@ export function AdminPage() {
 
       {/* AI Studio tab */}
       {tab === 'studio' && (
-        <div className="w-full max-w-2xl flex flex-col gap-6">
-          <Card className="flex flex-col gap-2">
-            <div className="flex items-center justify-between flex-wrap gap-2">
-              <span className="font-data text-[12px] text-[var(--ink-2)] uppercase tracking-widest">{t.studioActiveVer}</span>
-              <span className="font-data text-[13px] text-[var(--green)]">{aiConfig.modelVersion ?? '—'}</span>
-            </div>
-            <p className="font-body text-[13px] text-[var(--ink-3)] m-0">{t.studioHint}</p>
-          </Card>
-          <ModelRegistrySection />
-        </div>
+        <AiStudioTab aiConfig={aiConfig} />
       )}
 
 

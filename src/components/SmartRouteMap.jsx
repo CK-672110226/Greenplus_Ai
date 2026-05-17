@@ -1,5 +1,4 @@
 import L from 'leaflet'
-import 'leaflet/dist/leaflet.css'
 import { MapContainer, TileLayer, Marker, Polyline, Popup } from 'react-leaflet'
 import { useSmartRoute } from '../hooks/useSmartRoute'
 

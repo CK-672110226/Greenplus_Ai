@@ -70,6 +70,8 @@ export function ScanPage() {
   const [cleanlinessScore, setCleanlinessScore] = useState(null)
   const [stage, setStage]                   = useState(null)
 
+  const [isDragging, setIsDragging]  = useState(false)
+
   const [touchStart, setTouchStart] = useState(null)
   const [touchEnd, setTouchEnd]     = useState(null)
   const minSwipeDistance = 50
@@ -308,10 +310,8 @@ export function ScanPage() {
     }
   }
 
-  async function handleFileChange(e) {
-    const file = e.target.files?.[0]
+  async function handleFile(file) {
     if (!file) return
-    e.target.value = ''
     streamRef.current?.getTracks().forEach(t => t.stop())
     streamRef.current = null
     setHasStream(false)
@@ -323,6 +323,13 @@ export function ScanPage() {
     img.onload  = () => { uploadImgRef.current = img; runInference(img) }
     img.onerror = () => { toast.error('Could not load image'); setPhase('idle') }
     img.src = url
+  }
+
+  async function handleFileChange(e) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    e.target.value = ''
+    await handleFile(file)
   }
 
   /* ── Report misidentification ─────────────────────────────── */
@@ -476,7 +483,26 @@ export function ScanPage() {
 
           {/* Viewfinder */}
           <div className="px-6 lg:px-8 py-5 flex flex-col gap-4 flex-1">
-            <div className="relative w-full aspect-video bg-[var(--ink)] overflow-hidden border-[1.5px] border-[var(--ink)]">
+            <div
+              className="relative w-full aspect-video bg-[var(--ink)] overflow-hidden"
+              style={{
+                border: isDragging
+                  ? '2px dashed var(--green)'
+                  : '1.5px solid var(--ink)',
+                background: isDragging ? 'var(--green-soft)' : undefined,
+              }}
+              onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); setIsDragging(true) }}
+              onDragLeave={(e) => { e.preventDefault(); e.stopPropagation(); setIsDragging(false) }}
+              onDrop={(e) => {
+                e.preventDefault()
+                e.stopPropagation()
+                setIsDragging(false)
+                const file = e.dataTransfer.files?.[0]
+                if (file && file.type.startsWith('image/')) {
+                  handleFile(file)
+                }
+              }}
+            >
               {inputMode === 'camera'
                 ? <video ref={videoRef} className="w-full h-full object-cover" autoPlay playsInline muted />
                 : uploadSrc && <img src={uploadSrc} alt="scan" className="w-full h-full object-contain bg-[var(--paper-2)]" />
@@ -536,20 +562,31 @@ export function ScanPage() {
               )}
 
               {phase === 'starting' && (
-                <div className="absolute inset-0 flex flex-col items-center justify-center gap-5 bg-[var(--paper-2)]">
-                  <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--ink-3)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
-                    <circle cx="12" cy="13" r="4"/>
-                  </svg>
-                  <button
-                    onClick={startCamera}
-                    className="lg:hidden font-data text-[12px] uppercase tracking-widest border-[2px] border-[var(--ink)] px-6 py-3 bg-[var(--green)] text-[var(--paper)] shadow-[3px_3px_0_var(--ink)] active:shadow-none active:translate-x-[3px] active:translate-y-[3px] transition-all cursor-pointer"
-                  >
-                    {language === 'th' ? 'เปิดกล้อง' : 'Open Camera'}
-                  </button>
-                  <span className="hidden lg:block font-data text-[10px] text-[var(--ink-4)] uppercase tracking-widest">
-                    {language === 'th' ? 'อัปโหลดรูปด้านล่าง' : 'Upload image below'}
-                  </span>
+                <div
+                  className="absolute inset-0 flex flex-col items-center justify-center gap-5"
+                  style={{ background: isDragging ? 'var(--green-soft)' : 'var(--paper-2)' }}
+                >
+                  {isDragging ? (
+                    <span className="font-data text-[13px] text-[var(--green)] uppercase tracking-[0.2em]">
+                      DROP IMAGE HERE
+                    </span>
+                  ) : (
+                    <>
+                      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--ink-3)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                        <circle cx="12" cy="13" r="4"/>
+                      </svg>
+                      <button
+                        onClick={startCamera}
+                        className="lg:hidden font-data text-[12px] uppercase tracking-widest border-[2px] border-[var(--ink)] px-6 py-3 bg-[var(--green)] text-[var(--paper)] shadow-[3px_3px_0_var(--ink)] active:shadow-none active:translate-x-[3px] active:translate-y-[3px] transition-all cursor-pointer"
+                      >
+                        {language === 'th' ? 'เปิดกล้อง' : 'Open Camera'}
+                      </button>
+                      <span className="hidden lg:block font-data text-[10px] text-[var(--ink-4)] uppercase tracking-widest">
+                        {language === 'th' ? 'อัปโหลดรูปหรือลากมาวาง' : 'Upload or drag & drop image here'}
+                      </span>
+                    </>
+                  )}
                 </div>
               )}
 
@@ -569,6 +606,15 @@ export function ScanPage() {
                   </span>
                   <span className="font-data text-[11px] text-[var(--green)]">
                     {queueKg.toFixed(2)} kg · est. ฿{queueTotal.toFixed(0)}
+                  </span>
+                </div>
+              )}
+
+              {isDragging && phase !== 'starting' && (
+                <div className="absolute inset-0 flex items-center justify-center z-20"
+                  style={{ background: 'var(--green-soft)', border: '2px dashed var(--green)' }}>
+                  <span className="font-data text-[13px] text-[var(--green)] uppercase tracking-[0.2em]">
+                    DROP IMAGE HERE
                   </span>
                 </div>
               )}

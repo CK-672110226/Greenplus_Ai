@@ -72,10 +72,19 @@ export function SettingsPage() {
     )
     if (!confirmed) return
     try {
+      // Step 1: Soft-delete the profile row so the account is invisible to the app.
       await supabase
         .from('user_profiles')
         .update({ deleted_at: new Date().toISOString() })
         .eq('id', session.user.id)
+
+      // TODO: hard-delete via Edge Function — the Supabase auth user persists
+      // until an admin calls supabase.auth.admin.deleteUser() server-side.
+      // supabase.auth.admin.deleteUser() requires the service-role key and must
+      // not be called from client code. Wire up an Edge Function or DB trigger
+      // (e.g. supabase.rpc('delete_my_account')) to complete hard-deletion.
+
+      // Step 2: End the session immediately so the user cannot re-authenticate.
       await supabase.auth.signOut()
       dispatch(clearUser())
       navigate('/')
@@ -90,17 +99,42 @@ export function SettingsPage() {
       supabase.from('scan_history').select('*').eq('user_id', session.user.id).order('scanned_at', { ascending: false }),
       supabase.from('bookings').select('*').eq('seller_id', session.user.id).order('created_at', { ascending: false }),
     ])
-    const payload = {
-      exported_at: new Date().toISOString(),
-      user_id:     session.user.id,
-      scan_history: scans ?? [],
-      bookings:     bookings ?? [],
+
+    // Build CSV: tag each row with a "record_type" column so scans and bookings
+    // can coexist in a single file without losing context.
+    function escapeCell(v) {
+      return `"${String(v ?? '').replace(/"/g, '""')}"`
     }
-    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' })
+    const scanRows    = scans    ?? []
+    const bookingRows = bookings ?? []
+
+    // Derive headers from the first available row of each type.
+    const scanHeaders    = scanRows.length    > 0 ? Object.keys(scanRows[0])    : []
+    const bookingHeaders = bookingRows.length > 0 ? Object.keys(bookingRows[0]) : []
+
+    // Collect all unique column names (order: record_type first, then union of both).
+    const allColumns = ['record_type', ...new Set([...scanHeaders, ...bookingHeaders])]
+    const headerRow  = allColumns.join(',')
+
+    // Build data rows using the full column set so every row has the same width.
+    function toAlignedRow(row, type) {
+      return [
+        escapeCell(type),
+        ...allColumns.slice(1).map(col => escapeCell(row[col])),
+      ].join(',')
+    }
+
+    const dataRows = [
+      ...scanRows.map(r => toAlignedRow(r, 'scan')),
+      ...bookingRows.map(r => toAlignedRow(r, 'booking')),
+    ]
+
+    const csv  = [headerRow, ...dataRows].join('\n')
+    const blob = new Blob([csv], { type: 'text/csv' })
     const url  = URL.createObjectURL(blob)
     const a    = document.createElement('a')
     a.href     = url
-    a.download = `greenplus-export-${new Date().toISOString().slice(0, 10)}.json`
+    a.download = `greenplus-data-${new Date().toISOString().slice(0, 10)}.csv`
     a.click()
     URL.revokeObjectURL(url)
   }

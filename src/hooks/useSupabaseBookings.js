@@ -82,5 +82,33 @@ export function useSupabaseBookings() {
     }
   }, [])
 
-  return { bookings, loading, acceptBooking, rejectBooking }
+  const completeBooking = useCallback(async (id) => {
+    try {
+      const { error } = await supabase
+        .from('bookings')
+        .update({ status: 'completed' })
+        .eq('id', id)
+      if (!error) {
+        setBookings(prev => prev.map(b => b.id === id ? { ...b, status: 'completed' } : b))
+      }
+    } catch {
+      // fail silently
+    }
+  }, [])
+
+  const cancelBooking = useCallback(async (id) => {
+    try {
+      const { error } = await supabase
+        .from('bookings')
+        .update({ status: 'cancelled' })
+        .eq('id', id)
+      if (!error) {
+        setBookings(prev => prev.map(b => b.id === id ? { ...b, status: 'cancelled' } : b))
+      }
+    } catch {
+      // fail silently
+    }
+  }, [])
+
+  return { bookings, loading, acceptBooking, rejectBooking, completeBooking, cancelBooking }
 }

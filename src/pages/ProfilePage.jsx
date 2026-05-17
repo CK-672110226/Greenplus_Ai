@@ -203,6 +203,14 @@ function AdminProfile({ profile, session, t }) {
   )
 }
 
+/* ── Eco-points tier helper ────────────────────────────────── */
+function getEcoTier(pts) {
+  if (pts >= 3000) return 'Platinum'
+  if (pts >= 2000) return 'Gold'
+  if (pts >= 1000) return 'Silver'
+  return 'Bronze'
+}
+
 export function ProfilePage() {
   const t                      = useT()
   const dispatch               = useDispatch()
@@ -210,6 +218,8 @@ export function ProfilePage() {
   const { session, profile }   = useSelector(s => s.user)
   const language               = useSelector(s => s.user.language)
   const role                   = profile?.role ?? 'user'
+  const ecoPoints              = profile?.eco_points ?? 0
+  const ecoTier                = getEcoTier(ecoPoints)
 
   async function handleSignOut() {
     await supabase.auth.signOut()
@@ -226,6 +236,21 @@ export function ProfilePage() {
 
       {/* Quick actions */}
       <div className="w-full max-w-sm flex flex-col border-[1.5px] border-[var(--ink)] divide-y divide-[var(--ink-4)]">
+        {/* Eco-points row */}
+        <button
+          onClick={() => navigate('/eco-points')}
+          className="flex items-center justify-between px-4 py-3 bg-transparent border-none cursor-pointer text-left hover:bg-[var(--paper-2)] transition-colors"
+        >
+          <div className="flex flex-col gap-0.5">
+            <span className="font-data text-[12px] text-[var(--ink)] uppercase tracking-widest">
+              ECO-POINTS
+            </span>
+            <span className="font-data text-[10px] text-[var(--ink-3)] uppercase tracking-widest">
+              {ecoPoints.toLocaleString()} pts · {ecoTier}
+            </span>
+          </div>
+          <span className="font-data text-[12px] text-[var(--ink-3)]">→</span>
+        </button>
         <button
           onClick={() => navigate('/settings')}
           className="flex items-center justify-between px-4 py-3 bg-transparent border-none cursor-pointer text-left hover:bg-[var(--paper-2)] transition-colors"
