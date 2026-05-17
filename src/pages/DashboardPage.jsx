@@ -11,7 +11,7 @@ import SmartRouteMap from '../components/SmartRouteMap'
 import { useSelector, useDispatch } from 'react-redux'
 import { localName, WASTE_ITEMS } from '../data/wasteItems'
 import { setBookings } from '../store/bookingSlice'
-import { toggleMaterial, setOpenDays } from '../store/buyerSlice'
+import { toggleMaterial, setOpenDays, setAcceptedMaterials } from '../store/buyerSlice'
 import { useSupabaseBookings } from '../hooks/useSupabaseBookings'
 import { useMyShop } from '../hooks/useMyShop'
 import { supabase } from '../lib/supabase'
@@ -51,6 +51,32 @@ export function DashboardPage() {
   useEffect(() => {
     dispatch(setBookings(bookings))
   }, [bookings, dispatch])
+
+  // Load persisted buyer settings from Supabase on mount
+  useEffect(() => {
+    if (!session?.user?.id) return
+    async function loadSettings() {
+      try {
+        const { data } = await supabase
+          .from('user_profiles')
+          .select('open_days, accepted_materials')
+          .eq('id', session.user.id)
+          .single()
+        if (data) {
+          if (Array.isArray(data.open_days) && data.open_days.length > 0) {
+            setOpenDays_local(data.open_days)
+            dispatch(setOpenDays(data.open_days))
+          }
+          if (Array.isArray(data.accepted_materials) && data.accepted_materials.length > 0) {
+            dispatch(setAcceptedMaterials(data.accepted_materials))
+          }
+        }
+      } catch {
+        // fail silently — Redux defaults remain
+      }
+    }
+    loadSettings()
+  }, [session?.user?.id, dispatch])
 
   function handleToggleDay(dayIndex) {
     setOpenDays_local(prev =>
