@@ -39,9 +39,8 @@ export function useMarketPricing() {
     load()
   }, [])
 
-  // Returns the market average price_per_kg for a material type
-  function marketPrice(materialType, clean = true) {
-    return pricing[materialType] ?? pricePerKg(materialType, clean)
+  function marketPrice(materialType) {
+    return pricing[materialType] ?? pricePerKg(materialType)
   }
 
   function shopPrice(shopId, materialType) {

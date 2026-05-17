@@ -19,6 +19,8 @@ const aiConfigSlice = createSlice({
     // ONNX classifier fallback
     onnxStage1Url:        saved.onnxStage1Url        ?? '',
     onnxStage2Url:        saved.onnxStage2Url        ?? '',
+    // Active backend selector: 'teachable-machine' | 'onnx'
+    modelType:            saved.modelType            ?? 'teachable-machine',
     modelVersion:         saved.modelVersion         ?? 'v0-mock',
     // Vertex AI (fallback)
     vertexProjectId:      saved.vertexProjectId      ?? '',

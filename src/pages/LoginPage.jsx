@@ -55,6 +55,7 @@ export function LoginPage() {
   const [loading, setLoading]         = useState(false)
   const [unverified, setUnverified]   = useState(false)
   const [recoverySession, setRecoverySession] = useState(false)
+  const [rememberMe, setRememberMe]   = useState(false)
   const [showForgot, setShowForgot]   = useState(false)
   const [forgotEmail, setForgotEmail] = useState('')
   const [forgotSent, setForgotSent]   = useState(false)
@@ -113,6 +114,14 @@ export function LoginPage() {
         setUnverified(true)
       } else {
         setError(t.invalidCredentials ?? 'Invalid email or password')
+      }
+    } else {
+      // Persist "remember me" preference — Supabase handles session storage;
+      // this flag lets other parts of the app know the user opted in.
+      if (rememberMe) {
+        localStorage.setItem('gp_remember', '1')
+      } else {
+        localStorage.removeItem('gp_remember')
       }
     }
   }
@@ -449,10 +458,20 @@ export function LoginPage() {
               {/* Remember me + Forgot password */}
               <div className="flex items-center justify-between -mt-1">
                 <label className="flex items-center gap-2 cursor-pointer select-none">
-                  <span className="w-3.5 h-3.5 border-[1.5px] border-[var(--ink)] bg-[var(--green-soft)] flex items-center justify-center flex-shrink-0">
-                    <svg width="9" height="9" viewBox="0 0 10 8" fill="none">
-                      <path d="M1 4l3 3 5-6" stroke="var(--green-ink)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
+                  <span className="w-3.5 h-3.5 border-[1.5px] border-[var(--ink)] flex items-center justify-center flex-shrink-0 relative"
+                    style={{ backgroundColor: rememberMe ? 'var(--green-soft)' : 'var(--paper)' }}>
+                    <input
+                      type="checkbox"
+                      checked={rememberMe}
+                      onChange={e => setRememberMe(e.target.checked)}
+                      className="absolute inset-0 opacity-0 w-full h-full cursor-pointer m-0"
+                      aria-label="Remember me"
+                    />
+                    {rememberMe && (
+                      <svg width="9" height="9" viewBox="0 0 10 8" fill="none" aria-hidden="true">
+                        <path d="M1 4l3 3 5-6" stroke="var(--green-ink)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    )}
                   </span>
                   <span className="font-data text-[11px] text-[var(--ink-3)] uppercase tracking-widest">Remember me</span>
                 </label>

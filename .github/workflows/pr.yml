@@ -1,0 +1,58 @@
+name: PR Check
+
+# Runs on every pull request to main.
+# Gate: lint → unit tests → build verification.
+# Preview deploy is handled separately by preview.yml.
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  # ── Stage 1: Lint + unit tests ───────────────────────────────────
+  check:
+    name: Lint + Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Unit tests
+        run: npm run test:run
+
+  # ── Stage 2: Build verification ──────────────────────────────────
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    needs: check
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci
+
+      - name: Build
+        run: npm run build
+        env:
+          VITE_SUPABASE_URL:      ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          VITE_SENTRY_DSN:        ${{ secrets.VITE_SENTRY_DSN }}
