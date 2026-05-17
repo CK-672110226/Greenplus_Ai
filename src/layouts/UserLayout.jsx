@@ -49,7 +49,7 @@ function SideLink({ to, icon, label, badge }) {
       className={({ isActive }) =>
         'flex items-center gap-3 px-5 py-2.5 transition-colors relative group ' +
         (isActive
-          ? 'text-[var(--green)] bg-[var(--green-soft)]'
+          ? 'bg-[var(--ink)] text-[var(--paper)]'
           : 'text-[var(--ink-3)] hover:text-[var(--ink)] hover:bg-[var(--paper-2)]')
       }
     >
@@ -77,26 +77,27 @@ function Tab({ to, icon, label, badge, isHero }) {
   return (
     <NavLink
       to={to}
-      className={({ isActive }) =>
-        'relative flex flex-col items-center justify-center gap-0.5 flex-1 py-2.5 transition-colors ' +
-        (isActive ? 'text-[var(--green)]' : 'text-[var(--ink-3)] hover:text-[var(--ink)]')
-      }
+      className="relative flex flex-col items-center justify-center gap-0.5 flex-1 py-2 transition-colors"
     >
-      {isHero ? (
-        <span className="relative flex items-center justify-center w-12 h-12 -mt-5 border-[2px] border-[var(--ink)] bg-[var(--green)] text-[var(--paper)] shadow-[2px_2px_0_var(--ink)] rounded-full transition-transform hover:scale-105 cursor-pointer">
-          {icon}
-        </span>
-      ) : (
-        <span className="relative">
-          {icon}
-          {badge > 0 && (
-            <span className="absolute -top-1 -right-1.5 flex items-center justify-center min-w-[14px] h-[14px] px-0.5 bg-[var(--green)] text-[var(--paper)] font-data text-[9px] rounded-full leading-none">
-              {badge}
+      {({ isActive }) => (
+        <>
+          {isHero ? (
+            <span className="relative flex items-center justify-center w-12 h-12 -mt-5 border-[2px] border-[var(--ink)] bg-[var(--green)] text-[var(--paper)] shadow-[2px_2px_0_var(--ink)] rounded-full transition-transform hover:scale-105 cursor-pointer">
+              {icon}
+            </span>
+          ) : (
+            <span className={`relative flex items-center justify-center w-10 h-7 transition-colors ${isActive ? 'bg-[var(--green-soft)]' : ''}`}>
+              <span className={isActive ? 'text-[var(--green)]' : 'text-[var(--ink-3)]'}>{icon}</span>
+              {badge > 0 && (
+                <span className="absolute -top-1 -right-0.5 flex items-center justify-center min-w-[14px] h-[14px] px-0.5 bg-[var(--green)] text-[var(--paper)] font-data text-[9px] rounded-full leading-none">
+                  {badge}
+                </span>
+              )}
             </span>
           )}
-        </span>
+          <span className={`font-data text-[10px] uppercase tracking-wide leading-none ${isHero ? 'text-[var(--green-ink)] font-bold mt-1' : isActive ? 'text-[var(--green)]' : 'text-[var(--ink-3)]'}`}>{label}</span>
+        </>
       )}
-      <span className={`font-data text-[10px] uppercase tracking-wide leading-none ${isHero ? 'text-[var(--green-ink)] font-bold mt-1' : ''}`}>{label}</span>
     </NavLink>
   )
 }

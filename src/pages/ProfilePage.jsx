@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react'
 import { toast } from 'sonner'
-import { useSelector } from 'react-redux'
+import { useSelector, useDispatch } from 'react-redux'
+import { useNavigate } from 'react-router-dom'
 import { useT } from '../hooks/useT'
 import { useScanHistory } from '../hooks/useScanHistory'
 import { Card } from '../components/Card'
 import { Button } from '../components/Button'
 import { WASTE_ITEMS, localName } from '../data/wasteItems'
 import { supabase } from '../lib/supabase'
+import { clearUser } from '../store/userSlice'
 
 function Avatar({ name }) {
   const initials = (name ?? 'U').slice(0, 2).toUpperCase()
@@ -203,9 +205,17 @@ function AdminProfile({ profile, session, t }) {
 
 export function ProfilePage() {
   const t                      = useT()
+  const dispatch               = useDispatch()
+  const navigate               = useNavigate()
   const { session, profile }   = useSelector(s => s.user)
   const language               = useSelector(s => s.user.language)
   const role                   = profile?.role ?? 'user'
+
+  async function handleSignOut() {
+    await supabase.auth.signOut()
+    dispatch(clearUser())
+    navigate('/')
+  }
 
   return (
     <main className="flex flex-col items-center px-4 py-10 gap-6">
@@ -213,6 +223,37 @@ export function ProfilePage() {
       {role === 'user'  && <UserProfile  profile={profile} session={session} t={t} language={language} />}
       {role === 'buyer' && <BuyerProfile profile={profile} session={session} t={t} language={language} />}
       {role === 'admin' && <AdminProfile profile={profile} session={session} t={t} />}
+
+      {/* Quick actions */}
+      <div className="w-full max-w-sm flex flex-col border-[1.5px] border-[var(--ink)] divide-y divide-[var(--ink-4)]">
+        <button
+          onClick={() => navigate('/settings')}
+          className="flex items-center justify-between px-4 py-3 bg-transparent border-none cursor-pointer text-left hover:bg-[var(--paper-2)] transition-colors"
+        >
+          <span className="font-data text-[12px] text-[var(--ink)] uppercase tracking-widest">
+            {language === 'th' ? 'การตั้งค่า' : 'Settings'}
+          </span>
+          <span className="font-data text-[12px] text-[var(--ink-3)]">→</span>
+        </button>
+        <button
+          onClick={() => navigate('/settings')}
+          className="flex items-center justify-between px-4 py-3 bg-transparent border-none cursor-pointer text-left hover:bg-[var(--paper-2)] transition-colors"
+        >
+          <span className="font-data text-[12px] text-[var(--ink)] uppercase tracking-widest">
+            {language === 'th' ? 'ช่วยเหลือ / FAQ' : 'Help & FAQ'}
+          </span>
+          <span className="font-data text-[12px] text-[var(--ink-3)]">support@greenplus.ai</span>
+        </button>
+        <button
+          onClick={handleSignOut}
+          className="flex items-center justify-between px-4 py-3 bg-transparent border-none cursor-pointer text-left hover:bg-[var(--paper-2)] transition-colors"
+        >
+          <span className="font-data text-[12px] text-[var(--orange)] uppercase tracking-widest">
+            {t.logout}
+          </span>
+          <span className="font-data text-[12px] text-[var(--orange)]">→</span>
+        </button>
+      </div>
     </main>
   )
 }
