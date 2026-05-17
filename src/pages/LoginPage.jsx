@@ -55,6 +55,11 @@ export function LoginPage() {
   const [loading, setLoading]         = useState(false)
   const [unverified, setUnverified]   = useState(false)
   const [recoverySession, setRecoverySession] = useState(false)
+  const [showForgot, setShowForgot]   = useState(false)
+  const [forgotEmail, setForgotEmail] = useState('')
+  const [forgotSent, setForgotSent]   = useState(false)
+  const [forgotError, setForgotError] = useState(null)
+  const [forgotLoading, setForgotLoading] = useState(false)
   const emailId      = useId()
   const passwordId   = useId()
   const newPassId    = useId()
@@ -149,6 +154,18 @@ export function LoginPage() {
     setLoading(false)
     if (err) setError(err.message)
     else setMode('forgot-sent')
+  }
+
+  async function handleInlineForgot(e) {
+    e.preventDefault()
+    setForgotError(null)
+    setForgotLoading(true)
+    const { error: err } = await supabase.auth.resetPasswordForEmail(forgotEmail, {
+      redirectTo: window.location.origin + '/login',
+    })
+    setForgotLoading(false)
+    if (err) setForgotError(err.message)
+    else setForgotSent(true)
   }
 
   async function handleSetNewPassword(e) {
@@ -441,12 +458,52 @@ export function LoginPage() {
                 </label>
                 <button
                   type="button"
-                  onClick={() => { setMode('forgot'); setError(null); setUnverified(false) }}
+                  onClick={() => {
+                    setShowForgot(v => !v)
+                    setForgotSent(false)
+                    setForgotError(null)
+                    setForgotEmail('')
+                  }}
                   className="font-data text-[11px] text-[var(--green-ink)] uppercase tracking-widest bg-transparent border-none cursor-pointer p-0 hover:opacity-75 transition-opacity"
                 >
                   {t.forgotPassword ?? 'Forgot password?'}
                 </button>
               </div>
+
+              {/* Inline forgot password panel */}
+              {showForgot && (
+                <div className="flex flex-col gap-2 -mt-1">
+                  {forgotSent ? (
+                    <p className="font-data text-[11px] text-[var(--green-ink)] uppercase tracking-widest m-0">
+                      Check your email for a reset link
+                    </p>
+                  ) : (
+                    <form onSubmit={handleInlineForgot} className="flex flex-col gap-2">
+                      <input
+                        type="email"
+                        required
+                        autoComplete="username"
+                        placeholder="your@email.com"
+                        value={forgotEmail}
+                        onChange={e => setForgotEmail(e.target.value)}
+                        className="border-[1.5px] border-[var(--ink-4)] focus:border-[var(--ink)] bg-[var(--paper)] font-body text-[15px] w-full px-3 py-2 outline-none"
+                      />
+                      {forgotError && (
+                        <p className="border-[1.5px] border-[var(--orange)] font-data text-[12px] uppercase tracking-widest px-3 py-2 m-0 text-[var(--orange)]">
+                          {forgotError}
+                        </p>
+                      )}
+                      <button
+                        type="submit"
+                        disabled={forgotLoading}
+                        className="font-data text-[11px] uppercase tracking-widest border-[1.5px] border-[var(--ink)] px-3 py-2 bg-transparent hover:bg-[var(--ink)] hover:text-[var(--paper)] transition-colors cursor-pointer disabled:opacity-50"
+                      >
+                        {forgotLoading ? '...' : 'Send reset link'}
+                      </button>
+                    </form>
+                  )}
+                </div>
+              )}
 
               {error && (
                 <p className="font-data text-[12px] text-[var(--orange)] uppercase tracking-widest border-[1.5px] border-[var(--orange)] px-3 py-2 m-0">{error}</p>

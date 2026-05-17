@@ -300,6 +300,116 @@ function ModelRegistrySection() {
 }
 
 
+// ── Rider Assignment Panel ────────────────────────────────────────
+function RiderAssignmentPanel() {
+  const [unassigned,   setUnassigned]   = useState([])
+  const [riders,       setRiders]       = useState([])
+  const [assignments,  setAssignments]  = useState({}) // { [bookingId]: riderId }
+  const [loadingData,  setLoadingData]  = useState(true)
+
+  useEffect(() => {
+    async function load() {
+      setLoadingData(true)
+      const [bookingsRes, ridersRes] = await Promise.all([
+        supabase
+          .from('bookings')
+          .select('id, seller_id, shop_id, materials, total_kg, created_at')
+          .eq('status', 'accepted')
+          .is('rider_id', null)
+          .order('created_at', { ascending: true }),
+        supabase
+          .from('user_profiles')
+          .select('id, display_name')
+          .eq('role', 'rider'),
+      ])
+      if (bookingsRes.data) setUnassigned(bookingsRes.data)
+      if (ridersRes.data)   setRiders(ridersRes.data)
+      setLoadingData(false)
+    }
+    load()
+  }, [])
+
+  async function handleAssign(bookingId) {
+    const riderId = assignments[bookingId]
+    if (!riderId) return
+    const { error } = await supabase
+      .from('bookings')
+      .update({ rider_id: riderId, status: 'in_transit' })
+      .eq('id', bookingId)
+    if (error) {
+      toast.error('Failed to assign rider')
+      return
+    }
+    setUnassigned(prev => prev.filter(b => b.id !== bookingId))
+    setAssignments(prev => { const next = { ...prev }; delete next[bookingId]; return next })
+    toast.success('Rider assigned')
+  }
+
+  if (loadingData) {
+    return <div className="h-12 bg-[var(--paper-2)] animate-pulse border-[1.5px] border-[var(--ink-4)]" />
+  }
+
+  return (
+    <section className="flex flex-col gap-3">
+      <span className="font-data text-[12px] text-[var(--ink-2)] uppercase tracking-widest">
+        Unassigned Bookings ({unassigned.length})
+      </span>
+
+      {riders.length === 0 && (
+        <p className="font-data text-[11px] text-[var(--ink-4)] m-0">
+          No riders registered yet — add users with role&nbsp;<code>rider</code> first.
+        </p>
+      )}
+
+      {unassigned.length === 0 && riders.length > 0 && (
+        <div className="flex items-center justify-center py-6 border-[1.5px] border-dashed border-[var(--ink-4)]">
+          <span className="font-body text-[14px] text-[var(--ink-3)]">All accepted bookings have riders assigned</span>
+        </div>
+      )}
+
+      {unassigned.length > 0 && (
+        <div className="flex flex-col border-[1.5px] border-[var(--ink)] px-4">
+          {unassigned.map(b => (
+            <div
+              key={b.id}
+              className="flex items-center justify-between gap-3 py-3 border-b-[1px] border-[var(--ink-4)] last:border-0"
+            >
+              <div className="flex flex-col gap-0.5 min-w-0">
+                <span className="font-body text-[14px] text-[var(--ink)]">
+                  {(b.materials ?? []).join(', ')} · {b.total_kg ?? '?'} kg
+                </span>
+                <span className="font-data text-[10px] text-[var(--ink-3)] uppercase tracking-widest">
+                  {new Date(b.created_at).toLocaleDateString()}
+                </span>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                <select
+                  value={assignments[b.id] ?? ''}
+                  onChange={e => setAssignments(prev => ({ ...prev, [b.id]: e.target.value }))}
+                  className="px-2 py-1 border-[1.5px] border-[var(--ink-4)] focus:border-[var(--ink)] bg-[var(--paper)] font-data text-[11px] outline-none"
+                >
+                  <option value="">Select rider…</option>
+                  {riders.map(r => (
+                    <option key={r.id} value={r.id}>{r.display_name}</option>
+                  ))}
+                </select>
+                <button
+                  onClick={() => handleAssign(b.id)}
+                  disabled={!assignments[b.id]}
+                  className="font-data text-[11px] uppercase tracking-widest px-3 py-1.5 bg-[var(--green)] border-[1.5px] border-[var(--ink)] text-[var(--paper)] cursor-pointer disabled:opacity-40"
+                >
+                  Assign
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </section>
+  )
+}
+
+
 export function AdminPage() {
   const t        = useT()
   const aiConfig = useSelector(s => s.aiConfig)
@@ -315,6 +425,8 @@ export function AdminPage() {
   const [modLoading, setModLoading] = useState(true)
   const [scanPoints, setScanPoints] = useState([])
   const [heatLoading, setHeatLoading] = useState(true)
+  const [heatmapData, setHeatmapData]       = useState(null)  // { [material_type]: { count, totalKg } }
+  const [heatmapLoading, setHeatmapLoading] = useState(false)
 
   const { reports, loading: reportsLoading, approveReport, rejectReport } = useUserReports()
   const pendingCount = reports.length
@@ -339,6 +451,30 @@ export function AdminPage() {
       .then(({ data }) => { if (data) setScanPoints(data) })
       .finally(() => setHeatLoading(false))
   }, [])
+
+  // Fetch scan_history material heatmap only when heatmap tab is active
+  useEffect(() => {
+    if (tab !== 'heatmap') return
+    async function fetchHeatmap() {
+      setHeatmapLoading(true)
+      try {
+        const { data } = await supabase
+          .from('scan_history')
+          .select('material_type, weight_kg')
+        const agg = {}
+        data?.forEach(r => {
+          if (!r.material_type) return
+          if (!agg[r.material_type]) agg[r.material_type] = { count: 0, totalKg: 0 }
+          agg[r.material_type].count++
+          agg[r.material_type].totalKg += (r.weight_kg ?? 0)
+        })
+        setHeatmapData(agg)
+      } finally {
+        setHeatmapLoading(false)
+      }
+    }
+    fetchHeatmap()
+  }, [tab])
 
   // Load all marketplace posts for admin moderation
   useEffect(() => {
@@ -421,6 +557,7 @@ export function AdminPage() {
         <TabBtn active={tab === 'shops'}      onClick={() => setTab('shops')}>{t.shopManagement}</TabBtn>
         <TabBtn active={tab === 'heatmap'}    onClick={() => setTab('heatmap')}>{t.heatmap}</TabBtn>
         <TabBtn active={tab === 'moderation'} onClick={() => setTab('moderation')}>{t.moderation}</TabBtn>
+        <TabBtn active={tab === 'logistics'}  onClick={() => setTab('logistics')}>Logistics</TabBtn>
         <TabBtn active={tab === 'studio'}     onClick={() => setTab('studio')}>{t.aiStudio}</TabBtn>
         <TabBtn active={tab === 'reports'}    onClick={() => setTab('reports')}>
           {t.adminReports}{pendingCount > 0 ? ` (${pendingCount})` : ''}
@@ -541,6 +678,70 @@ export function AdminPage() {
               No scans with GPS yet — showing active shop locations. Scan dots will appear as users scan with location permission enabled.
             </p>
           )}
+
+          {/* Material-type heatmap grid */}
+          <div className="flex flex-col gap-2 pt-2">
+            <span className="font-data text-[11px] text-[var(--ink-3)] uppercase tracking-widest">
+              Material breakdown · all scans
+            </span>
+
+            {heatmapLoading && (
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                {[0, 1, 2].map(i => (
+                  <div key={i} className="h-20 border-[1.5px] border-[var(--ink-4)] bg-[var(--paper-2)] animate-pulse" />
+                ))}
+              </div>
+            )}
+
+            {!heatmapLoading && heatmapData && Object.keys(heatmapData).length === 0 && (
+              <p className="font-data text-[11px] text-[var(--ink-4)] m-0">
+                No scan data yet — grid will populate as users scan items.
+              </p>
+            )}
+
+            {!heatmapLoading && heatmapData && Object.keys(heatmapData).length > 0 && (() => {
+              const max = Math.max(...Object.values(heatmapData).map(v => v.totalKg))
+              return (
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                  {Object.entries(heatmapData)
+                    .sort(([, a], [, b]) => b.totalKg - a.totalKg)
+                    .map(([mat, { count, totalKg }]) => {
+                      const intensity = max > 0 ? totalKg / max : 0
+                      return (
+                        <div
+                          key={mat}
+                          className="flex flex-col gap-1 p-3 border-[1.5px] border-[var(--ink)]"
+                          style={{
+                            background: intensity > 0.66
+                              ? 'var(--green)'
+                              : intensity > 0.33
+                              ? 'var(--green-soft)'
+                              : 'var(--paper-2)',
+                          }}
+                        >
+                          <span className="font-data text-[10px] uppercase tracking-widest text-[var(--ink-3)]">
+                            {mat.replace(/_/g, ' ')}
+                          </span>
+                          <span className="font-brand text-[22px] text-[var(--ink)] leading-none">
+                            {totalKg.toFixed(1)}
+                          </span>
+                          <span className="font-data text-[9px] text-[var(--ink-3)] uppercase tracking-widest">
+                            {count} scans · kg
+                          </span>
+                        </div>
+                      )
+                    })}
+                </div>
+              )
+            })()}
+          </div>
+        </div>
+      )}
+
+      {/* Logistics tab */}
+      {tab === 'logistics' && (
+        <div className="w-full max-w-2xl flex flex-col gap-6">
+          <RiderAssignmentPanel />
         </div>
       )}
 

@@ -19,6 +19,7 @@
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
     "@reduxjs/toolkit": "^2.11.2",
+    "@sentry/react": "^10.53.1",
     "@supabase/ssr": "^0.10.3",
     "@supabase/supabase-js": "^2.105.4",
     "@teachablemachine/image": "^0.8.5",
