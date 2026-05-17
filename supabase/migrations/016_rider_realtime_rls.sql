@@ -37,4 +37,8 @@ END $$;
 -- are semantically relevant, but Supabase Realtime publishes the full row;
 -- column-level filtering is not supported at the publication level.
 
-ALTER PUBLICATION supabase_realtime ADD TABLE public.user_profiles;
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_publication_tables WHERE pubname = 'supabase_realtime' AND tablename = 'user_profiles') THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.user_profiles;
+  END IF;
+END $$;
