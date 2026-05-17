@@ -1,0 +1,38 @@
+-- Remove seeded test shops and their associated data.
+-- Safe to run multiple times (DELETE ... WHERE is idempotent).
+-- These are the 6 fixed-UUID shops from supabase/seed/chiangmai_suthep_shops.sql.
+
+delete from public.shop_pricing
+where shop_id in (
+  'a1000000-0000-0000-0000-000000000001',
+  'a1000000-0000-0000-0000-000000000002',
+  'a1000000-0000-0000-0000-000000000003',
+  'a1000000-0000-0000-0000-000000000004',
+  'a1000000-0000-0000-0000-000000000005',
+  'a1000000-0000-0000-0000-000000000006'
+);
+
+delete from public.bookings
+where shop_id in (
+  'a1000000-0000-0000-0000-000000000001',
+  'a1000000-0000-0000-0000-000000000002',
+  'a1000000-0000-0000-0000-000000000003',
+  'a1000000-0000-0000-0000-000000000004',
+  'a1000000-0000-0000-0000-000000000005',
+  'a1000000-0000-0000-0000-000000000006'
+);
+
+delete from public.shops
+where id in (
+  'a1000000-0000-0000-0000-000000000001',
+  'a1000000-0000-0000-0000-000000000002',
+  'a1000000-0000-0000-0000-000000000003',
+  'a1000000-0000-0000-0000-000000000004',
+  'a1000000-0000-0000-0000-000000000005',
+  'a1000000-0000-0000-0000-000000000006'
+);
+
+-- Also remove the shared seed buyer profile if it has no real auth user.
+-- Uses DO NOTHING if the row doesn't exist.
+delete from public.user_profiles
+where id = '00000000-0000-0000-0000-000000000099';
