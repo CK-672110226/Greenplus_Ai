@@ -124,26 +124,34 @@ export function DashboardPage() {
   }
 
   const pending   = bookings.filter(b => b.status === 'pending').length
-  const completed = bookings.filter(b => b.status === 'accepted').length
+  const accepted  = bookings.filter(b => b.status === 'accepted').length
+  const completed = bookings.filter(b => b.status === 'completed').length
   const revenue   = bookings.filter(b => b.status === 'accepted').reduce((s, b) => s + (b.estValue ?? 0), 0)
 
   return (
     <main className="flex flex-col items-center px-4 py-10 gap-6">
-      <h1 className="font-brand text-[28px] text-[var(--ink)] m-0">{t.dashboardTitle ?? t.dashboard}</h1>
+      <div className="flex flex-col gap-1">
+        <span className="font-data text-[10px] text-[var(--ink-3)] uppercase tracking-[0.15em]">Buyer Dashboard</span>
+        <h1 className="font-brand text-[28px] text-[var(--ink)] m-0">{t.dashboardTitle ?? t.dashboard}</h1>
+      </div>
 
-      <div className="w-full max-w-xl grid grid-cols-3 gap-3">
-        <Card className="flex flex-col gap-1 items-center">
-          <span className="font-data text-[11px] text-[var(--ink-3)] uppercase tracking-widest text-center">{t.pendingOrders}</span>
-          <span className="font-brand text-[28px] text-[var(--orange)]">{pending}</span>
-        </Card>
-        <Card className="flex flex-col gap-1 items-center">
-          <span className="font-data text-[11px] text-[var(--ink-3)] uppercase tracking-widest text-center">{t.completedOrders}</span>
-          <span className="font-brand text-[28px] text-[var(--green)]">{completed}</span>
-        </Card>
-        <Card className="flex flex-col gap-1 items-center">
-          <span className="font-data text-[11px] text-[var(--ink-3)] uppercase tracking-widest text-center">{t.totalRevenue}</span>
-          <span className="font-data text-[22px] text-[var(--ink)]">฿{revenue}</span>
-        </Card>
+      <div className="w-full max-w-xl grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div className="flex flex-col gap-1 p-4 border-[1.5px] border-[var(--ink)]">
+          <span className="font-data text-[11px] text-[var(--ink-3)] uppercase tracking-widest">{t.pendingOrders}</span>
+          <div className="font-brand text-[32px] text-[var(--orange)] leading-none">{pending}</div>
+        </div>
+        <div className="flex flex-col gap-1 p-4 border-[1.5px] border-[var(--ink)]">
+          <span className="font-data text-[11px] text-[var(--ink-3)] uppercase tracking-widest">Accepted</span>
+          <div className="font-brand text-[32px] text-[var(--green)] leading-none">{accepted}</div>
+        </div>
+        <div className="flex flex-col gap-1 p-4 border-[1.5px] border-[var(--ink)]">
+          <span className="font-data text-[11px] text-[var(--ink-3)] uppercase tracking-widest">{t.completedOrders}</span>
+          <div className="font-brand text-[32px] text-[var(--ink)] leading-none">{completed}</div>
+        </div>
+        <div className="flex flex-col gap-1 p-4 border-[1.5px] border-[var(--ink)]">
+          <span className="font-data text-[11px] text-[var(--ink-3)] uppercase tracking-widest">{t.totalRevenue}</span>
+          <div className="font-data text-[26px] text-[var(--ink)] leading-none">฿{revenue}</div>
+        </div>
       </div>
 
       {/* Tabs */}
@@ -185,11 +193,11 @@ export function DashboardPage() {
                     {b.totalKg ?? b.weight}kg · ฿{b.estValue ?? 0}
                   </span>
                 </div>
-                <span
-                  className="font-data text-[11px] uppercase tracking-widest"
-                  style={b.status === 'pending' ? { color: 'var(--orange)' } : b.status === 'accepted' ? { color: 'var(--green)' } : { color: '#E53E3E' }}
-                >
-                  {b.status}
+                <span>
+                  {b.status === 'pending'   && <span className="font-data text-[10px] uppercase tracking-widest px-2 py-0.5 border-[1.5px] border-[var(--ink)] text-[var(--ink)]">pending</span>}
+                  {b.status === 'accepted'  && <span className="font-data text-[10px] uppercase tracking-widest px-2 py-0.5 border-[1.5px] border-[var(--green)] bg-[var(--green-soft)] text-[var(--green-ink)]">accepted</span>}
+                  {b.status === 'completed' && <span className="font-data text-[10px] uppercase tracking-widest px-2 py-0.5 border-[1.5px] border-[var(--ink-4)] bg-[var(--paper-2)] text-[var(--ink-3)]">completed</span>}
+                  {b.status === 'rejected'  && <span className="font-data text-[10px] uppercase tracking-widest px-2 py-0.5 border-[1.5px] border-[var(--orange)] text-[var(--orange)]">rejected</span>}
                 </span>
               </div>
               <span className="font-body text-[13px] text-[var(--ink-3)]">{b.seller ?? b.shopName}</span>

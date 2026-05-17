@@ -30,7 +30,7 @@ function statusBadge(status) {
     pending:   { color: 'var(--orange)', label: 'Pending' },
     accepted:  { color: 'var(--green)',  label: 'Confirmed' },
     completed: { color: 'var(--ink-3)',  label: 'Completed' },
-    rejected:  { color: '#E53E3E',       label: 'Cancelled' },
+    rejected:  { color: 'var(--orange)', label: 'Cancelled' },
   }
   const entry = map[status] ?? { color: 'var(--ink-3)', label: status }
   return (
@@ -45,7 +45,7 @@ function SlotCard({ slot, language, t, onConfirm, onCancel, onComplete }) {
     <Card className="flex flex-col gap-3">
       <div className="flex items-start justify-between gap-3 flex-wrap">
         <div className="flex flex-col gap-0.5">
-          <span className="font-brand text-[26px] text-[var(--ink)] leading-none">{slot.time}</span>
+          <span className="font-data text-[26px] text-[var(--ink)] leading-none">{slot.time}</span>
           <span className="font-body text-[14px] text-[var(--ink)]">{slot.seller}</span>
         </div>
         <div className="flex flex-col items-end gap-1">
@@ -128,6 +128,7 @@ export function SchedulePage() {
   return (
     <main className="px-4 py-8 flex flex-col gap-6">
       <div className="flex flex-col gap-1">
+        <span className="font-data text-[10px] text-[var(--ink-3)] uppercase tracking-[0.15em]">Schedule</span>
         <h1 className="font-brand text-[28px] text-[var(--ink)] m-0">{t.scheduleTitle}</h1>
         <span className="font-data text-[12px] text-[var(--ink-3)]">{TODAY}</span>
       </div>

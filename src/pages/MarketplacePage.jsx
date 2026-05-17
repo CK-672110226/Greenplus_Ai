@@ -216,7 +216,10 @@ export function MarketplacePage() {
           {/* Table header */}
           <div className="px-6 lg:px-10 pt-6 pb-4 border-b-[1.5px] border-[var(--ink)]">
             <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-3">
-              <div>
+              <div className="flex flex-col gap-1">
+                <span className="font-data text-[10px] text-[var(--ink-3)] uppercase tracking-[0.15em]">
+                  Chiang Mai · Today
+                </span>
                 <h1 className="font-brand text-[28px] lg:text-[36px] text-[var(--ink)] m-0 leading-tight">
                   Today&apos;s market —
                 </h1>
