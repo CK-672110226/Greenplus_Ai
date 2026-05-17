@@ -155,6 +155,27 @@ function PostAdForm({ onClose, onAdd, marketPrice }) {
   )
 }
 
+/* ── CSV export helper ────────────────────────────────────────── */
+function exportCSV(shops) {
+  const rows = [
+    ['Name', 'Area', 'Materials', 'Distance (km)'],
+    ...shops.map(s => [
+      s.name ?? '',
+      s.area ?? '',
+      (s.accepts ?? []).join('; '),
+      s.distanceKm ?? '',
+    ])
+  ]
+  const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n')
+  const blob = new Blob([csv], { type: 'text/csv' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `greenplus-marketplace-${new Date().toISOString().slice(0,10)}.csv`
+  a.click()
+  URL.revokeObjectURL(url)
+}
+
 /* ── MarketplacePage ──────────────────────────────────────────── */
 export function MarketplacePage() {
   const t        = useT()
@@ -347,12 +368,22 @@ export function MarketplacePage() {
 
           {/* Right header */}
           <div className="px-5 py-5 border-b-[1.5px] border-[var(--ink)]">
-            <h2 className="font-brand text-[20px] text-[var(--ink)] m-0 leading-tight">
-              Active shops —
-            </h2>
-            <h2 className="font-brand text-[20px] text-[var(--ink)] m-0 leading-tight">
-              Chiang Mai
-            </h2>
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <h2 className="font-brand text-[20px] text-[var(--ink)] m-0 leading-tight">
+                  Active shops —
+                </h2>
+                <h2 className="font-brand text-[20px] text-[var(--ink)] m-0 leading-tight">
+                  Chiang Mai
+                </h2>
+              </div>
+              <button
+                onClick={() => exportCSV(shops)}
+                className="font-data text-[11px] uppercase tracking-widest border-[1.5px] border-[var(--ink-4)] px-3 py-1.5 bg-transparent hover:border-[var(--ink)] hover:bg-[var(--paper-2)] transition-colors cursor-pointer shrink-0 mt-0.5"
+              >
+                ↓ Export CSV
+              </button>
+            </div>
           </div>
 
           {/* Shop cards */}

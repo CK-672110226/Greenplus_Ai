@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useDispatch } from 'react-redux'
 import { haversineKm } from '../utils/haversine'
 import { toast } from 'sonner'
@@ -43,9 +44,30 @@ function PulsingDot() {
   )
 }
 
+function StarRating({ value, onChange }) {
+  return (
+    <div className="flex gap-1">
+      {[1, 2, 3, 4, 5].map(star => (
+        <button
+          key={star}
+          onClick={() => onChange(star)}
+          className={`font-data text-[20px] bg-transparent border-none cursor-pointer transition-colors ${
+            star <= value ? 'text-[var(--green-ink)]' : 'text-[var(--ink-4)]'
+          }`}
+        >
+          ★
+        </button>
+      ))}
+    </div>
+  )
+}
+
 export function UserTrackingPanel() {
   const dispatch      = useDispatch()
   const { activeBooking, riderLocation } = useRealtimeLogistics()
+
+  const [ratingValue,   setRatingValue]   = useState(0)
+  const [ratingSubmitted, setRatingSubmitted] = useState(false)
 
   const booking = activeBooking
   const status  = booking?.status
@@ -171,6 +193,23 @@ export function UserTrackingPanel() {
   if (status === 'completed') {
     const kg  = booking.actual_weight ?? '?'
     const val = booking.actual_value  ?? '?'
+    const alreadyRated = booking.rider_rating != null
+
+    async function handleRatingChange(star) {
+      setRatingValue(star)
+      if (!booking?.id) return
+      const { error } = await supabase
+        .from('bookings')
+        .update({ rider_rating: star })
+        .eq('id', booking.id)
+      if (error) {
+        toast.error('Failed to save rating')
+      } else {
+        setRatingSubmitted(true)
+        toast.success('Rating saved — thank you!')
+      }
+    }
+
     return (
       <div className="border-[1.5px] border-[var(--ink)] shadow-[2px_2px_0_var(--ink)] p-4 bg-[var(--paper)] mb-4">
         <div className="font-data text-[11px] uppercase tracking-wider text-[var(--green-ink)] mb-1">
@@ -179,6 +218,28 @@ export function UserTrackingPanel() {
         <p className="font-brand text-[16px] mb-4">
           {kg} kg collected · ฿{val} earned
         </p>
+
+        {!alreadyRated && !ratingSubmitted && (
+          <div className="flex flex-col gap-2 mb-4">
+            <span className="font-data text-[10px] uppercase tracking-widest text-[var(--ink-3)]">
+              Rate your rider
+            </span>
+            <StarRating value={ratingValue} onChange={handleRatingChange} />
+          </div>
+        )}
+
+        {(alreadyRated || ratingSubmitted) && (
+          <div className="flex flex-col gap-1 mb-4">
+            <span className="font-data text-[10px] uppercase tracking-widest text-[var(--ink-3)]">
+              Your rating
+            </span>
+            <span className="font-data text-[18px] text-[var(--green-ink)]">
+              {'★'.repeat(alreadyRated ? booking.rider_rating : ratingValue)}
+              {'☆'.repeat(5 - (alreadyRated ? booking.rider_rating : ratingValue))}
+            </span>
+          </div>
+        )}
+
         <div className="flex gap-3">
           <button
             className="px-4 py-2 border-[1.5px] border-[var(--ink)] bg-[var(--paper)] text-[var(--ink)] font-data text-[11px] uppercase tracking-wider cursor-pointer"
