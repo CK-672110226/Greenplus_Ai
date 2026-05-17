@@ -32,6 +32,7 @@ const ProfilePage           = lazy(() => import('./pages/ProfilePage').then(m =>
 const RiderDashboardPage    = lazy(() => import('./pages/RiderDashboardPage').then(m => ({ default: m.RiderDashboardPage })))
 const ChatPage              = lazy(() => import('./pages/ChatPage').then(m => ({ default: m.ChatPage })))
 const BuyerOnboardingPage   = lazy(() => import('./pages/BuyerOnboardingPage').then(m => ({ default: m.BuyerOnboardingPage })))
+const EcoPointsPage         = lazy(() => import('./pages/EcoPointsPage').then(m => ({ default: m.EcoPointsPage })))
 
 function PageFallback() {
   return (
@@ -108,6 +109,7 @@ function App() {
               <Route path="/profile"      element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
               <Route path="/chat"         element={<ProtectedRoute><ChatPage /></ProtectedRoute>} />
               <Route path="/chat/:roomId" element={<ProtectedRoute><ChatPage /></ProtectedRoute>} />
+              <Route path="/eco-points"   element={<ProtectedRoute requiredRole="user"><EcoPointsPage /></ProtectedRoute>} />
             </Route>
             <Route path="*" element={<Page404 />} />
           </Routes>

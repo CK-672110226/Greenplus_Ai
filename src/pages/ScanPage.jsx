@@ -802,6 +802,9 @@ export function ScanPage() {
                   <div className="font-brand text-[28px] text-[var(--ink)] leading-none">
                     ฿ {liveValue.toFixed(2)}
                   </div>
+                  <div className="font-data text-[13px] text-[var(--green-ink)]">
+                    + {Math.max(1, Math.round((liveResult.weight ?? 0.5) * 10))} impact pts
+                  </div>
                 </div>
               </div>
 

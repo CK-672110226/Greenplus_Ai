@@ -6,6 +6,7 @@ import { WASTE_ITEMS, localName } from '../data/wasteItems'
 import { useShops } from '../hooks/useShops'
 import { useGPS } from '../hooks/useGPS'
 import { useSelector } from 'react-redux'
+import { haversineKm } from '../utils/haversine'
 import 'leaflet/dist/leaflet.css'
 
 import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png'
@@ -319,6 +320,49 @@ export function MapPage() {
               })}
             </MapContainer>
           </div>
+
+          {/* Shop list below map */}
+          {!loading && visible.length > 0 && (
+            <div className="w-full border-[1.5px] border-[var(--ink)] border-t-0 flex flex-col">
+              {visible.map(shop => {
+                const dist = gps.lat && gps.lng
+                  ? haversineKm(gps.lat, gps.lng, shop.lat, shop.lng).toFixed(1)
+                  : null
+                const openStatus = isShopOpen(shop)
+                return (
+                  <div key={shop.id} className="border-b-[1px] border-[var(--ink-4)] last:border-b-0 py-3 px-4 flex flex-col gap-1.5">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="font-body text-[15px] text-[var(--ink)]">{shop.name}</span>
+                      <div className="flex items-center gap-2 shrink-0">
+                        {dist && (
+                          <span className="font-data text-[11px] text-[var(--ink-3)]">{dist} km</span>
+                        )}
+                        {openStatus === true && (
+                          <span className="font-data text-[9px] border-[1.5px] border-[var(--green)] text-[var(--green-ink)] px-1.5 py-0.5 uppercase tracking-widest">open</span>
+                        )}
+                        {openStatus === false && (
+                          <span className="font-data text-[9px] border-[1.5px] border-[var(--ink-4)] text-[var(--ink-4)] px-1.5 py-0.5 uppercase tracking-widest">closed</span>
+                        )}
+                      </div>
+                    </div>
+                    {(shop.accepts ?? []).length > 0 && (
+                      <span className="font-data text-[11px] text-[var(--ink-3)]">
+                        {(shop.accepts ?? []).map(a => localName(a, language)).join(' · ')}
+                      </span>
+                    )}
+                    <div className="flex gap-2 mt-0.5">
+                      <button
+                        onClick={() => setRouteTo(shop)}
+                        className="font-data text-[11px] uppercase tracking-widest px-3 py-1 border-[1.5px] border-[var(--ink)] bg-transparent hover:bg-[var(--ink)] hover:text-[var(--paper)] transition-colors cursor-pointer"
+                      >
+                        Directions ↗
+                      </button>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          )}
 
           {!loading && visible.length === 0 && (
             <p className="font-body text-[15px] text-[var(--ink-3)]">{t.noShopsNear}</p>

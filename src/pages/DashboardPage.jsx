@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 import { useT } from '../hooks/useT'
-import { Card } from '../components/Card'
 import { Button } from '../components/Button'
 import { EmptyState } from '../components/EmptyState'
 import { ScheduleCalendar } from '../components/ScheduleCalendar'
@@ -21,12 +20,70 @@ function TabBtn({ active, onClick, children }) {
     <button
       onClick={onClick}
       className={[
-        'px-4 py-2 font-data text-[11px] uppercase tracking-widest border-[1.5px] border-[var(--ink)] cursor-pointer',
-        active ? 'bg-[var(--ink)] text-[var(--paper)]' : 'bg-[var(--paper)] text-[var(--ink)] hover:bg-[var(--paper-2)]',
+        'px-4 py-1.5 font-data text-[10px] uppercase tracking-widest border-[1.5px] border-[var(--ink)] cursor-pointer whitespace-nowrap transition-colors',
+        active
+          ? 'bg-[var(--ink)] text-[var(--paper)]'
+          : 'bg-[var(--paper)] text-[var(--ink)] hover:bg-[var(--paper-2)]',
       ].join(' ')}
     >
       {children}
     </button>
+  )
+}
+
+function AvatarInitial({ name }) {
+  const initial = (name ?? '?').trim().charAt(0).toUpperCase()
+  return (
+    <div className="w-9 h-9 flex-shrink-0 flex items-center justify-center border-[1.5px] border-[var(--ink)] bg-[var(--paper-2)]">
+      <span className="font-data text-[13px] text-[var(--ink)]">{initial}</span>
+    </div>
+  )
+}
+
+function StatusChip({ status }) {
+  if (status === 'pending')
+    return <span className="font-data text-[9px] uppercase tracking-widest px-2 py-0.5 border-[1.5px] border-[var(--ink)] text-[var(--ink)]">pending</span>
+  if (status === 'accepted')
+    return <span className="font-data text-[9px] uppercase tracking-widest px-2 py-0.5 border-[1.5px] border-[var(--green)] bg-[var(--green-soft)] text-[var(--green-ink)]">accepted</span>
+  if (status === 'completed')
+    return <span className="font-data text-[9px] uppercase tracking-widest px-2 py-0.5 border-[1.5px] border-[var(--ink-4)] bg-[var(--paper-2)] text-[var(--ink-3)]">completed</span>
+  if (status === 'rejected')
+    return <span className="font-data text-[9px] uppercase tracking-widest px-2 py-0.5 border-[1.5px] border-[var(--orange)] text-[var(--orange)]">rejected</span>
+  return null
+}
+
+function BookingRow({ b, language, t, onAccept, onReject }) {
+  const sellerName = b.seller ?? b.shopName ?? '—'
+  const materials  = (b.materials ?? (b.materialType ? [b.materialType] : [])).map(m => localName(m, language)).join(', ')
+  const kg         = b.totalKg ?? b.weight ?? 0
+  const value      = b.estValue ?? 0
+
+  return (
+    <div className="flex flex-col gap-2 py-3 border-b-[1px] border-[var(--ink-4)] last:border-0">
+      <div className="flex items-start gap-3">
+        <AvatarInitial name={sellerName} />
+        <div className="flex-1 min-w-0 flex flex-col gap-0.5">
+          <div className="flex items-center justify-between gap-2 flex-wrap">
+            <span className="font-body text-[15px] text-[var(--ink)] truncate">{sellerName}</span>
+            <StatusChip status={b.status} />
+          </div>
+          <span className="font-data text-[11px] text-[var(--ink-3)]">
+            {materials} · {kg}kg · ฿{value.toLocaleString()}
+          </span>
+          {b.scheduledAt && (
+            <span className="font-data text-[10px] text-[var(--ink-4)] uppercase tracking-widest">
+              {new Date(b.scheduledAt).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Asia/Bangkok' })} today
+            </span>
+          )}
+        </div>
+      </div>
+      {b.status === 'pending' && (
+        <div className="flex gap-2 pl-12">
+          <Button variant="primary"   onClick={() => onAccept(b.id)}>{t.acceptOrder} ▶</Button>
+          <Button variant="secondary" onClick={() => onReject(b.id)}>{t.rejectOrder}</Button>
+        </div>
+      )}
+    </div>
   )
 }
 
@@ -39,20 +96,18 @@ export function DashboardPage() {
   const savedOpenDays     = useSelector(s => s.buyer?.openDays ?? [1, 2, 3, 4, 5, 6])
   const acceptedMaterials = useSelector(s => s.buyer?.acceptedMaterials ?? Object.keys(WASTE_ITEMS))
 
-  const [tab, setTab]                     = useState('orders')
-  const [openDays, setOpenDays_local]     = useState(savedOpenDays)
+  const [tab, setTab]                       = useState('orders')
+  const [openDays, setOpenDays_local]       = useState(savedOpenDays)
   const [materialsSaved, setMaterialsSaved] = useState(false)
-  const [slotPopup, setSlotPopup]         = useState(null) // { date, hour }
+  const [slotPopup, setSlotPopup]           = useState(null)
 
   const { shop } = useMyShop()
-
   const { bookings, loading, acceptBooking, rejectBooking } = useSupabaseBookings()
 
   useEffect(() => {
     dispatch(setBookings(bookings))
   }, [bookings, dispatch])
 
-  // Load persisted buyer settings from Supabase on mount
   useEffect(() => {
     if (!session?.user?.id) return
     async function loadSettings() {
@@ -71,9 +126,7 @@ export function DashboardPage() {
             dispatch(setAcceptedMaterials(data.accepted_materials))
           }
         }
-      } catch {
-        // fail silently — Redux defaults remain
-      }
+      } catch { /* fail silently */ }
     }
     loadSettings()
   }, [session?.user?.id, dispatch])
@@ -90,15 +143,10 @@ export function DashboardPage() {
     dispatch(setOpenDays(openDays))
     try {
       if (session?.user?.id) {
-        await supabase
-          .from('user_profiles')
-          .update({ open_days: openDays })
-          .eq('id', session.user.id)
+        await supabase.from('user_profiles').update({ open_days: openDays }).eq('id', session.user.id)
       }
-    } catch {
-      // fail silently
-    }
-    toast.success(language === 'th' ? 'บันทึกวันเปิดทำการแล้ว' : 'Calendar saved successfully')
+    } catch { /* fail silently */ }
+    toast.success(language === 'th' ? 'บันทึกวันเปิดทำการแล้ว' : 'Calendar saved')
   }
 
   async function handleSaveMaterials() {
@@ -107,37 +155,44 @@ export function DashboardPage() {
       .update({ accepted_materials: acceptedMaterials })
       .eq('id', session.user.id)
     if (error) {
-      toast.error(language === 'th' ? 'บันทึกไม่สำเร็จ' : 'Failed to save materials')
+      toast.error(language === 'th' ? 'บันทึกไม่สำเร็จ' : 'Failed to save')
     } else {
-      toast.success(language === 'th' ? 'บันทึกแล้ว' : 'Materials saved')
+      toast.success(language === 'th' ? 'บันทึกแล้ว' : 'Saved')
       setMaterialsSaved(true)
     }
   }
 
-  function handleAccept(id) {
-    acceptBooking(id)
-    toast.success('Order accepted')
-  }
-  function handleReject(id) {
-    rejectBooking(id)
-    toast.error('Order rejected')
-  }
+  function handleAccept(id) { acceptBooking(id); toast.success('Order accepted') }
+  function handleReject(id) { rejectBooking(id); toast.error('Order rejected') }
 
   const pending   = bookings.filter(b => b.status === 'pending').length
   const accepted  = bookings.filter(b => b.status === 'accepted').length
   const completed = bookings.filter(b => b.status === 'completed').length
   const revenue   = bookings.filter(b => b.status === 'accepted').reduce((s, b) => s + (b.estValue ?? 0), 0)
+  const newReqs   = pending
+
+  const shopName  = shop?.name ?? (language === 'th' ? 'แดชบอร์ดร้าน' : 'Your Shop')
 
   return (
-    <main className="flex flex-col items-center px-4 py-10 gap-6">
-      <div className="flex flex-col gap-1">
-        <span className="font-data text-[10px] text-[var(--ink-3)] uppercase tracking-[0.15em]">Buyer Dashboard</span>
-        <h1 className="font-brand text-[28px] text-[var(--ink)] m-0">{t.dashboardTitle ?? t.dashboard}</h1>
+    <main className="w-full px-4 py-8 flex flex-col gap-6 max-w-4xl mx-auto">
+
+      {/* Header */}
+      <div className="flex flex-col gap-0.5">
+        <span className="font-data text-[10px] text-[var(--ink-3)] uppercase tracking-[0.15em]">
+          {language === 'th' ? 'หน้าแรก / แดชบอร์ด' : 'Home / Dashboard'}
+        </span>
+        <h1 className="font-brand text-[26px] text-[var(--ink)] m-0 leading-tight">
+          {shopName}
+          <span className="font-body text-[16px] text-[var(--ink-3)] ml-2">
+            — {language === 'th' ? 'วันนี้' : "today's haul"}
+          </span>
+        </h1>
       </div>
 
-      <div className="w-full max-w-xl grid grid-cols-2 md:grid-cols-4 gap-3">
+      {/* KPI row — 4 cards, full-width, exact spec pattern */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <div className="flex flex-col gap-1 p-4 border-[1.5px] border-[var(--ink)] hover:shadow-[3px_3px_0_var(--ink)] hover:-translate-x-px hover:-translate-y-px transition-all duration-150">
-          <span className="font-data text-[11px] text-[var(--ink-3)] uppercase tracking-widest">{t.pendingOrders}</span>
+          <span className="font-data text-[11px] text-[var(--ink-3)] uppercase tracking-widest">Pending</span>
           <div className="font-brand text-[32px] text-[var(--orange)] leading-none">{pending}</div>
         </div>
         <div className="flex flex-col gap-1 p-4 border-[1.5px] border-[var(--ink)] hover:shadow-[3px_3px_0_var(--ink)] hover:-translate-x-px hover:-translate-y-px transition-all duration-150">
@@ -145,76 +200,74 @@ export function DashboardPage() {
           <div className="font-brand text-[32px] text-[var(--green)] leading-none">{accepted}</div>
         </div>
         <div className="flex flex-col gap-1 p-4 border-[1.5px] border-[var(--ink)] hover:shadow-[3px_3px_0_var(--ink)] hover:-translate-x-px hover:-translate-y-px transition-all duration-150">
-          <span className="font-data text-[11px] text-[var(--ink-3)] uppercase tracking-widest">{t.completedOrders}</span>
+          <span className="font-data text-[11px] text-[var(--ink-3)] uppercase tracking-widest">Completed</span>
           <div className="font-brand text-[32px] text-[var(--ink)] leading-none">{completed}</div>
+          <span className="font-data text-[10px] text-[var(--ink-4)]">7d</span>
         </div>
         <div className="flex flex-col gap-1 p-4 border-[1.5px] border-[var(--ink)] hover:shadow-[3px_3px_0_var(--ink)] hover:-translate-x-px hover:-translate-y-px transition-all duration-150">
-          <span className="font-data text-[11px] text-[var(--ink-3)] uppercase tracking-widest">{t.totalRevenue}</span>
-          <div className="font-data text-[26px] text-[var(--ink)] leading-none">฿{revenue}</div>
+          <span className="font-data text-[11px] text-[var(--ink-3)] uppercase tracking-widest">Revenue</span>
+          <div className="font-brand text-[32px] text-[var(--ink)] leading-none">฿{revenue.toLocaleString()}</div>
+          <span className="font-data text-[10px] text-[var(--ink-4)]">7d</span>
         </div>
       </div>
 
-      {/* Tabs */}
-      <div className="w-full max-w-xl flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
-        <TabBtn active={tab === 'orders'}    onClick={() => setTab('orders')}>{t.recentBookings}</TabBtn>
-        <TabBtn active={tab === 'schedule'}  onClick={() => setTab('schedule')}>{language === 'th' ? 'ตารางนัด' : 'Schedule'}</TabBtn>
-        <TabBtn active={tab === 'route'}     onClick={() => setTab('route')}>{language === 'th' ? 'เส้นทางวันนี้' : 'Smart Route'}</TabBtn>
-        <TabBtn active={tab === 'calendar'}  onClick={() => setTab('calendar')}>{language === 'th' ? 'ปฏิทินร้าน' : 'Shop Days'}</TabBtn>
-        <TabBtn active={tab === 'materials'} onClick={() => setTab('materials')}>{language === 'th' ? 'วัสดุที่รับ' : 'Materials'}</TabBtn>
+      {/* Tab bar */}
+      <div className="flex items-center justify-between gap-3 border-b-[1.5px] border-[var(--ink-4)] pb-0">
+        <div className="flex gap-0 overflow-x-auto scrollbar-hide">
+          {[
+            { key: 'orders',    label: 'Bookings' },
+            { key: 'schedule',  label: language === 'th' ? 'ตารางนัด' : 'Schedule' },
+            { key: 'route',     label: language === 'th' ? 'เส้นทาง' : 'Route' },
+            { key: 'calendar',  label: language === 'th' ? 'วันทำการ' : 'Shop Days' },
+            { key: 'materials', label: language === 'th' ? 'วัสดุ' : 'Materials' },
+          ].map(({ key, label }) => (
+            <TabBtn key={key} active={tab === key} onClick={() => setTab(key)}>
+              {label}
+            </TabBtn>
+          ))}
+        </div>
+        {newReqs > 0 && (
+          <span className="font-data text-[10px] text-[var(--orange)] uppercase tracking-widest whitespace-nowrap flex-shrink-0">
+            ● {newReqs} new request{newReqs > 1 ? 's' : ''}
+          </span>
+        )}
       </div>
 
-      {/* Orders tab */}
+      {/* Bookings tab */}
       {tab === 'orders' && (
-        <div className="w-full max-w-xl flex flex-col gap-3">
+        <div className="flex flex-col">
           {loading && (
             <>
-              <div className="h-20 bg-[var(--paper-2)] animate-pulse border-[1.5px] border-[var(--ink-4)]" />
-              <div className="h-20 bg-[var(--paper-2)] animate-pulse border-[1.5px] border-[var(--ink-4)]" />
+              <div className="h-20 bg-[var(--paper-2)] animate-pulse border-[1.5px] border-[var(--ink-4)] mb-3" />
+              <div className="h-20 bg-[var(--paper-2)] animate-pulse border-[1.5px] border-[var(--ink-4)] mb-3" />
               <div className="h-20 bg-[var(--paper-2)] animate-pulse border-[1.5px] border-[var(--ink-4)]" />
             </>
           )}
           {!loading && bookings.length === 0 && (
             <EmptyState
               icon="📋"
-              title="No bookings yet today"
+              title="No bookings yet"
               body="When a recycler books a pickup, it'll appear here."
-              primaryCta="Adjust prices →"
+              primaryCta="Adjust materials →"
               onPrimary={() => setTab('materials')}
             />
           )}
-          {bookings.map(b => (
-            <Card key={b.id} className="flex flex-col gap-2">
-              <div className="flex items-center justify-between flex-wrap gap-2">
-                <div className="flex flex-col gap-0.5">
-                  <span className="font-body text-[15px] text-[var(--ink)]">
-                    {(b.materials ?? [b.materialType]).map(m => localName(m, language)).join(', ')}
-                  </span>
-                  <span className="font-data text-[12px] text-[var(--ink-3)]">
-                    {b.totalKg ?? b.weight}kg · ฿{b.estValue ?? 0}
-                  </span>
-                </div>
-                <span>
-                  {b.status === 'pending'   && <span className="font-data text-[10px] uppercase tracking-widest px-2 py-0.5 border-[1.5px] border-[var(--ink)] text-[var(--ink)]">pending</span>}
-                  {b.status === 'accepted'  && <span className="font-data text-[10px] uppercase tracking-widest px-2 py-0.5 border-[1.5px] border-[var(--green)] bg-[var(--green-soft)] text-[var(--green-ink)]">accepted</span>}
-                  {b.status === 'completed' && <span className="font-data text-[10px] uppercase tracking-widest px-2 py-0.5 border-[1.5px] border-[var(--ink-4)] bg-[var(--paper-2)] text-[var(--ink-3)]">completed</span>}
-                  {b.status === 'rejected'  && <span className="font-data text-[10px] uppercase tracking-widest px-2 py-0.5 border-[1.5px] border-[var(--orange)] text-[var(--orange)]">rejected</span>}
-                </span>
-              </div>
-              <span className="font-body text-[13px] text-[var(--ink-3)]">{b.seller ?? b.shopName}</span>
-              {b.status === 'pending' && (
-                <div className="flex gap-2 pt-1">
-                  <Button variant="primary"   onClick={() => handleAccept(b.id)}>{t.acceptOrder}</Button>
-                  <Button variant="secondary" onClick={() => handleReject(b.id)}>{t.rejectOrder}</Button>
-                </div>
-              )}
-            </Card>
+          {!loading && bookings.map(b => (
+            <BookingRow
+              key={b.id}
+              b={b}
+              language={language}
+              t={t}
+              onAccept={handleAccept}
+              onReject={handleReject}
+            />
           ))}
         </div>
       )}
 
       {/* Schedule tab */}
       {tab === 'schedule' && (
-        <div className="w-full max-w-4xl flex flex-col gap-3">
+        <div className="flex flex-col gap-3">
           <ScheduleCalendar
             bookings={bookings}
             onSlotCreate={(date, hour) => setSlotPopup({ date, hour })}
@@ -232,98 +285,87 @@ export function DashboardPage() {
       )}
 
       {/* Smart Route tab */}
-      {tab === 'route' && (
-        <div className="w-full max-w-2xl">
-          <SmartRouteMap />
-        </div>
-      )}
+      {tab === 'route' && <SmartRouteMap />}
 
       {/* Calendar tab */}
       {tab === 'calendar' && (
-        <div className="w-full max-w-xl flex flex-col gap-4">
-          <Card className="flex flex-col gap-4">
-            <h2 className="font-brand text-[18px] text-[var(--ink)] m-0">
-              {language === 'th' ? 'วันเปิด-ปิดทำการ (Operating Days)' : 'Operating Days'}
-            </h2>
+        <div className="flex flex-col gap-4 max-w-xl">
+          <div className="flex flex-col gap-0.5">
+            <span className="font-data text-[10px] text-[var(--ink-3)] uppercase tracking-widest">Operating Days</span>
             <p className="font-body text-[14px] text-[var(--ink-3)] m-0">
               {language === 'th'
                 ? 'เลือกวันที่ร้านเปิดรับซื้อ เพื่อให้ลูกค้าไม่ถูกนำทางมาในวันที่ร้านหยุด'
-                : 'Select the days your shop is open so users do not route to you when closed.'}
+                : 'Select your open days so users are not routed to you when closed.'}
             </p>
-            <div className="flex flex-col gap-2 mt-2">
-              {['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'].map((dayName, index) => {
-                const isOpen = openDays.includes(index)
-                return (
-                  <div key={index} className="flex items-center justify-between border-[1.5px] border-[var(--ink-4)] p-3">
-                    <span className="font-body text-[15px] text-[var(--ink)]">{dayName}</span>
-                    <button
-                      onClick={() => handleToggleDay(index)}
-                      className={`font-data text-[11px] uppercase tracking-widest px-3 py-1.5 border-[1.5px] transition-colors cursor-pointer ${
-                        isOpen
-                          ? 'bg-[var(--green)] border-[var(--green-ink)] text-[var(--ink)]'
-                          : 'bg-[var(--paper-2)] border-[var(--ink-4)] text-[var(--ink-3)]'
-                      }`}
-                    >
-                      {isOpen ? (language === 'th' ? 'เปิด' : 'OPEN') : (language === 'th' ? 'ปิด' : 'CLOSED')}
-                    </button>
-                  </div>
-                )
-              })}
-            </div>
-            <Button variant="primary" onClick={handleSaveCalendar} className="mt-2">
-              {language === 'th' ? 'บันทึกการตั้งค่า' : 'Save Calendar'}
-            </Button>
-          </Card>
+          </div>
+          <div className="flex flex-col border-[1.5px] border-[var(--ink)] divide-y divide-[var(--ink-4)]">
+            {['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'].map((dayName, index) => {
+              const isOpen = openDays.includes(index)
+              return (
+                <div key={index} className="flex items-center justify-between px-4 py-3">
+                  <span className="font-body text-[15px] text-[var(--ink)]">{dayName}</span>
+                  <button
+                    onClick={() => handleToggleDay(index)}
+                    className={`font-data text-[10px] uppercase tracking-widest px-3 py-1 border-[1.5px] transition-colors cursor-pointer ${
+                      isOpen
+                        ? 'bg-[var(--green)] border-[var(--green-ink)] text-[var(--ink)]'
+                        : 'bg-transparent border-[var(--ink-4)] text-[var(--ink-3)]'
+                    }`}
+                  >
+                    {isOpen ? 'Open' : 'Closed'}
+                  </button>
+                </div>
+              )
+            })}
+          </div>
+          <Button variant="primary" onClick={handleSaveCalendar}>
+            {language === 'th' ? 'บันทึก' : 'Save Calendar'}
+          </Button>
         </div>
       )}
 
       {/* Materials tab */}
       {tab === 'materials' && (
-        <div className="w-full max-w-xl flex flex-col gap-4">
-          <Card className="flex flex-col gap-4">
-            <h2 className="font-brand text-[18px] text-[var(--ink)] m-0">
-              {language === 'th' ? 'วัสดุที่รับซื้อ' : 'Accepted Materials'}
-            </h2>
+        <div className="flex flex-col gap-4 max-w-xl">
+          <div className="flex flex-col gap-0.5">
+            <span className="font-data text-[10px] text-[var(--ink-3)] uppercase tracking-widest">Accepted Materials</span>
             <p className="font-body text-[14px] text-[var(--ink-3)] m-0">
               {language === 'th'
-                ? 'เลือกประเภทวัสดุที่ร้านของคุณรับซื้อ ระบบจะแสดงเฉพาะร้านที่รับวัสดุที่ผู้ใช้ต้องการขาย'
-                : "Select the material types your shop accepts. Only shops that accept the user's materials will be shown in routing."}
+                ? 'เลือกประเภทวัสดุที่ร้านของคุณรับซื้อ'
+                : "Select the material types your shop accepts."}
             </p>
-            <div className="grid grid-cols-2 gap-2">
-              {Object.keys(WASTE_ITEMS).map(key => {
-                const isOn = acceptedMaterials.includes(key)
-                return (
-                  <button
-                    key={key}
-                    onClick={() => { dispatch(toggleMaterial(key)); setMaterialsSaved(false) }}
-                    className={`py-3 px-4 font-body text-[14px] border-[1.5px] text-left transition-colors cursor-pointer ${
-                      isOn
-                        ? 'bg-[var(--green)] border-[var(--ink)] text-[var(--ink)]'
-                        : 'bg-[var(--paper-2)] border-[var(--ink-4)] text-[var(--ink-3)]'
-                    }`}
-                  >
-                    {localName(key, language)}
-                  </button>
-                )
-              })}
-            </div>
-            <div className="flex items-center gap-3">
-              <Button
-                variant="primary"
-                onClick={handleSaveMaterials}
-                disabled={!session?.user?.id}
-              >
-                {language === 'th' ? 'บันทึก' : 'Save'}
-              </Button>
-              {materialsSaved && (
-                <span className="font-data text-[11px] text-[var(--green-ink)] uppercase tracking-widest">
-                  ● {language === 'th' ? 'บันทึกแล้ว' : 'saved'}
-                </span>
-              )}
-            </div>
-          </Card>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            {Object.keys(WASTE_ITEMS).map(key => {
+              const isOn = acceptedMaterials.includes(key)
+              return (
+                <button
+                  key={key}
+                  onClick={() => { dispatch(toggleMaterial(key)); setMaterialsSaved(false) }}
+                  className={`py-3 px-4 font-body text-[14px] border-[1.5px] text-left transition-colors cursor-pointer ${
+                    isOn
+                      ? 'bg-[var(--green)] border-[var(--ink)] text-[var(--ink)]'
+                      : 'bg-transparent border-[var(--ink-4)] text-[var(--ink-3)]'
+                  }`}
+                >
+                  {localName(key, language)}
+                </button>
+              )
+            })}
+          </div>
+          <div className="flex items-center gap-3">
+            <Button variant="primary" onClick={handleSaveMaterials} disabled={!session?.user?.id}>
+              {language === 'th' ? 'บันทึก' : 'Save'}
+            </Button>
+            {materialsSaved && (
+              <span className="font-data text-[11px] text-[var(--green-ink)] uppercase tracking-widest">
+                ● {language === 'th' ? 'บันทึกแล้ว' : 'saved'}
+              </span>
+            )}
+          </div>
         </div>
       )}
+
     </main>
   )
 }
