@@ -198,10 +198,11 @@ export function LoginPage() {
             </h1>
           </div>
           {/* Role badge */}
-          <span className="font-data text-[10px] uppercase tracking-widest px-2 py-0.5 border-[1.5px]"
-                style={{ borderColor: roleColor, color: roleColor }}>
-            {role}
-          </span>
+          {role && (
+            <span className="inline-block font-data text-[10px] uppercase tracking-widest px-2 py-0.5 border-[1.5px] border-[var(--ink)] text-[var(--ink)] self-start">
+              {role}
+            </span>
+          )}
         </div>
 
         {/* Email-not-verified state */}
@@ -241,11 +242,13 @@ export function LoginPage() {
                 placeholder="you@example.com"
                 value={email}
                 onChange={e => setEmail(e.target.value)}
-                className="w-full px-3 py-2.5 border-[1.5px] border-[var(--ink)] bg-[var(--paper)] font-body text-[17px] outline-none focus:border-[var(--green)]"
+                className="w-full px-3 py-2.5 border-[1.5px] border-[var(--ink-4)] focus:border-[var(--ink)] bg-[var(--paper)] font-body text-[17px] outline-none"
               />
             </Field>
 
-            {error && <p className="font-body text-[14px] text-[var(--orange)] m-0">{error}</p>}
+            {error && (
+              <p className="font-data text-[12px] text-[var(--orange)] uppercase tracking-widest border-[1.5px] border-[var(--orange)] px-3 py-2 m-0">{error}</p>
+            )}
 
             <Button type="submit" variant="primary" fullWidth disabled={loading}
               style={{ height: 48, fontSize: 18 }}>
@@ -321,7 +324,7 @@ export function LoginPage() {
                   placeholder="••••••••"
                   value={newPassword}
                   onChange={e => setNewPassword(e.target.value)}
-                  className="w-full pl-3 pr-10 py-2.5 border-[1.5px] border-[var(--ink)] bg-[var(--paper)] font-body text-[17px] outline-none focus:border-[var(--green)]"
+                  className="w-full pl-3 pr-10 py-2.5 border-[1.5px] border-[var(--ink-4)] focus:border-[var(--ink)] bg-[var(--paper)] font-body text-[17px] outline-none"
                 />
                 <button
                   type="button"
@@ -345,7 +348,7 @@ export function LoginPage() {
                   placeholder="••••••••"
                   value={confirmPass}
                   onChange={e => setConfirmPass(e.target.value)}
-                  className="w-full pl-3 pr-10 py-2.5 border-[1.5px] border-[var(--ink)] bg-[var(--paper)] font-body text-[17px] outline-none focus:border-[var(--green)]"
+                  className="w-full pl-3 pr-10 py-2.5 border-[1.5px] border-[var(--ink-4)] focus:border-[var(--ink)] bg-[var(--paper)] font-body text-[17px] outline-none"
                 />
                 <button
                   type="button"
@@ -374,7 +377,9 @@ export function LoginPage() {
               </div>
             )}
 
-            {error && <p className="font-body text-[14px] text-[var(--orange)] m-0">{error}</p>}
+            {error && (
+              <p className="font-data text-[12px] text-[var(--orange)] uppercase tracking-widest border-[1.5px] border-[var(--orange)] px-3 py-2 m-0">{error}</p>
+            )}
 
             <Button type="submit" variant="primary" fullWidth disabled={loading}
               style={{ height: 48, fontSize: 18 }}>
@@ -396,7 +401,7 @@ export function LoginPage() {
                   placeholder="you@example.com"
                   value={email}
                   onChange={e => setEmail(e.target.value)}
-                  className="w-full px-3 py-2.5 border-[1.5px] border-[var(--ink)] bg-[var(--paper)] font-body text-[17px] outline-none focus:border-[var(--green)]"
+                  className="w-full px-3 py-2.5 border-[1.5px] border-[var(--ink-4)] focus:border-[var(--ink)] bg-[var(--paper)] font-body text-[17px] outline-none"
                 />
               </Field>
 
@@ -410,7 +415,7 @@ export function LoginPage() {
                     placeholder="••••••••"
                     value={password}
                     onChange={e => setPassword(e.target.value)}
-                    className="w-full pl-3 pr-10 py-2.5 border-[1.5px] border-[var(--ink)] bg-[var(--paper)] font-body text-[17px] outline-none focus:border-[var(--green)]"
+                    className="w-full pl-3 pr-10 py-2.5 border-[1.5px] border-[var(--ink-4)] focus:border-[var(--ink)] bg-[var(--paper)] font-body text-[17px] outline-none"
                   />
                   <button
                     type="button"
@@ -444,7 +449,7 @@ export function LoginPage() {
               </div>
 
               {error && (
-                <p className="font-body text-[14px] text-[var(--orange)] m-0">{error}</p>
+                <p className="font-data text-[12px] text-[var(--orange)] uppercase tracking-widest border-[1.5px] border-[var(--orange)] px-3 py-2 m-0">{error}</p>
               )}
 
               <Button type="submit" variant="primary" fullWidth disabled={loading}

@@ -411,7 +411,10 @@ export function AdminPage() {
 
   return (
     <main className="flex flex-col items-center px-4 py-10 gap-6">
-      <h1 className="font-brand text-[28px] text-[var(--ink)] m-0">{t.admin}</h1>
+      <div className="flex flex-col items-center gap-1">
+        <span className="font-data text-[10px] text-[var(--ink-3)] uppercase tracking-[0.15em]">Platform Admin</span>
+        <h1 className="font-brand text-[28px] text-[var(--ink)] m-0">{t.admin}</h1>
+      </div>
 
       {/* Tab bar */}
       <div className="w-full max-w-2xl flex gap-2 flex-wrap">
@@ -436,8 +439,11 @@ export function AdminPage() {
             )}
             {pending.map(s => (
               <Card key={s.id} className="flex items-center justify-between flex-wrap gap-3">
-                <div>
-                  <p className="font-body text-[15px] text-[var(--ink)] m-0 font-semibold">{s.name}</p>
+                <div className="flex flex-col gap-1">
+                  <div className="flex items-center gap-2">
+                    <p className="font-body text-[15px] text-[var(--ink)] m-0 font-semibold">{s.name}</p>
+                    <span className="border-[1.5px] border-[var(--orange)] text-[var(--orange)] font-data text-[10px] uppercase tracking-widest px-2 py-0.5">pending</span>
+                  </div>
                   <p className="font-data text-[11px] text-[var(--ink-3)] m-0">
                     {s.owner?.display_name ?? s.owner_id?.slice(0, 8) ?? '—'}{s.area ? ` · ${s.area}` : ''}
                   </p>
@@ -457,8 +463,9 @@ export function AdminPage() {
             )}
             {allShops.map(s => (
               <Card key={s.id} className="flex items-center justify-between">
-                <div>
+                <div className="flex items-center gap-2">
                   <p className="font-body text-[15px] text-[var(--ink)] m-0">{s.name}</p>
+                  <span className="border-[1.5px] border-[var(--green)] bg-[var(--green-soft)] text-[var(--green-ink)] font-data text-[10px] uppercase tracking-widest px-2 py-0.5">active</span>
                 </div>
               </Card>
             ))}
