@@ -215,18 +215,19 @@ export function BasketPage() {
     <main className="flex flex-col items-center px-4 py-10 gap-6">
 
       {/* Heading */}
-      <div className="w-full max-w-5xl flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <h1 className="font-brand text-[28px] text-[var(--ink)] m-0">{t.basket}</h1>
-          {basket.length > 0 && (
-            <span className="inline-flex items-center justify-center w-6 h-6 bg-[var(--green)] border-[1.5px] border-[var(--ink)] font-data text-[11px] font-bold text-[#062040]">
-              {basket.length}
-            </span>
-          )}
+      <div className="w-full max-w-5xl flex items-start justify-between gap-4">
+        <div className="flex flex-col gap-1">
+          <span className="font-data text-[10px] text-[var(--ink-3)] uppercase tracking-[0.15em]">
+            {t.basket} · {activeItems.length} of {basket.length} active
+          </span>
+          <div className="flex items-baseline gap-3">
+            <span className="font-brand text-[32px] text-[var(--green-ink)] leading-none">฿{total.toFixed(0)}</span>
+            <span className="font-data text-[11px] text-[var(--ink-3)] uppercase tracking-widest">estimated</span>
+          </div>
         </div>
         <button
           onClick={() => setShowManual(v => !v)}
-          className="font-data text-[11px] uppercase tracking-widest border-[1.5px] border-[var(--ink)] px-3 py-1.5 bg-[var(--paper)] hover:bg-[var(--paper-2)] text-[var(--ink)]"
+          className="font-data text-[11px] uppercase tracking-widest border-[1.5px] border-[var(--ink)] px-3 py-1.5 bg-[var(--paper)] hover:bg-[var(--paper-2)] text-[var(--ink)] shrink-0 mt-1"
         >
           + {t.addManually}
         </button>

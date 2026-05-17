@@ -100,6 +100,7 @@ export function PricingPage() {
     <main className="px-4 py-8 flex flex-col gap-6">
       <div className="flex items-start justify-between flex-wrap gap-3">
         <div className="flex flex-col gap-1">
+          <span className="font-data text-[10px] text-[var(--ink-3)] uppercase tracking-[0.15em]">Material Pricing</span>
           <h1 className="font-brand text-[28px] text-[var(--ink)] m-0">{t.pricingTitle}</h1>
           <p className="font-body text-[13px] text-[var(--ink-3)] m-0">{t.pricingHint}</p>
         </div>
