@@ -7,6 +7,7 @@ import { Card } from '../components/Card'
 import { Button } from '../components/Button'
 import { GradeTag } from '../components/GradeTag'
 import { EmptyState } from '../components/EmptyState'
+import { SectionDivider } from '../components/SectionDivider'
 import { localName, WASTE_ITEMS } from '../data/wasteItems'
 import { removeFromBasket, updateWeight, toggleSkip, clearBasket, addToBasket } from '../store/wasteSlice'
 import { useGPS } from '../hooks/useGPS'
@@ -156,8 +157,6 @@ export function BasketPage() {
   const basket   = useSelector(s => s.waste.basket)
   const language = useSelector(s => s.user.language)
 
-  const [routeMode,   setRouteMode]   = useState('single')
-  const [showRoute,   setShowRoute]   = useState(false)
   const [showManual,  setShowManual]  = useState(false)
   const [filterMat,   setFilterMat]   = useState('all')
   const [bookingShop, setBookingShop] = useState(null)
@@ -168,7 +167,7 @@ export function BasketPage() {
   const insertBooking = useInsertBooking()
 
   const shopsWithDist = shops.map(s => ({ ...s, dist: distOf(s, gps.lat, gps.lng) }))
-  const { single, multi, unmatched, materials } = computeRoutes(basket, shopsWithDist, gps.lat, gps.lng)
+  const { single, multi, unmatched } = computeRoutes(basket, shopsWithDist, gps.lat, gps.lng)
 
   const activeItems  = basket.filter(i => !i.skipped)
   const basketMats   = [...new Set(basket.map(i => i.materialType))]
@@ -218,11 +217,13 @@ export function BasketPage() {
       <div className="w-full max-w-5xl flex items-start justify-between gap-4">
         <div className="flex flex-col gap-1">
           <span className="font-data text-[10px] text-[var(--ink-3)] uppercase tracking-[0.15em]">
-            {t.basket} · {activeItems.length} of {basket.length} active
+            BASKET · {activeItems.length} of {basket.length} active
           </span>
           <div className="flex items-baseline gap-3">
-            <span className="font-brand text-[32px] text-[var(--green-ink)] leading-none">฿{total.toFixed(0)}</span>
-            <span className="font-data text-[11px] text-[var(--ink-3)] uppercase tracking-widest">estimated</span>
+            <span className="font-brand text-[32px] leading-none">
+              <span className="text-[var(--green-ink)]">฿</span>{total.toFixed(0)}
+            </span>
+            <span className="font-data text-[12px] text-[var(--ink-3)]">estimated</span>
           </div>
         </div>
         <button
@@ -270,10 +271,10 @@ export function BasketPage() {
           />
         </div>
       ) : (
-        <div className="w-full max-w-5xl grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+        <div className="w-full max-w-5xl flex flex-col gap-4">
 
-          {/* LEFT — basket items */}
-          <div className="flex flex-col gap-3 md:sticky md:top-4">
+          {/* Basket items list */}
+          <div className="flex flex-col gap-3">
             {visibleItems.map(item => {
               const unitPrice = marketPrice(item.materialType, item.clean ?? true)
               const lineTotal = unitPrice * (item.weight ?? 0)
@@ -317,124 +318,127 @@ export function BasketPage() {
                 </Card>
               )
             })}
-
-            {basket.length > 0 && (
-              <Card className="flex flex-col gap-3">
-                <div className="flex items-center justify-between">
-                  <span className="font-data text-[12px] text-[var(--ink-3)] uppercase tracking-widest">{t.basketTotal}</span>
-                  <span className="font-data text-[22px] text-[var(--green)]">฿{total.toFixed(2)}</span>
-                </div>
-                <div className="flex gap-2">
-                  <Button variant="primary" fullWidth className="md:hidden" onClick={() => setShowRoute(r => !r)}>
-                    {showRoute ? '▲' : '▼'} {t.findRoute}
-                  </Button>
-                  <span className="hidden md:inline-flex items-center font-data text-[11px] text-[var(--ink-3)] uppercase tracking-widest">
-                    Route shown →
-                  </span>
-                  <Button variant="secondary" onClick={() => dispatch(clearBasket())}>{t.clearBasket}</Button>
-                </div>
-                <button
-                  onClick={gps.request}
-                  disabled={gps.loading}
-                  className="font-data text-[11px] text-[var(--green)] uppercase tracking-widest bg-transparent border-none cursor-pointer disabled:opacity-50 text-left"
-                >
-                  {gps.loading ? '...' : gps.lat ? `GPS: ${gps.lat.toFixed(4)}, ${gps.lng.toFixed(4)}` : '+ ' + t.useMyLocation}
-                </button>
-              </Card>
-            )}
           </div>
 
-          {/* RIGHT — route planner (desktop always, mobile toggle) */}
-          {materials.length > 0 && (
-            <div className={showRoute ? 'flex flex-col gap-3' : 'hidden md:flex flex-col gap-3'}>
-              <Card className="flex flex-col gap-4">
-                <div className="flex gap-2">
-                  {['single', 'multi'].map(mode => (
-                    <button
-                      key={mode}
-                      onClick={() => setRouteMode(mode)}
-                      className={`flex-1 py-2 font-data text-[11px] uppercase tracking-widest border-[1.5px] border-[var(--ink)] ${routeMode === mode ? 'bg-[var(--ink)] text-[var(--paper)]' : 'bg-[var(--paper)] text-[var(--ink)]'}`}
-                    >
-                      {mode === 'single' ? t.singleShop : t.multiStop}
-                    </button>
-                  ))}
-                </div>
+          {/* ─── ROUTE ─────────────────────────────────────────── */}
+          <SectionDivider label="ROUTE" />
 
-                {routeMode === 'single' && (
-                  single.length === 0 ? (
-                    <p className="font-body text-[13px] text-[var(--orange)] m-0">{t.noShopWarning}</p>
+          {/* Route options */}
+          <div className="flex flex-col gap-3">
+            {/* Header row */}
+            <div className="flex items-center justify-between">
+              <span className="font-body text-[15px] text-[var(--ink)]">Pickup options</span>
+              <span className="font-data text-[11px] text-[var(--ink-3)]">
+                GPS · {gps.lat != null ? '0.0' : '—'} km
+              </span>
+            </div>
+
+            {/* Single shop card */}
+            <div className="flex flex-col gap-2 border-[1.5px] border-[var(--ink-4)] p-3">
+              <div className="flex items-start justify-between">
+                <div>
+                  <p className="font-body text-[15px] text-[var(--ink)] m-0 font-semibold">Single shop</p>
+                  {single.length > 0 ? (
+                    <p className="font-data text-[11px] text-[var(--ink-3)] m-0">
+                      {single[0].name} · {single[0].dist != null ? `${single[0].dist}km` : '—'}
+                    </p>
                   ) : (
-                    single.slice(0, 3).map(shop => {
-                      const shopTotal = shopTotalFor(shop, activeItems, shopPrice, marketPrice)
-                      const diff = shopTotal - total
-                      return (
-                        <div key={shop.id} className="flex flex-col gap-2 border-[1.5px] border-[var(--ink-4)] p-3">
-                          <div className="flex items-start justify-between">
-                            <div>
-                              <p className="font-body text-[15px] text-[var(--ink)] m-0 font-semibold">{shop.name}</p>
-                              <p className="font-data text-[11px] text-[var(--ink-3)] m-0">
-                                {shop.dist != null ? `${shop.dist} ${t.distanceKm}` : '—'} · {shop.area}
-                              </p>
-                              <p className="font-data text-[10px] text-[var(--green)] m-0">{t.acceptsAll}</p>
-                            </div>
-                            <div className="text-right">
-                              <span className="font-data text-[18px] text-[var(--green)]">฿{shopTotal.toFixed(0)}</span>
-                              {diff !== 0 && (
-                                <p className={`font-data text-[10px] m-0 ${diff > 0 ? 'text-[var(--green)]' : 'text-[var(--orange)]'}`}>
-                                  {diff > 0 ? '+' : ''}{diff.toFixed(0)} vs avg
-                                </p>
-                              )}
-                            </div>
-                          </div>
-                          <div className="flex gap-2">
-                            <Button variant="secondary" onClick={() => openMaps(shop)}>{t.openInMaps}</Button>
-                            <Button variant="primary" onClick={() => handleBookClick(shop)}>{t.bookAppointment}</Button>
-                          </div>
-                        </div>
-                      )
-                    })
-                  )
-                )}
-
-                {routeMode === 'multi' && (
-                  <div className="flex flex-col gap-3">
-                    {multi.map((stop, i) => {
-                      const stopItems = activeItems.filter(item => stop.materials.includes(item.materialType))
-                      const stopTotal = shopTotalFor(stop.shop, stopItems, shopPrice, marketPrice)
-                      return (
-                        <div key={stop.shop.id} className="flex flex-col gap-1 border-[1.5px] border-[var(--ink-4)] p-3">
-                          <div className="flex items-center justify-between">
-                            <span className="font-data text-[11px] text-[var(--ink-3)] uppercase">{t.stop} {i + 1}</span>
-                            <span className="font-data text-[11px] text-[var(--ink-3)]">
-                              {stop.distFromLast != null ? `${stop.distFromLast} ${t.distanceKm}` : '—'}
-                            </span>
-                          </div>
-                          <div className="flex items-start justify-between">
-                            <div>
-                              <p className="font-body text-[15px] text-[var(--ink)] m-0 font-semibold">{stop.shop.name}</p>
-                              <p className="font-data text-[11px] text-[var(--ink-3)] m-0">
-                                {stop.materials.map(m => localName(m, language)).join(', ')}
-                              </p>
-                            </div>
-                            <span className="font-data text-[16px] text-[var(--green)]">฿{stopTotal.toFixed(0)}</span>
-                          </div>
-                          <div className="flex gap-2 mt-1">
-                            <Button variant="secondary" onClick={() => openMaps(stop.shop)}>{t.openInMaps}</Button>
-                            <Button variant="primary" onClick={() => handleBookClick(stop.shop)}>{t.bookAppointment}</Button>
-                          </div>
-                        </div>
-                      )
-                    })}
-                    {unmatched.length > 0 && (
-                      <p className="font-data text-[11px] text-[var(--orange)] m-0">
-                        {t.noAcceptingShop}: {unmatched.map(m => localName(m, language)).join(', ')}
-                      </p>
-                    )}
+                    <p className="font-data text-[11px] text-[var(--ink-3)] m-0">
+                      {gps.lat ? 'No shop accepts all materials' : 'Finding shops…'}
+                    </p>
+                  )}
+                </div>
+                {single.length > 0 && (
+                  <div className="flex items-center gap-1">
+                    <span className="font-data text-[16px] text-[var(--green)]">
+                      ฿{shopTotalFor(single[0], activeItems, shopPrice, marketPrice).toFixed(0)}
+                    </span>
+                    <span className="font-data text-[14px] text-[var(--ink-3)]">→</span>
                   </div>
                 )}
-              </Card>
+              </div>
+              {single.length > 0 && (
+                <div className="flex gap-2">
+                  <Button variant="secondary" onClick={() => openMaps(single[0])}>{t.openInMaps}</Button>
+                  <Button variant="primary" onClick={() => handleBookClick(single[0])}>{t.bookAppointment}</Button>
+                </div>
+              )}
             </div>
-          )}
+
+            {/* Multi-stop card — highlighted as best */}
+            <div className="flex flex-col gap-2 border-[1.5px] border-[var(--green)] bg-[var(--green-soft)] p-3">
+              <div className="flex items-start justify-between">
+                <div>
+                  <p className="font-body text-[15px] text-[var(--ink)] m-0 font-semibold">★ Multi-stop · best</p>
+                  {multi.length > 0 ? (
+                    <p className="font-data text-[11px] text-[var(--ink-3)] m-0">
+                      {multi.length} shops · {multi.reduce((s, stop) => s + (stop.distFromLast ?? 0), 0).toFixed(1)}km loop
+                    </p>
+                  ) : (
+                    <p className="font-data text-[11px] text-[var(--ink-3)] m-0">
+                      {gps.lat ? 'Computing route…' : 'Finding shops…'}
+                    </p>
+                  )}
+                </div>
+                {multi.length > 0 && (
+                  <div className="flex items-center gap-1">
+                    <span className="font-data text-[16px] text-[var(--green-ink)]">
+                      ฿{multi.reduce((sum, stop) => {
+                        const stopItems = activeItems.filter(item => stop.materials.includes(item.materialType))
+                        return sum + shopTotalFor(stop.shop, stopItems, shopPrice, marketPrice)
+                      }, 0).toFixed(0)}
+                    </span>
+                    <span className="font-data text-[14px] text-[var(--ink-3)]">→</span>
+                  </div>
+                )}
+              </div>
+              {multi.length > 0 && (
+                <div className="flex gap-2">
+                  {multi.slice(0, 1).map(stop => (
+                    <Button key={stop.shop.id} variant="secondary" onClick={() => openMaps(stop.shop)}>
+                      {t.openInMaps}
+                    </Button>
+                  ))}
+                  <Button variant="primary" onClick={() => multi.length > 0 && handleBookClick(multi[0].shop)}>
+                    {t.bookAppointment}
+                  </Button>
+                </div>
+              )}
+              {unmatched.length > 0 && (
+                <p className="font-data text-[11px] text-[var(--orange)] m-0">
+                  {t.noAcceptingShop}: {unmatched.map(m => localName(m, language)).join(', ')}
+                </p>
+              )}
+            </div>
+          </div>
+
+          {/* GPS location button */}
+          <button
+            onClick={gps.request}
+            disabled={gps.loading}
+            className="font-data text-[11px] text-[var(--green)] uppercase tracking-widest bg-transparent border-none cursor-pointer disabled:opacity-50 text-left"
+          >
+            {gps.loading ? '...' : gps.lat ? `GPS: ${gps.lat.toFixed(4)}, ${gps.lng.toFixed(4)}` : '+ ' + t.useMyLocation}
+          </button>
+
+          {/* Bottom CTAs */}
+          <div className="flex flex-col gap-2 pt-2">
+            <Button
+              variant="primary"
+              fullWidth
+              onClick={() => single.length > 0 ? handleBookClick(single[0]) : (multi.length > 0 ? handleBookClick(multi[0].shop) : null)}
+              disabled={single.length === 0 && multi.length === 0}
+            >
+              Book pickup · ฿{total.toFixed(0)} →
+            </Button>
+            <Button
+              variant="secondary"
+              fullWidth
+              onClick={() => dispatch(clearBasket())}
+            >
+              Clear basket
+            </Button>
+          </div>
         </div>
       )}
 

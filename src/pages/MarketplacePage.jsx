@@ -194,6 +194,7 @@ export function MarketplacePage() {
   const [catFilter, setCatFilter] = useState('all')
   const [isPosting, setIsPosting] = useState(false)
   const [mktTab, setMktTab] = useState('listings')
+  const [grade, setGrade] = useState('all')
 
   const basketMaterials = new Set(basket.filter(i => !i.skipped).map(i => i.materialType))
   const basketCount     = basket.filter(i => !i.skipped).length
@@ -400,6 +401,24 @@ export function MarketplacePage() {
                   ].join(' ')}
                 >
                   {tab === 'listings' ? 'Listings' : 'Buy Requests'}
+                </button>
+              ))}
+            </div>
+
+            {/* Grade filter */}
+            <div className="flex gap-1.5 flex-wrap mt-3">
+              {['all', 'A', 'B', 'C'].map(g => (
+                <button
+                  key={g}
+                  onClick={() => setGrade(g)}
+                  className={[
+                    'px-2.5 py-1 font-data text-[10px] uppercase tracking-widest border-[1.5px] transition-colors cursor-pointer',
+                    grade === g
+                      ? 'bg-[var(--ink)] text-[var(--paper)] border-[var(--ink)]'
+                      : 'bg-transparent text-[var(--ink-3)] border-[var(--ink-4)] hover:border-[var(--ink)] hover:text-[var(--ink)]',
+                  ].join(' ')}
+                >
+                  {g === 'all' ? 'All grades' : `Grade ${g}`}
                 </button>
               ))}
             </div>
