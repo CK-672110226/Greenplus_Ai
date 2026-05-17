@@ -50,7 +50,7 @@ function SideLink({ to, icon, label, badge }) {
       className={({ isActive }) =>
         'flex items-center gap-3 px-5 py-2.5 transition-colors relative group cursor-pointer ' +
         (isActive
-          ? 'text-[var(--green)] bg-[var(--green-soft)]'
+          ? 'bg-[var(--ink)] text-[var(--paper)]'
           : 'text-[var(--ink-3)] hover:text-[var(--ink)] hover:bg-[var(--paper-2)]')
       }
     >
