@@ -3,6 +3,7 @@ import { Button } from './Button'
 import { WASTE_ITEMS, localName } from '../data/wasteItems'
 
 export function ChatOfferModal({ onSend, onClose, language = 'en' }) {
+  const [side, setSide]         = useState('sell')
   const [material, setMaterial] = useState('')
   const [price, setPrice]       = useState('')
   const [weight, setWeight]     = useState('')
@@ -12,6 +13,7 @@ export function ChatOfferModal({ onSend, onClose, language = 'en' }) {
     if (!material || !price) return
     onSend({
       type: 'offer',
+      side,
       material,
       price: parseFloat(price),
       weight: weight ? parseFloat(weight) : null,
@@ -33,6 +35,25 @@ export function ChatOfferModal({ onSend, onClose, language = 'en' }) {
           >
             &#x2715;
           </button>
+        </div>
+
+        {/* Sell / Buy toggle */}
+        <div className="flex gap-0 border-[1.5px] border-[var(--ink)] w-fit">
+          {[['sell', "I'm Selling"], ['buy', 'I Want to Buy']].map(([val, label]) => (
+            <button
+              key={val}
+              type="button"
+              onClick={() => setSide(val)}
+              className={[
+                'px-3 py-1.5 font-data text-[11px] uppercase tracking-widest cursor-pointer border-none',
+                side === val
+                  ? 'bg-[var(--ink)] text-[var(--paper)]'
+                  : 'bg-[var(--paper)] text-[var(--ink)] hover:bg-[var(--paper-2)]'
+              ].join(' ')}
+            >
+              {label}
+            </button>
+          ))}
         </div>
 
         {/* Material */}

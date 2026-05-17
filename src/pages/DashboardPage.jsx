@@ -136,19 +136,19 @@ export function DashboardPage() {
       </div>
 
       <div className="w-full max-w-xl grid grid-cols-2 md:grid-cols-4 gap-3">
-        <div className="flex flex-col gap-1 p-4 border-[1.5px] border-[var(--ink)]">
+        <div className="flex flex-col gap-1 p-4 border-[1.5px] border-[var(--ink)] hover:shadow-[3px_3px_0_var(--ink)] hover:-translate-x-px hover:-translate-y-px transition-all duration-150">
           <span className="font-data text-[11px] text-[var(--ink-3)] uppercase tracking-widest">{t.pendingOrders}</span>
           <div className="font-brand text-[32px] text-[var(--orange)] leading-none">{pending}</div>
         </div>
-        <div className="flex flex-col gap-1 p-4 border-[1.5px] border-[var(--ink)]">
+        <div className="flex flex-col gap-1 p-4 border-[1.5px] border-[var(--ink)] hover:shadow-[3px_3px_0_var(--ink)] hover:-translate-x-px hover:-translate-y-px transition-all duration-150">
           <span className="font-data text-[11px] text-[var(--ink-3)] uppercase tracking-widest">Accepted</span>
           <div className="font-brand text-[32px] text-[var(--green)] leading-none">{accepted}</div>
         </div>
-        <div className="flex flex-col gap-1 p-4 border-[1.5px] border-[var(--ink)]">
+        <div className="flex flex-col gap-1 p-4 border-[1.5px] border-[var(--ink)] hover:shadow-[3px_3px_0_var(--ink)] hover:-translate-x-px hover:-translate-y-px transition-all duration-150">
           <span className="font-data text-[11px] text-[var(--ink-3)] uppercase tracking-widest">{t.completedOrders}</span>
           <div className="font-brand text-[32px] text-[var(--ink)] leading-none">{completed}</div>
         </div>
-        <div className="flex flex-col gap-1 p-4 border-[1.5px] border-[var(--ink)]">
+        <div className="flex flex-col gap-1 p-4 border-[1.5px] border-[var(--ink)] hover:shadow-[3px_3px_0_var(--ink)] hover:-translate-x-px hover:-translate-y-px transition-all duration-150">
           <span className="font-data text-[11px] text-[var(--ink-3)] uppercase tracking-widest">{t.totalRevenue}</span>
           <div className="font-data text-[26px] text-[var(--ink)] leading-none">฿{revenue}</div>
         </div>

@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 import { Card } from '../components/Card'
 import { Button } from '../components/Button'
@@ -15,6 +15,20 @@ function IconClock() {
 }
 
 const TODAY = todayBangkok()
+
+const DAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+
+function getWeekDays() {
+  const now    = new Date()
+  const day    = now.getDay() // 0=Sun
+  const monday = new Date(now)
+  monday.setDate(now.getDate() - ((day + 6) % 7))
+  return Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(monday)
+    d.setDate(monday.getDate() + i)
+    return d
+  })
+}
 
 function slotTime(scheduledAt) {
   if (!scheduledAt) return '--:--'
@@ -78,6 +92,11 @@ export function SchedulePage() {
   const dispatch = useDispatch()
   const language = useSelector(s => s.user.language)
   const slots    = useSelector(s => s.schedule.slots)
+
+  const [viewMode, setViewMode]   = useState('week')
+  const [slotPopup, setSlotPopup] = useState(null)
+
+  const weekDays = getWeekDays()
 
   const { bookings, loading } = useSupabaseBookings()
 
@@ -148,36 +167,138 @@ export function SchedulePage() {
         </Card>
       </div>
 
-      {loading && (
-        <div className="flex flex-col gap-3">
-          <div className="h-24 bg-[var(--paper-2)] animate-pulse border-[1.5px] border-[var(--ink-4)]" />
-          <div className="h-24 bg-[var(--paper-2)] animate-pulse border-[1.5px] border-[var(--ink-4)]" />
+      {/* View toggle */}
+      <div className="flex gap-0 border-[1.5px] border-[var(--ink)] w-fit">
+        {['week', 'list'].map(mode => (
+          <button
+            key={mode}
+            onClick={() => setViewMode(mode)}
+            className={[
+              'px-3 py-1.5 font-data text-[10px] uppercase tracking-widest cursor-pointer border-none',
+              viewMode === mode
+                ? 'bg-[var(--ink)] text-[var(--paper)]'
+                : 'bg-[var(--paper)] text-[var(--ink)] hover:bg-[var(--paper-2)]'
+            ].join(' ')}
+          >
+            {mode}
+          </button>
+        ))}
+      </div>
+
+      {/* Week grid view */}
+      {viewMode === 'week' && (
+        <div className="grid grid-cols-7 border-[1.5px] border-[var(--ink)] divide-x divide-[var(--ink-4)] min-h-[320px]">
+          {weekDays.map((day, idx) => {
+            const isToday = day.toDateString() === new Date().toDateString()
+            const daySlots = (slots ?? []).filter(s => {
+              const d = new Date(s.start_at)
+              return d.toDateString() === day.toDateString()
+            })
+            const dayBookings = (bookings ?? []).filter(b => {
+              const d = new Date(b.pickup_date ?? b.scheduledAt ?? b.created_at)
+              return d.toDateString() === day.toDateString()
+            })
+            return (
+              <div
+                key={idx}
+                className={[
+                  'flex flex-col gap-1 p-1.5 cursor-pointer hover:bg-[var(--paper-2)] transition-colors',
+                  isToday ? 'bg-[var(--green-soft)]' : '',
+                ].join(' ')}
+                onClick={() => setSlotPopup({ open: true, date: day })}
+              >
+                {/* Day header */}
+                <div className="text-center">
+                  <span className={[
+                    'font-data text-[9px] uppercase tracking-widest block',
+                    isToday ? 'text-[var(--green-ink)]' : 'text-[var(--ink-3)]',
+                  ].join(' ')}>
+                    {DAY_LABELS[idx]}
+                  </span>
+                  <span className={[
+                    'font-data text-[13px] leading-none',
+                    isToday ? 'text-[var(--green-ink)] font-bold' : 'text-[var(--ink)]',
+                  ].join(' ')}>
+                    {day.getDate()}
+                  </span>
+                </div>
+                {/* Slots from scheduleSlice */}
+                {daySlots.map(s => (
+                  <div
+                    key={s.id}
+                    className="border-[1px] border-[var(--green)] bg-[var(--green-soft)] px-1 py-0.5 rounded-none"
+                    onClick={e => e.stopPropagation()}
+                  >
+                    <span className="font-data text-[9px] text-[var(--green-ink)] uppercase block truncate">
+                      {s.time ?? new Date(s.start_at).toLocaleTimeString('th', { hour: '2-digit', minute: '2-digit' })}
+                    </span>
+                  </div>
+                ))}
+                {/* Bookings for this day */}
+                {dayBookings.map(b => (
+                  <div
+                    key={b.id}
+                    className="border-[1px] border-[var(--ink-4)] bg-[var(--paper-2)] px-1 py-0.5"
+                    onClick={e => e.stopPropagation()}
+                  >
+                    <span className="font-data text-[9px] text-[var(--ink-3)] uppercase block truncate">
+                      {b.status}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )
+          })}
         </div>
       )}
 
-      {!loading && slots.length === 0 && (
-        <p className="font-body text-[14px] text-[var(--ink-3)]">{t.noSchedule}</p>
-      )}
+      {/* List view */}
+      {viewMode === 'list' && (
+        <>
+          {loading && (
+            <div className="flex flex-col gap-3">
+              <div className="h-24 bg-[var(--paper-2)] animate-pulse border-[1.5px] border-[var(--ink-4)]" />
+              <div className="h-24 bg-[var(--paper-2)] animate-pulse border-[1.5px] border-[var(--ink-4)]" />
+            </div>
+          )}
 
-      {groups.map(group => (
-        <div key={group.label} className="flex flex-col gap-3">
-          <span className="flex items-center gap-1.5 font-data text-[10px] text-[var(--ink-4)] uppercase tracking-widest">
-            <IconClock />
-            {group.label}
-          </span>
-          {group.items.map(slot => (
-            <SlotCard
-              key={slot.id}
-              slot={slot}
-              language={language}
-              t={t}
-              onConfirm={handleConfirm}
-              onCancel={handleCancel}
-              onComplete={handleComplete}
-            />
+          {!loading && slots.length === 0 && (
+            <p className="font-body text-[14px] text-[var(--ink-3)]">{t.noSchedule}</p>
+          )}
+
+          {groups.map(group => (
+            <div key={group.label} className="flex flex-col gap-3">
+              <span className="flex items-center gap-1.5 font-data text-[10px] text-[var(--ink-4)] uppercase tracking-widest">
+                <IconClock />
+                {group.label}
+              </span>
+              {group.items.map(slot => (
+                <SlotCard
+                  key={slot.id}
+                  slot={slot}
+                  language={language}
+                  t={t}
+                  onConfirm={handleConfirm}
+                  onCancel={handleCancel}
+                  onComplete={handleComplete}
+                />
+              ))}
+            </div>
           ))}
+        </>
+      )}
+
+      {slotPopup && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="bg-[var(--paper)] border-[1.5px] border-[var(--ink)] p-6 flex flex-col gap-4 min-w-[280px]">
+            <span className="font-data text-[11px] uppercase tracking-widest text-[var(--ink-3)]">New slot</span>
+            <span className="font-brand text-[20px] text-[var(--ink)]">
+              {slotPopup.date?.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })}
+            </span>
+            <Button variant="secondary" onClick={() => setSlotPopup(null)}>Close</Button>
+          </div>
         </div>
-      ))}
+      )}
     </main>
   )
 }

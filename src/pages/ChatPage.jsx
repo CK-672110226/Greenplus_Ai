@@ -9,6 +9,7 @@ export function ChatPage() {
   const language = useSelector(s => s.user.language)
   const [draft, setDraft]           = useState('')
   const [offerOpen, setOfferOpen]   = useState(false)
+  const [dialOpen, setDialOpen]     = useState(false)
   const bottomRef = useRef(null)
 
   useEffect(() => {
@@ -39,8 +40,9 @@ export function ChatPage() {
   }
 
   async function handleOffer(offer) {
+    const side = offer.side ?? 'sell'
     const body = [
-      `[OFFER] ${offer.material}`,
+      `[OFFER:${side}] ${offer.material}`,
       `฿${offer.price}/kg`,
       offer.weight ? `${offer.weight}kg` : null,
       offer.date   ? offer.date           : null,
@@ -118,7 +120,7 @@ export function ChatPage() {
             <div className="flex-1 overflow-y-auto px-5 py-4 flex flex-col gap-3">
               {messages.map(msg => {
                 const isOwn   = msg.sender_id === session?.user?.id
-                const isOffer = msg.body.startsWith('[OFFER]')
+                const isOffer = msg.body.startsWith('[OFFER:')
                 return (
                   <div key={msg.id} className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}>
                     <div
@@ -138,7 +140,7 @@ export function ChatPage() {
                         </div>
                       )}
                       <span className={isOffer ? 'font-data text-[13px]' : ''}>
-                        {isOffer ? msg.body.replace('[OFFER] ', '') : msg.body}
+                        {isOffer ? msg.body.replace(/^\[OFFER:[^\]]+\] /, '') : msg.body}
                       </span>
                       <div className="font-data text-[9px] text-[var(--ink-3)] mt-1 text-right">
                         {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
@@ -155,14 +157,45 @@ export function ChatPage() {
               className="px-5 py-3 border-t-[1.5px] border-[var(--ink-4)] flex gap-2 items-end"
               style={{ background: 'var(--paper)' }}
             >
-              {/* Offer trigger */}
-              <button
-                onClick={() => setOfferOpen(true)}
-                title="Send structured offer"
-                className="flex-shrink-0 px-3 py-2 border-[1.5px] border-[var(--ink-4)] text-[var(--ink-3)] font-data text-[11px] uppercase tracking-widest bg-transparent cursor-pointer hover:border-[var(--ink)] hover:text-[var(--ink)] transition-colors"
-              >
-                + Offer
-              </button>
+              {/* Speed dial FAB */}
+              <div className="relative flex-shrink-0">
+                {/* Speed dial sub-buttons */}
+                {dialOpen && (
+                  <div className="absolute bottom-12 left-0 flex flex-col gap-2 items-center">
+                    <button
+                      onClick={() => { setDialOpen(false); setOfferOpen(true) }}
+                      className="w-9 h-9 border-[1.5px] border-[var(--ink)] bg-[var(--paper)] text-[var(--ink)] font-data text-[9px] uppercase tracking-wide shadow-[2px_2px_0_var(--ink)] cursor-pointer flex items-center justify-center"
+                      title="Offer"
+                    >
+                      ฿
+                    </button>
+                    <button
+                      className="w-9 h-9 border-[1.5px] border-[var(--ink-4)] bg-[var(--paper-2)] text-[var(--ink-3)] font-data text-[9px] uppercase shadow-[1px_1px_0_var(--ink-4)] cursor-not-allowed flex items-center justify-center"
+                      title="Photo (coming soon)"
+                      disabled
+                    >
+                      ☐
+                    </button>
+                    <button
+                      className="w-9 h-9 border-[1.5px] border-[var(--ink-4)] bg-[var(--paper-2)] text-[var(--ink-3)] font-data text-[9px] uppercase shadow-[1px_1px_0_var(--ink-4)] cursor-not-allowed flex items-center justify-center"
+                      title="Voice (coming soon)"
+                      disabled
+                    >
+                      ♪
+                    </button>
+                  </div>
+                )}
+                {/* Main FAB */}
+                <button
+                  onClick={() => setDialOpen(d => !d)}
+                  className={[
+                    'w-10 h-10 border-[1.5px] border-[var(--ink)] bg-[var(--green)] text-[var(--ink)] shadow-[2px_2px_0_var(--ink)] cursor-pointer font-data text-[20px] leading-none flex items-center justify-center transition-transform duration-150',
+                    dialOpen ? 'rotate-45' : ''
+                  ].join(' ')}
+                >
+                  +
+                </button>
+              </div>
               <textarea
                 value={draft}
                 onChange={e => setDraft(e.target.value)}
