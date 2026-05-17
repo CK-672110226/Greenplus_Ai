@@ -139,7 +139,7 @@ function BuyerProfile({ profile, session, t, language }) {
               key={mat}
               onClick={() => toggle(mat)}
               className={[
-                'px-3 py-1 font-data text-[11px] uppercase tracking-widest border-[1.5px] transition-colors',
+                'px-3 py-1 font-data text-[11px] uppercase tracking-widest border-[1.5px] transition-colors cursor-pointer',
                 accepted.includes(mat)
                   ? 'border-[var(--green)] bg-[var(--green-soft)] text-[var(--green-ink)]'
                   : 'border-[var(--ink-4)] bg-[var(--paper)] text-[var(--ink-3)]',

@@ -20,7 +20,6 @@ C4Context
   System_Ext(vertex,    "Vertex AI AutoML",    "Two-stage waste classifier (GCP)")
   System_Ext(onnx,      "ONNX Runtime Web",    "Local inference in browser (WASM)")
   System_Ext(osm,       "OpenStreetMap",       "Tile server — no API key required")
-  System_Ext(gmaps,     "Google Maps",         "Directions deep-link only")
   System_Ext(vercel,    "Vercel",              "Hosting, CI/CD, Edge CDN")
 
   Rel(user,   spa, "Scan · Basket · Booking · Map")
@@ -31,5 +30,23 @@ C4Context
   Rel(spa, vertex,   "Stage 1 classify + Stage 2 cleanliness")
   Rel(spa, onnx,     "Offline inference (WASM)")
   Rel(spa, osm,      "Map tiles (react-leaflet)")
-  Rel(spa, gmaps,    "Directions link")
   Rel(spa, vercel,   "Deployed to")
+
+%% ─────────────────────────────────────────────────────────────────────────────
+%% DIAGRAM 2 — On-Demand Logistics State Machine
+%% Booking lifecycle: Seller → Booking → Rider (Buyer)
+%% ─────────────────────────────────────────────────────────────────────────────
+
+stateDiagram-v2
+  direction LR
+  [*] --> pending : Seller creates booking
+  pending --> accepted : Buyer accepts
+  pending --> rejected : Buyer rejects
+  accepted --> searching : System assigns rider
+  searching --> arrived : Rider reaches location
+  arrived --> completed : Weight verified + paid
+  accepted --> cancelled : Either party cancels
+  searching --> cancelled : No rider found
+  rejected --> [*]
+  completed --> [*]
+  cancelled --> [*]

@@ -418,3 +418,27 @@ Stage 2 (cleanliness per material):
 | 11 | Admin profile stats (not hardcoded 0) | ProfilePage |
 | 12 | Settings notification prefs persist | SettingsPage |
 | 13 | Export scan history CSV | SettingsPage / ProfilePage |
+
+---
+
+## Feature 21 — On-Demand Logistics (Partial — M6)
+
+**Status:** ⚠️ Partial  
+**Files:** `src/store/logisticsSlice.js`, `src/hooks/useRealtimeLogistics.js`, `src/pages/RiderDashboardPage.jsx`, `src/components/UserTrackingPanel.jsx`, `src/pages/BuyerOnboardingPage.jsx`  
+**DB:** `supabase/migrations/013_logistics_onboarding.sql`, `supabase/migrations/016_rider_realtime_rls.sql`
+
+3-sided Grab-inspired system: Seller creates booking → Buyer accepts → Rider (buyer role) picks up with GPS tracking. Booking state machine: pending → accepted → searching → arrived → completed | cancelled | rejected.
+
+**Missing:** Manual rider assignment UI in admin, rider rating system.
+
+---
+
+## Feature 22 — Chat / Messages (Partial — M8)
+
+**Status:** ⚠️ Partial  
+**Files:** `src/store/chatSlice.js`, `src/hooks/useChat.js`, `src/pages/ChatPage.jsx`  
+**DB:** `supabase/migrations/014_chat.sql`
+
+Real-time 1:1 chat between sellers and buyer shops via Supabase Realtime. Full thread UI with message bubbles, composer, keyboard shortcuts.
+
+**Missing:** ChatOfferModal (make in-chat offers with price/item/date), mobile room list navigation, unread count badge.

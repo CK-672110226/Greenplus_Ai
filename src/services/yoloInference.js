@@ -34,7 +34,8 @@ function preprocessYolo(source) {
     float32[i + n]     = data[i * 4 + 1] / 255
     float32[i + 2 * n] = data[i * 4 + 2] / 255
   }
-  return { float32, padX, padY, scale }
+  // sw/sh returned so parseYolo can produce normalized [0,1] bbox coordinates
+  return { float32, padX, padY, scale, sw, sh }
 }
 
 // ── NMS ──────────────────────────────────────────────────────────
@@ -63,7 +64,8 @@ function nms(dets) {
 
 // ── Output parsing ────────────────────────────────────────────────
 // classLabels: string[] matching model output class indices
-function parseYolo(rawData, shape, classLabels, padX, padY, scale) {
+// sw/sh: original source pixel dimensions, used to normalise bbox to [0,1]
+function parseYolo(rawData, shape, classLabels, padX, padY, scale, sw, sh) {
   const nc         = classLabels.length
   const [, d0, d1] = shape   // shape is [1, ?, ?]
 
@@ -123,11 +125,18 @@ function parseYolo(rawData, shape, classLabels, padX, padY, scale) {
     dets.push({ x1, y1, x2, y2, score, classIdx: bestClass })
   }
 
+  const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v))
   return nms(dets).map(d => ({
     materialType: classLabels[d.classIdx] ?? `class_${d.classIdx}`,
     confidence:   +d.score.toFixed(3),
-    bbox:         { x1: d.x1, y1: d.y1, x2: d.x2, y2: d.y2 },
-    sizeKg:       +(((d.x2 - d.x1) * (d.y2 - d.y1)) / 90000 * 2).toFixed(2),
+    // Normalized [0,1] relative to source image — safe for CSS percentage overlays
+    bbox: {
+      x1: clamp(d.x1 / sw, 0, 1),
+      y1: clamp(d.y1 / sh, 0, 1),
+      x2: clamp(d.x2 / sw, 0, 1),
+      y2: clamp(d.y2 / sh, 0, 1),
+    },
+    sizeKg: +(((d.x2 - d.x1) * (d.y2 - d.y1)) / (sw * sh) * 2).toFixed(2),
   }))
 }
 
@@ -138,7 +147,7 @@ export async function yoloStage1(modelUrl, classLabels, imageSource) {
     const { Tensor, InferenceSession } = await import('onnxruntime-web')
     const session = await InferenceSession.create(modelUrl)
 
-    const { float32, padX, padY, scale } = preprocessYolo(imageSource)
+    const { float32, padX, padY, scale, sw, sh } = preprocessYolo(imageSource)
     const inputName = session.inputNames[0]
     const tensor    = new Tensor('float32', float32, [1, 3, YOLO_INPUT_SIZE, YOLO_INPUT_SIZE])
 
@@ -147,7 +156,7 @@ export async function yoloStage1(modelUrl, classLabels, imageSource) {
     const rawData    = Array.from(outTensor.data)
     const shape      = outTensor.dims
 
-    const dets = parseYolo(rawData, shape, classLabels, padX, padY, scale)
+    const dets = parseYolo(rawData, shape, classLabels, padX, padY, scale, sw, sh)
     if (!dets.length) {
       console.info('[YOLO] no detections above threshold')
       return []

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet'
+import { MapContainer, TileLayer, Marker, Popup, Circle, Polyline, useMap } from 'react-leaflet'
 import L from 'leaflet'
 import { useT } from '../hooks/useT'
 import { WASTE_ITEMS, localName } from '../data/wasteItems'
@@ -76,13 +76,18 @@ const pillBase     = 'font-data text-[11px] uppercase tracking-widest border-[1.
 const pillActive   = 'bg-[var(--ink)] text-[var(--paper)]'
 const pillInactive = 'bg-[var(--paper)] text-[var(--ink)] hover:bg-[var(--paper-2)]'
 
+function IconPin() {
+  return <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+}
+
 export function MapPage() {
   const t          = useT()
   const language   = useSelector(s => s.user.language)
   const darkMode   = useSelector(s => s.user.darkMode)
   const basket     = useSelector(s => s.waste?.basket ?? [])
-  const [filter, setFilter] = useState('all')
-  const { shops, loading }  = useShops()
+  const [filter, setFilter]   = useState('all')
+  const [routeTo, setRouteTo] = useState(null)
+  const { shops, loading }    = useShops()
   const gps = useGPS()
   const { request: requestGPS } = gps
 
@@ -99,9 +104,36 @@ export function MapPage() {
   const visible = (filter === 'all' ? shops : shops.filter(s => (s.accepts ?? []).includes(filter)))
     .filter(s => s.lat != null && s.lng != null)
 
+  const shopCount = visible.length
+
   return (
-    <main className="flex flex-col items-center px-4 py-10 gap-6">
-      <h1 className="font-brand text-[28px] text-[var(--ink)] m-0">{t.mapTitle ?? t.map}</h1>
+    <main className="flex flex-col items-center gap-0">
+
+      {/* Page header */}
+      <div className="w-full px-4 pt-4 pb-2 border-b-[1.5px] border-[var(--ink-4)]">
+        <div className="flex items-center gap-1.5 font-data text-[10px] uppercase tracking-widest text-[var(--ink-3)] mb-1">
+          <IconPin />
+          CHIANG MAI AREA
+        </div>
+        <h1 className="font-brand text-[24px] leading-tight m-0">
+          {t.mapTitle ?? 'Nearby Buyers'}
+          <span className="text-[var(--green-ink)] font-data text-[16px] ml-2">· {shopCount} shops</span>
+        </h1>
+      </div>
+
+      {/* Map legend */}
+      <div className="w-full flex items-center gap-4 px-4 py-2 text-[11px] font-data text-[var(--ink-3)] border-b-[1.5px] border-[var(--ink-4)] bg-[var(--paper-2)]">
+        <span className="flex items-center gap-1.5">
+          <span className="w-3 h-3 rounded-full bg-[var(--green)] border-[1.5px] border-[var(--ink)]" />
+          Open · accepts your materials
+        </span>
+        <span className="flex items-center gap-1.5">
+          <span className="w-3 h-3 rounded-full bg-[var(--ink-4)] border-[1.5px] border-[var(--ink)]" />
+          Closed or no match
+        </span>
+      </div>
+
+      <div className="flex flex-col items-center w-full px-4 py-6 gap-6">
 
       {/* GPS status strip */}
       <div className="w-full max-w-5xl flex items-center gap-3">
@@ -175,6 +207,13 @@ export function MapPage() {
             className="w-full h-[55vw] max-h-[480px] min-h-[260px] border-[1.5px] border-[var(--ink)]"
             style={{ position: 'relative', zIndex: 0, overflow: 'hidden' }}
           >
+            {routeTo && (
+              <div className="absolute top-2 left-1/2 -translate-x-1/2 z-[1000] flex items-center gap-3 px-4 py-2 bg-[var(--paper)] border-[1.5px] border-[var(--ink)] shadow-[2px_2px_0_var(--ink)]" style={{ whiteSpace: 'nowrap' }}>
+                <span className="font-data text-[12px] uppercase tracking-widest text-[var(--green-ink)]">● ROUTE</span>
+                <span className="font-body text-[14px]">{routeTo.name}</span>
+                <button onClick={() => setRouteTo(null)} className="font-data text-[11px] text-[var(--ink-3)] bg-transparent border-none cursor-pointer hover:text-[var(--ink)]">✕ clear</button>
+              </div>
+            )}
             <MapContainer
               center={mapCenter}
               zoom={mapZoom}
@@ -197,6 +236,32 @@ export function MapPage() {
                     </div>
                   </Popup>
                 </Marker>
+              )}
+
+              {userCenter && (
+                <Circle
+                  center={userCenter}
+                  radius={5000}
+                  pathOptions={{
+                    color: '#22C55E',
+                    weight: 1.5,
+                    dashArray: '6 4',
+                    fillColor: '#22C55E',
+                    fillOpacity: 0.04,
+                  }}
+                />
+              )}
+
+              {userCenter && routeTo && (
+                <Polyline
+                  positions={[userCenter, [routeTo.lat, routeTo.lng]]}
+                  pathOptions={{
+                    color: '#22C55E',
+                    weight: 3,
+                    opacity: 0.85,
+                    dashArray: '8 5',
+                  }}
+                />
               )}
 
               {visible.map(shop => {
@@ -234,10 +299,18 @@ export function MapPage() {
                           {(shop.accepts ?? []).map(a => localName(a, language)).join(', ')}
                         </div>
                         <button
-                          onClick={() => window.open(`https://maps.google.com/maps?daddr=${shop.lat},${shop.lng}`, '_blank')}
+                          onClick={() => {
+                            const from = gps.lat ? `${gps.lat},${gps.lng}` : ''
+                            const to   = `${shop.lat},${shop.lng}`
+                            const url  = from
+                              ? `https://www.openstreetmap.org/directions?from=${from}&to=${to}`
+                              : `https://www.openstreetmap.org/?mlat=${shop.lat}&mlon=${shop.lng}`
+                            window.open(url, '_blank')
+                            setRouteTo(shop)
+                          }}
                           style={{ fontSize: 12, color: '#22C55E', background: 'none', border: 'none', cursor: 'pointer', padding: 0, marginTop: 6, display: 'block' }}
                         >
-                          {t.directions} →
+                          Navigate →
                         </button>
                       </div>
                     </Popup>
@@ -251,6 +324,8 @@ export function MapPage() {
             <p className="font-body text-[15px] text-[var(--ink-3)]">{t.noShopsNear}</p>
           )}
         </div>
+      </div>
+
       </div>
     </main>
   )

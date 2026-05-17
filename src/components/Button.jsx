@@ -5,6 +5,7 @@ export function Button({ children, variant = 'primary', onClick, type = 'button'
     'border-[1.5px] border-[var(--ink)]',
     'shadow-[2px_2px_0_var(--ink)]',
     'transition-all duration-75',
+    'cursor-pointer',
     'active:translate-x-[2px] active:translate-y-[2px] active:shadow-none',
     'disabled:opacity-50 disabled:cursor-not-allowed',
     fullWidth ? 'w-full' : '',

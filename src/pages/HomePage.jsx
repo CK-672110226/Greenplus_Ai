@@ -66,7 +66,7 @@ export function HomePage() {
   const basket    = useSelector(s => s.waste?.basket ?? [])
   const lastScan  = useSelector(s => s.waste?.lastScan)
 
-  const { shops } = useShops()
+  const { shops, loading } = useShops()
 
   const [lastRefresh] = useState(() => new Date())
 
@@ -267,7 +267,14 @@ const { salute, name: displayName } = greeting(profile?.display_name)
           <div className="px-6 py-6">
             <SectionDivider label="Nearby buying requests" />
             <div className="flex flex-col mt-3">
-              {nearbyShops.map(shop => {
+              {loading && (
+                <div className="flex flex-col gap-2 w-full">
+                  {[1,2,3].map(i => (
+                    <div key={i} className="h-16 border-[1.5px] border-[var(--ink-4)] animate-pulse bg-[var(--paper-2)]" />
+                  ))}
+                </div>
+              )}
+              {!loading && nearbyShops.length > 0 && nearbyShops.map(shop => {
                 const topMaterial = (shop.accepts ?? [])[0]
                 const price = topMaterial ? pricePerKg(topMaterial, 'A') : 0
                 return (

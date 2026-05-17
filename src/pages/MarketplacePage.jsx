@@ -100,7 +100,7 @@ function PostAdForm({ onClose, onAdd, marketPrice }) {
           <div className="flex gap-2">
             {[{ label: 'สะอาด', val: true }, { label: 'ไม่สะอาด', val: false }].map(({ label, val }) => (
               <button key={label} type="button" onClick={() => set('clean', val)}
-                className={`flex-1 py-2 font-data text-[12px] uppercase tracking-widest border-[1.5px] border-[var(--ink)] transition-colors ${form.clean === val ? 'bg-[var(--ink)] text-[var(--paper)]' : 'bg-transparent text-[var(--ink)]'}`}>
+                className={`flex-1 py-2 font-data text-[12px] uppercase tracking-widest border-[1.5px] border-[var(--ink)] transition-colors cursor-pointer ${form.clean === val ? 'bg-[var(--ink)] text-[var(--paper)]' : 'bg-transparent text-[var(--ink)]'}`}>
                 {label}
               </button>
             ))}
@@ -143,7 +143,7 @@ function PostAdForm({ onClose, onAdd, marketPrice }) {
                   () => {}
                 )
               }}
-              className="px-3 py-2 font-data text-[11px] uppercase tracking-widest border-[1.5px] border-[var(--ink)] bg-transparent hover:bg-[var(--ink)] hover:text-[var(--paper)] transition-colors whitespace-nowrap"
+              className="px-3 py-2 font-data text-[11px] uppercase tracking-widest border-[1.5px] border-[var(--ink)] bg-transparent hover:bg-[var(--ink)] hover:text-[var(--paper)] transition-colors whitespace-nowrap cursor-pointer"
             >
               📍 ตำแหน่ง
             </button>
@@ -237,7 +237,7 @@ export function MarketplacePage() {
                   key={tab.key}
                   onClick={() => setCatFilter(tab.key)}
                   className={[
-                    'px-3 py-1.5 font-data text-[11px] uppercase tracking-widest border-[1.5px] transition-colors',
+                    'px-3 py-1.5 font-data text-[11px] uppercase tracking-widest border-[1.5px] transition-colors cursor-pointer',
                     catFilter === tab.key
                       ? 'bg-[var(--ink)] text-[var(--paper)] border-[var(--ink)]'
                       : 'bg-transparent text-[var(--ink-3)] border-[var(--ink-4)] hover:border-[var(--ink)] hover:text-[var(--ink)]',

@@ -9,12 +9,14 @@ import { bulkSet, resetToDefault } from '../store/pricingSlice'
 import { useMyShop } from '../hooks/useMyShop'
 import { supabase } from '../lib/supabase'
 
+const DEFAULT_CAP_KG = 100
+
 function buildDefaultPrices() {
   const prices = {}
   Object.keys(WASTE_ITEMS).forEach(mat => {
     prices[mat] = {
-      clean: pricePerKg(mat, true),
-      dirty: pricePerKg(mat, false),
+      price_per_kg: pricePerKg(mat, true),
+      cap_kg: DEFAULT_CAP_KG,
     }
   })
   return prices
@@ -24,9 +26,8 @@ export function PricingPage() {
   const t        = useT()
   const dispatch = useDispatch()
   const language = useSelector(s => s.user.language)
-  const reduxPrices = useSelector(s => s.pricing.prices)
 
-  const [local, setLocal] = useState(() => JSON.parse(JSON.stringify(reduxPrices)))
+  const [local, setLocal] = useState(() => buildDefaultPrices())
   const { shop } = useMyShop()
 
   useEffect(() => {
@@ -36,15 +37,15 @@ export function PricingPage() {
       try {
         const { data, error } = await supabase
           .from('shop_pricing')
-          .select('material_type, price_grade_a, price_grade_c')
+          .select('material_type, price_per_kg, cap_kg')
           .eq('shop_id', shop.id)
 
         if (!error && data && data.length > 0) {
-          const merged = { ...reduxPrices }
+          const merged = buildDefaultPrices()
           data.forEach(row => {
             merged[row.material_type] = {
-              clean: row.price_grade_a ?? merged[row.material_type]?.clean,
-              dirty: row.price_grade_c ?? merged[row.material_type]?.dirty,
+              price_per_kg: row.price_per_kg ?? merged[row.material_type]?.price_per_kg,
+              cap_kg:       row.cap_kg       ?? merged[row.material_type]?.cap_kg,
             }
           })
           setLocal(merged)
@@ -54,8 +55,6 @@ export function PricingPage() {
       }
     }
     loadShopPricing()
-  // reduxPrices intentionally excluded — only sync from DB once when shop loads
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [shop])
 
   function handleChange(mat, field, raw) {
@@ -64,14 +63,22 @@ export function PricingPage() {
   }
 
   async function handleSave() {
-    dispatch(bulkSet(local))
+    // Keep Redux pricing slice in sync using the single price_per_kg value
+    const reduxPayload = {}
+    Object.entries(local).forEach(([mat, vals]) => {
+      reduxPayload[mat] = {
+        clean: vals.price_per_kg,
+        dirty: vals.price_per_kg,
+      }
+    })
+    dispatch(bulkSet(reduxPayload))
 
     if (shop?.id) {
-      const rows = Object.entries(local).map(([mat, grades]) => ({
+      const rows = Object.entries(local).map(([mat, vals]) => ({
         shop_id:       shop.id,
         material_type: mat,
-        price_grade_a: grades.clean ?? null,
-        price_grade_c: grades.dirty ?? null,
+        price_per_kg:  vals.price_per_kg ?? null,
+        cap_kg:        vals.cap_kg        ?? null,
       }))
       try {
         await supabase.from('shop_pricing').upsert(rows, { onConflict: 'shop_id,material_type' })
@@ -84,9 +91,8 @@ export function PricingPage() {
   }
 
   function handleReset() {
-    const defaults = buildDefaultPrices()
     dispatch(resetToDefault())
-    setLocal(defaults)
+    setLocal(buildDefaultPrices())
     toast.success(t.pricingReset)
   }
 
@@ -103,55 +109,73 @@ export function PricingPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-3 gap-2 font-data text-[11px] text-[var(--ink-3)] uppercase tracking-widest px-3">
+      {/* Table header */}
+      <div className="grid grid-cols-4 gap-2 font-data text-[11px] text-[var(--ink-3)] uppercase tracking-widest px-3">
         <span>{t.materialTypeLabel}</span>
-        <span>{t.gradeClean}</span>
-        <span>{t.gradeDirty}</span>
+        <span>{t.pricePerKgCol}</span>
+        <span>{t.capKgCol}</span>
+        <span>{t.statusLabel}</span>
       </div>
 
       <div className="flex flex-col gap-3">
         {Object.keys(WASTE_ITEMS).map(mat => {
-          const marketClean = pricePerKg(mat, true)
-          const marketDirty = pricePerKg(mat, false)
-          const currentPrices = local[mat] ?? { clean: marketClean, dirty: marketDirty }
+          const marketRef   = pricePerKg(mat, true)
+          const currentVals = local[mat] ?? { price_per_kg: marketRef, cap_kg: DEFAULT_CAP_KG }
+          const price       = currentVals.price_per_kg ?? 0
+          const cap         = currentVals.cap_kg ?? DEFAULT_CAP_KG
+          const diff        = price - marketRef
 
           return (
-            <Card key={mat} className="grid grid-cols-3 gap-3 items-center">
+            <Card key={mat} className="grid grid-cols-4 gap-3 items-center">
+              {/* Material name */}
               <div className="flex flex-col gap-0.5">
                 <span className="font-body text-[14px] text-[var(--ink)]">
                   {localName(mat, language)}
                 </span>
                 <span className="font-data text-[10px]" style={{ color: 'var(--ink-3)' }}>
-                  {t.marketRate}: ฿{marketClean} / ฿{marketDirty}
+                  {t.marketRate}: ฿{marketRef}/kg
                 </span>
               </div>
 
-              {[['clean', marketClean], ['dirty', marketDirty]].map(([field, market]) => {
-                const val = currentPrices[field] ?? 0
-                const diff = val - market
-                return (
-                  <div key={field} className="flex flex-col gap-0.5">
-                    <input
-                      type="number"
-                      min="0"
-                      step="0.5"
-                      value={val}
-                      onChange={e => handleChange(mat, field, e.target.value)}
-                      className="w-full px-2 py-1 border-[1.5px] border-[var(--ink)] bg-[var(--paper)] font-data text-[13px] outline-none focus:border-[var(--green)]"
-                    />
-                    {diff > 0 && (
-                      <span className="font-data text-[10px]" style={{ color: 'var(--green)' }}>
-                        {t.priceAbove}
-                      </span>
-                    )}
-                    {diff < 0 && (
-                      <span className="font-data text-[10px]" style={{ color: 'var(--orange)' }}>
-                        {t.priceBelow}
-                      </span>
-                    )}
-                  </div>
-                )
-              })}
+              {/* Price per kg */}
+              <div className="flex flex-col gap-0.5">
+                <input
+                  type="number"
+                  min="0"
+                  step="0.5"
+                  value={price}
+                  onChange={e => handleChange(mat, 'price_per_kg', e.target.value)}
+                  className="w-full px-2 py-1 border-[1.5px] border-[var(--ink)] bg-[var(--paper)] font-data text-[13px] outline-none focus:border-[var(--green)]"
+                />
+                {diff > 0 && (
+                  <span className="font-data text-[10px]" style={{ color: 'var(--green)' }}>
+                    {t.priceAbove}
+                  </span>
+                )}
+                {diff < 0 && (
+                  <span className="font-data text-[10px]" style={{ color: 'var(--orange)' }}>
+                    {t.priceBelow}
+                  </span>
+                )}
+              </div>
+
+              {/* Cap kg/day */}
+              <input
+                type="number"
+                min="0"
+                step="10"
+                value={cap}
+                onChange={e => handleChange(mat, 'cap_kg', e.target.value)}
+                className="w-full px-2 py-1 border-[1.5px] border-[var(--ink)] bg-[var(--paper)] font-data text-[13px] outline-none focus:border-[var(--green)]"
+              />
+
+              {/* Status indicator */}
+              <span
+                className="font-data text-[11px] uppercase tracking-wide"
+                style={{ color: price > 0 ? 'var(--green)' : 'var(--ink-3)' }}
+              >
+                {price > 0 ? t.statusActive : t.statusOff}
+              </span>
             </Card>
           )
         })}

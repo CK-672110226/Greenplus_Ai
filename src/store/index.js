@@ -9,6 +9,8 @@ import notificationReducer from './notificationSlice'
 import scheduleReducer from './scheduleSlice'
 import pricingReducer from './pricingSlice'
 import customLabelsReducer from './customLabelsSlice'
+import logisticsReducer from './logisticsSlice'
+import chatReducer from './chatSlice'
 
 export const store = configureStore({
   reducer: {
@@ -22,5 +24,7 @@ export const store = configureStore({
     schedule:      scheduleReducer,
     pricing:       pricingReducer,
     customLabels:  customLabelsReducer,
+    logistics:     logisticsReducer,
+    chat:          chatReducer,
   },
 })

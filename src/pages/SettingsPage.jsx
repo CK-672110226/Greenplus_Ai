@@ -1,8 +1,10 @@
 import { useDispatch, useSelector } from 'react-redux'
-import { setLanguage, toggleDarkMode, setProfile } from '../store/userSlice'
+import { useNavigate } from 'react-router-dom'
+import { setLanguage, toggleDarkMode, setProfile, clearUser } from '../store/userSlice'
 import { useT } from '../hooks/useT'
 import { SectionDivider } from '../components/SectionDivider'
 import { supabase } from '../lib/supabase'
+import { toast } from 'sonner'
 
 function LangBtn({ active, onClick, children }) {
   return (
@@ -10,7 +12,7 @@ function LangBtn({ active, onClick, children }) {
       type="button"
       onClick={onClick}
       className={[
-        'px-4 py-2 font-body text-[16px] border-[1.5px] transition-all',
+        'px-4 py-2 font-body text-[16px] border-[1.5px] transition-all cursor-pointer',
         active
           ? 'border-[var(--ink)] bg-[var(--green)] text-[#062040] shadow-[2px_2px_0_var(--ink)]'
           : 'border-[var(--ink-4)] bg-[var(--paper)] text-[var(--ink-3)] hover:border-[var(--ink)]',
@@ -44,7 +46,8 @@ function Toggle({ on, onToggle, label }) {
 const DEFAULT_PREFS = { price_alerts: true, pickup_reminders: true, marketing: false }
 
 export function SettingsPage() {
-  const dispatch = useDispatch()
+  const dispatch  = useDispatch()
+  const navigate  = useNavigate()
   const { profile, session, language, darkMode } = useSelector(s => s.user)
   const t = useT()
 
@@ -58,6 +61,26 @@ export function SettingsPage() {
         .from('user_profiles')
         .update({ notification_prefs: next })
         .eq('id', session.user.id)
+    }
+  }
+
+  async function handleDeleteAccount() {
+    const confirmed = window.confirm(
+      language === 'th'
+        ? 'ลบบัญชีถาวร? ไม่สามารถกู้คืนได้'
+        : 'Permanently delete your account? This cannot be undone.'
+    )
+    if (!confirmed) return
+    try {
+      await supabase
+        .from('user_profiles')
+        .update({ deleted_at: new Date().toISOString() })
+        .eq('id', session.user.id)
+      await supabase.auth.signOut()
+      dispatch(clearUser())
+      navigate('/')
+    } catch {
+      toast.error('Could not delete account. Please contact support.')
     }
   }
 
@@ -133,7 +156,7 @@ export function SettingsPage() {
             <button
               type="button"
               className="flex items-center justify-between py-3 bg-transparent border-none cursor-pointer text-left w-full"
-              onClick={() => {}}
+              onClick={handleDeleteAccount}
             >
               <span className="font-body text-[15px] text-[var(--orange)]">Delete account</span>
               <span className="font-data text-[11px] text-[var(--orange)]">→</span>

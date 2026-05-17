@@ -10,6 +10,10 @@ import { useSupabaseBookings } from '../hooks/useSupabaseBookings'
 import { supabase } from '../lib/supabase'
 import { todayBangkok } from '../utils/time'
 
+function IconClock() {
+  return <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+}
+
 const TODAY = todayBangkok()
 
 function slotTime(scheduledAt) {
@@ -156,7 +160,10 @@ export function SchedulePage() {
 
       {groups.map(group => (
         <div key={group.label} className="flex flex-col gap-3">
-          <span className="font-data text-[10px] text-[var(--ink-4)] uppercase tracking-widest">{group.label}</span>
+          <span className="flex items-center gap-1.5 font-data text-[10px] text-[var(--ink-4)] uppercase tracking-widest">
+            <IconClock />
+            {group.label}
+          </span>
           {group.items.map(slot => (
             <SlotCard
               key={slot.id}

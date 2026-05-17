@@ -5,6 +5,7 @@ import { useDispatch, useSelector } from 'react-redux'
 import { SpeedInsights } from '@vercel/speed-insights/react'
 import { SmartLayout } from './layouts/SmartLayout'
 import { ProtectedRoute } from './components/ProtectedRoute'
+import { ErrorBoundary } from './components/ErrorBoundary'
 import { useAuth } from './hooks/useAuth'
 import { useActiveModels } from './hooks/useActiveModels'
 import { setDarkMode } from './store/userSlice'
@@ -13,6 +14,7 @@ import { setDarkMode } from './store/userSlice'
 import { LandingPage } from './pages/LandingPage'
 import { LoginPage } from './pages/LoginPage'
 import { AdminLoginPage } from './pages/AdminLoginPage'
+import { Page404 } from './pages/Page404'
 
 // Lazy-loaded — split into separate chunks; ONNX WASM only loads when ScanPage mounts
 const HomePage       = lazy(() => import('./pages/HomePage').then(m => ({ default: m.HomePage })))
@@ -25,8 +27,11 @@ const SchedulePage      = lazy(() => import('./pages/SchedulePage').then(m => ({
 const PricingPage       = lazy(() => import('./pages/PricingPage').then(m => ({ default: m.PricingPage })))
 const NotificationsPage = lazy(() => import('./pages/NotificationsPage').then(m => ({ default: m.NotificationsPage })))
 const AdminPage         = lazy(() => import('./pages/AdminPage').then(m => ({ default: m.AdminPage })))
-const SettingsPage   = lazy(() => import('./pages/SettingsPage').then(m => ({ default: m.SettingsPage })))
-const ProfilePage    = lazy(() => import('./pages/ProfilePage').then(m => ({ default: m.ProfilePage })))
+const SettingsPage          = lazy(() => import('./pages/SettingsPage').then(m => ({ default: m.SettingsPage })))
+const ProfilePage           = lazy(() => import('./pages/ProfilePage').then(m => ({ default: m.ProfilePage })))
+const RiderDashboardPage    = lazy(() => import('./pages/RiderDashboardPage').then(m => ({ default: m.RiderDashboardPage })))
+const ChatPage              = lazy(() => import('./pages/ChatPage').then(m => ({ default: m.ChatPage })))
+const BuyerOnboardingPage   = lazy(() => import('./pages/BuyerOnboardingPage').then(m => ({ default: m.BuyerOnboardingPage })))
 
 function PageFallback() {
   return (
@@ -64,6 +69,7 @@ function AuthInitializer({ children }) {
 
 function App() {
   return (
+    <ErrorBoundary>
     <BrowserRouter>
       <AuthInitializer>
         <Toaster richColors position="top-right" />
@@ -87,20 +93,28 @@ function App() {
               <Route path="/dashboard"     element={<ProtectedRoute requiredRole="buyer"><DashboardPage /></ProtectedRoute>} />
               <Route path="/schedule"      element={<ProtectedRoute requiredRole="buyer"><SchedulePage /></ProtectedRoute>} />
               <Route path="/pricing"       element={<ProtectedRoute requiredRole="buyer"><PricingPage /></ProtectedRoute>} />
-              <Route path="/notifications" element={<ProtectedRoute requiredRole="buyer"><NotificationsPage /></ProtectedRoute>} />
+              <Route path="/notifications" element={<ProtectedRoute><NotificationsPage /></ProtectedRoute>} />
 
               {/* Admin */}
               <Route path="/admin" element={<ProtectedRoute requiredRole="admin"><AdminPage /></ProtectedRoute>} />
 
+              {/* Buyer rider routes */}
+              <Route path="/rider"      element={<ProtectedRoute requiredRole="buyer"><RiderDashboardPage /></ProtectedRoute>} />
+              <Route path="/onboarding" element={<ProtectedRoute requiredRole="buyer"><BuyerOnboardingPage /></ProtectedRoute>} />
+
               {/* All authenticated roles */}
-              <Route path="/marketplace" element={<ProtectedRoute><MarketplacePage /></ProtectedRoute>} />
-              <Route path="/settings"    element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
-              <Route path="/profile"     element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
+              <Route path="/marketplace"  element={<ProtectedRoute><MarketplacePage /></ProtectedRoute>} />
+              <Route path="/settings"     element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
+              <Route path="/profile"      element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
+              <Route path="/chat"         element={<ProtectedRoute><ChatPage /></ProtectedRoute>} />
+              <Route path="/chat/:roomId" element={<ProtectedRoute><ChatPage /></ProtectedRoute>} />
             </Route>
+            <Route path="*" element={<Page404 />} />
           </Routes>
         </Suspense>
       </AuthInitializer>
     </BrowserRouter>
+    </ErrorBoundary>
   )
 }
 

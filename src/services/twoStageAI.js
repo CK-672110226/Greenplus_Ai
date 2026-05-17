@@ -39,7 +39,7 @@ async function runStage2ForDet(det, config, imageSource, b64) {
   const materialStage2Url = tmStage2Urls[det.materialType] ?? null
 
   if (!materialStage2Url && !onnxStage2Url && !vertexStage2Endpoint) {
-    return { ...det, stage2Pass: true, stage2Skipped: true }
+    return { ...det, stage2Pass: true, stage2Skipped: true, cleanlinessScore: null }
   }
 
   let s2Raw = null
@@ -53,7 +53,7 @@ async function runStage2ForDet(det, config, imageSource, b64) {
     s2Raw = await vertexStage2(b64, vertexStage2Endpoint)
   }
   const s2 = s2Raw ?? { pass: true }
-  return { ...det, stage2Pass: s2.pass }
+  return { ...det, stage2Pass: s2.pass, cleanlinessScore: s2.cleanlinessScore ?? null }
 }
 
 // ── Pipeline entry point ──────────────────────────────────────────
@@ -112,13 +112,14 @@ export async function twoStageInfer(imageSource, config = {}) {
 
       return {
         multiResult: results.map(r => ({
-          materialType:  r.materialType,
-          confidence:    r.confidence,
-          weight:        r.sizeKg,
-          bbox:          r.bbox ?? null,
-          stage2Pass:    r.stage2Pass,
-          stage2Skipped: r.stage2Skipped ?? false,
-          source:        'yolo',
+          materialType:    r.materialType,
+          confidence:      r.confidence,
+          weight:          r.sizeKg,
+          bbox:            r.bbox ?? null,
+          stage2Pass:      r.stage2Pass,
+          stage2Skipped:   r.stage2Skipped ?? false,
+          cleanlinessScore: r.cleanlinessScore ?? null,
+          source:          'yolo',
         })),
       }
     }
@@ -161,13 +162,14 @@ export async function twoStageInfer(imageSource, config = {}) {
 
   if (!materialStage2Url && !onnxStage2Url && !vertexStage2Endpoint) {
     return {
-      materialType:  s1.materialType,
-      confidence:    s1.confidence,
-      weight:        s1.sizeKg,
-      bbox:          s1.bbox ?? null,
-      stage2Pass:    true,
-      stage2Skipped: true,
-      source:        aiSource,
+      materialType:    s1.materialType,
+      confidence:      s1.confidence,
+      weight:          s1.sizeKg,
+      bbox:            s1.bbox ?? null,
+      stage2Pass:      true,
+      stage2Skipped:   true,
+      cleanlinessScore: null,
+      source:          aiSource,
     }
   }
 
@@ -185,11 +187,12 @@ export async function twoStageInfer(imageSource, config = {}) {
   const s2 = s2Raw ?? { pass: true }
 
   return {
-    materialType: s1.materialType,
-    confidence:   s1.confidence,
-    weight:       s1.sizeKg,
-    bbox:         s1.bbox ?? null,
-    stage2Pass:   s2.pass,
-    source:       aiSource,
+    materialType:    s1.materialType,
+    confidence:      s1.confidence,
+    weight:          s1.sizeKg,
+    bbox:            s1.bbox ?? null,
+    stage2Pass:      s2.pass,
+    cleanlinessScore: s2.cleanlinessScore ?? null,
+    source:          aiSource,
   }
 }

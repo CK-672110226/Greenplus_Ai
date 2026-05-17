@@ -278,4 +278,37 @@ export const en = {
   selectMaterial:    'Select material',
   selectGrade:       'Grade',
   addItem:           'Add',
+
+  // Pricing page — new single-price columns (migration 013b)
+  pricePerKgCol:     'Price (฿/kg)',
+  capKgCol:          'Cap (kg/day)',
+  statusLabel:       'Status',
+  statusActive:      'Active',
+  statusOff:         'Off',
+
+  // On-Demand Logistics
+  riderMode:         'Rider Mode',
+  goOnline:          'Go Online',
+  goOffline:         'Go Offline',
+  onlineStatus:      'Online',
+  offlineStatus:     'Offline',
+  searchingRider:    'Searching for a rider...',
+  riderFound:        'Rider found!',
+  riderAccepted:     'Rider accepted your order',
+  riderArrived:      'Rider has arrived',
+  orderCompleted:    'Order completed',
+  nearbyPickups:     'Nearby Pickups',
+  acceptPickup:      'Accept Order',
+  verifyWeights:     'Verify Weights',
+  completeAndPay:    'Complete & Pay',
+  cancelOrder:       'Cancel Order',
+  estimatedValue:    'Est. Value',
+  actualWeight:      'Actual Weight',
+  actualValue:       'Actual Value',
+
+  // Onboarding
+  tellUsAboutShop:   'Tell us about your shop',
+  materialsYouBuy:   'Materials you buy',
+  locationAndHours:  'Location & hours',
+  finishSetup:       'Finish setup',
 }

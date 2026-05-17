@@ -63,6 +63,13 @@ export function ScanPage() {
   const [showReport, setShowReport]         = useState(false)
   const [reportMaterial, setReportMaterial] = useState(Object.keys(WASTE_ITEMS)[0])
 
+  const [flashOn, setFlashOn]               = useState(false)
+  const [cameras, setCameras]               = useState([])
+  const [cameraIdx, setCameraIdx]           = useState(0)
+  const [bbox, setBbox]                     = useState(null)
+  const [cleanlinessScore, setCleanlinessScore] = useState(null)
+  const [stage, setStage]                   = useState(null)
+
   const [touchStart, setTouchStart] = useState(null)
   const [touchEnd, setTouchEnd]     = useState(null)
   const minSwipeDistance = 50
@@ -126,6 +133,13 @@ export function ScanPage() {
     }
   }, [])
 
+  // Enumerate cameras once on mount
+  useEffect(() => {
+    navigator.mediaDevices?.enumerateDevices()
+      .then(devices => setCameras(devices.filter(d => d.kind === 'videoinput')))
+      .catch(() => {})
+  }, [])
+
   // Cleanup camera on unmount only
   useEffect(() => {
     return () => { streamRef.current?.getTracks().forEach(t => t.stop()) }
@@ -138,6 +152,43 @@ export function ScanPage() {
     if (videoRef.current) videoRef.current.srcObject = null
   }
 
+  /* ── Flash control ───────────────────────────────────────── */
+  async function handleToggleFlash() {
+    const track = videoRef.current?.srcObject?.getVideoTracks?.()?.[0]
+    if (!track) return
+    const caps = track.getCapabilities?.()
+    if (!caps?.torch) { toast.info('Flash not supported on this device'); return }
+    const next = !flashOn
+    try {
+      await track.applyConstraints({ advanced: [{ torch: next }] })
+      setFlashOn(next)
+    } catch {
+      toast.info('Flash not available')
+    }
+  }
+
+  /* ── Camera switch ────────────────────────────────────────── */
+  async function handleSwitchCamera() {
+    if (cameras.length < 2) { toast.info('No other camera found'); return }
+    const nextIdx = (cameraIdx + 1) % cameras.length
+    setCameraIdx(nextIdx)
+    if (videoRef.current?.srcObject) {
+      videoRef.current.srcObject.getTracks().forEach(t => t.stop())
+    }
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { deviceId: { exact: cameras[nextIdx].deviceId } },
+      })
+      streamRef.current = stream
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream
+        await videoRef.current.play()
+      }
+    } catch {
+      toast.info('Could not switch camera')
+    }
+  }
+
   /* ── Inference ────────────────────────────────────────────── */
   async function runInference(source) {
     if (isMockMode) {
@@ -148,6 +199,9 @@ export function ScanPage() {
       setPhase(streamRef.current ? 'idle' : 'starting')
       return
     }
+    setBbox(null)
+    setCleanlinessScore(null)
+    setStage(1)
     setPhase('analyzing')
     try {
       const infer = await twoStageInfer(source, {
@@ -162,7 +216,9 @@ export function ScanPage() {
         vertexStage1Endpoint: aiConfig.vertexStage1Endpoint || null,
         vertexStage2Endpoint: aiConfig.vertexStage2Endpoint || null,
       })
+      setStage(2)
       if (infer.noDetection) {
+        setStage(null)
         toast.error(
           language === 'th'
             ? 'ตรวจไม่พบวัตถุ — ลองปรับมุมกล้องหรือแสงสว่าง'
@@ -172,23 +228,28 @@ export function ScanPage() {
         setPhase(streamRef.current ? 'idle' : 'starting')
         return
       }
-      if (infer.troll || infer.lowConfidence) { setPhase('troll'); return }
+      if (infer.troll || infer.lowConfidence) { setStage(null); setPhase('troll'); return }
 
       // Multi-object path: YOLO returned several detections at once
       if (infer.multiResult) {
         const newItems = infer.multiResult.map(r => ({
-          id:           crypto.randomUUID(),
-          materialType: r.materialType,
-          weight:       r.weight,
-          clean:        r.stage2Pass,
-          confidence:   r.confidence,
-          source:       r.source,
-          bbox:         r.bbox,
+          id:              crypto.randomUUID(),
+          materialType:    r.materialType,
+          weight:          r.weight,
+          clean:           r.stage2Pass,
+          confidence:      r.confidence,
+          source:          r.source,
+          bbox:            r.bbox,
+          cleanlinessScore: r.cleanlinessScore ?? null,
         }))
 
         // Always update Live Analysis with the first (highest-confidence) detection
-        setResult(infer.multiResult[0])
-        dispatch(setLastScan(infer.multiResult[0]))
+        const first = infer.multiResult[0]
+        setResult(first)
+        setBbox(first.bbox ?? null)
+        setCleanlinessScore(first.cleanlinessScore ?? null)
+        setStage(null)
+        dispatch(setLastScan(first))
         navigator.vibrate?.(100)
 
         // Single dirty item in normal scan mode → trigger dirty popup
@@ -212,6 +273,9 @@ export function ScanPage() {
 
       navigator.vibrate?.(100)
       setResult(infer)
+      setBbox(infer.bbox ?? null)
+      setCleanlinessScore(infer.cleanlinessScore ?? null)
+      setStage(null)
       dispatch(setLastScan(infer))
 
       // Always accumulate in batch queue; dirty items need user confirmation first
@@ -227,6 +291,7 @@ export function ScanPage() {
       }
     } catch (err) {
       console.error('[Scan] inference error:', err)
+      setStage(null)
       const msg = language === 'th'
         ? 'AI ขัดข้อง — กรุณาลองใหม่อีกครั้ง'
         : 'AI error — please try again'
@@ -313,6 +378,9 @@ export function ScanPage() {
     setUploadSrc(null)
     uploadImgRef.current = null
     setResult(null)
+    setBbox(null)
+    setCleanlinessScore(null)
+    setStage(null)
     setDirtyAlert(false)
     setInputMode('camera')
     setPhase('starting')
@@ -352,12 +420,22 @@ export function ScanPage() {
 
           {/* Camera controls */}
           <div className="flex items-center gap-3 px-6 lg:px-8 py-3 border-b-[1.5px] border-[var(--ink)] bg-[var(--paper-2)]">
-            <button className="font-data text-[11px] text-[var(--ink-3)] border-[1.5px] border-[var(--ink-4)] px-2.5 py-1 bg-transparent cursor-not-allowed flex items-center gap-1.5">
+            <button
+              onClick={handleToggleFlash}
+              className={`font-data text-[11px] border-[1.5px] px-2.5 py-1 bg-transparent cursor-pointer flex items-center gap-1.5 transition-colors ${
+                flashOn
+                  ? 'border-[var(--orange)] text-[var(--orange)]'
+                  : 'border-[var(--ink-4)] text-[var(--ink-3)] hover:border-[var(--ink)] hover:text-[var(--ink)]'
+              }`}
+            >
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-              flash ▾
+              {flashOn ? 'flash ON' : 'flash ▾'}
             </button>
-            <button className="font-data text-[11px] text-[var(--ink-3)] border-[1.5px] border-[var(--ink-4)] px-2.5 py-1 bg-transparent cursor-not-allowed">
-              camera 1 ▾
+            <button
+              onClick={handleSwitchCamera}
+              className="font-data text-[11px] text-[var(--ink-3)] border-[1.5px] border-[var(--ink-4)] px-2.5 py-1 bg-transparent cursor-pointer hover:border-[var(--ink)] hover:text-[var(--ink)] transition-colors"
+            >
+              camera {cameraIdx + 1}/{Math.max(cameras.length, 1)} ▾
             </button>
 
             <button
@@ -420,21 +498,40 @@ export function ScanPage() {
                   style={{ boxShadow: '0 0 6px 1px rgba(34,197,94,0.55)' }} />
               )}
 
-              {/* Bounding box on result */}
-              {phase === 'result' && result && (
-                <div className="absolute bbox-draw pointer-events-none"
-                  style={{ top: '18%', left: '18%', right: '18%', bottom: '18%',
-                    border: '1.5px solid var(--green)',
-                    boxShadow: '0 0 8px 1px rgba(34,197,94,0.35)' }}>
-                  <span className="absolute top-0 left-0 w-5 h-5 border-t-2 border-l-2 border-[var(--green)]" style={{ top: '-2px', left: '-2px' }} />
-                  <span className="absolute top-0 right-0 w-5 h-5 border-t-2 border-r-2 border-[var(--green)]" style={{ top: '-2px', right: '-2px' }} />
-                  <span className="absolute bottom-0 left-0 w-5 h-5 border-b-2 border-l-2 border-[var(--green)]" style={{ bottom: '-2px', left: '-2px' }} />
-                  <span className="absolute bottom-0 right-0 w-5 h-5 border-b-2 border-r-2 border-[var(--green)]" style={{ bottom: '-2px', right: '-2px' }} />
-                  <div className="absolute bottom-0 left-0 px-1.5 py-0.5 bg-[var(--green)]" style={{ bottom: '-22px' }}>
-                    <span className="font-data text-[9px] text-[var(--paper)] uppercase tracking-widest">
-                      {resolve(result.materialType)} · {(result.confidence * 100).toFixed(0)}%
-                    </span>
-                  </div>
+              {/* Stage indicator — shows during analysis */}
+              {stage && (
+                <div className="absolute top-3 left-3 flex items-center gap-2 px-3 py-1.5 bg-[var(--paper)] border-[1.5px] border-[var(--ink)] shadow-[2px_2px_0_var(--ink)] z-10">
+                  <span className="w-2 h-2 rounded-full bg-[var(--green)] animate-pulse" />
+                  <span className="font-data text-[11px] uppercase tracking-widest">Stage {stage}</span>
+                  <span className="font-data text-[10px] text-[var(--ink-3)]">
+                    {stage === 1 ? '— detecting material' : '— checking cleanliness'}
+                  </span>
+                </div>
+              )}
+
+              {/* Bounding box overlay — real normalized coordinates from YOLO */}
+              {bbox && (
+                <div
+                  className="absolute pointer-events-none border-2 border-[#5BC0BE]"
+                  style={{
+                    left:      `${bbox.x1 * 100}%`,
+                    top:       `${bbox.y1 * 100}%`,
+                    width:     `${(bbox.x2 - bbox.x1) * 100}%`,
+                    height:    `${(bbox.y2 - bbox.y1) * 100}%`,
+                    boxShadow: '0 0 0 9999px rgba(0,0,0,0.15)',
+                  }}
+                >
+                  <span className="absolute top-0 left-0 w-3 h-3 border-t-2 border-l-2 border-[#5BC0BE]" />
+                  <span className="absolute top-0 right-0 w-3 h-3 border-t-2 border-r-2 border-[#5BC0BE]" />
+                  <span className="absolute bottom-0 left-0 w-3 h-3 border-b-2 border-l-2 border-[#5BC0BE]" />
+                  <span className="absolute bottom-0 right-0 w-3 h-3 border-b-2 border-r-2 border-[#5BC0BE]" />
+                  {result && (
+                    <div className="absolute px-1.5 py-0.5 bg-[#5BC0BE]" style={{ bottom: '-22px', left: 0 }}>
+                      <span className="font-data text-[9px] text-[var(--paper)] uppercase tracking-widest">
+                        {resolve(result.materialType)} · {(result.confidence * 100).toFixed(0)}%
+                      </span>
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -668,11 +765,15 @@ export function ScanPage() {
         <div className="flex flex-col w-full lg:w-[260px] shrink-0 border-t-[1.5px] lg:border-t-0 border-[var(--ink)]">
           <div className="px-5 py-4 border-b-[1.5px] border-[var(--ink)] bg-[var(--paper-2)] flex items-center justify-between">
             <span className="font-data text-[9px] text-[var(--ink-4)] uppercase tracking-[0.15em]">Live analysis</span>
-            {liveResult && (
+            {stage ? (
+              <span className="font-data text-[9px] border-[1.5px] border-[var(--green)] text-[var(--green)] px-1.5 py-0.5 uppercase tracking-widest animate-pulse">
+                STAGE {stage} / 2
+              </span>
+            ) : liveResult ? (
               <span className="font-data text-[9px] border-[1.5px] border-[var(--green)] text-[var(--green)] px-1.5 py-0.5 uppercase tracking-widest">
                 STAGE 2 / 2
               </span>
-            )}
+            ) : null}
           </div>
 
           {liveResult ? (
@@ -728,6 +829,33 @@ export function ScanPage() {
                 <span className="font-data text-[10px] text-[var(--ink-3)] uppercase tracking-widest">{t.confidence}</span>
                 <span className="font-data text-[13px] text-[var(--ink)]">{(liveResult.confidence * 100).toFixed(0)}%</span>
               </div>
+
+              {cleanlinessScore !== null && (
+                <div className="border-t-[1px] border-[var(--ink-4)] pt-3">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="font-data text-[10px] uppercase tracking-widest text-[var(--ink-3)]">Cleanliness</span>
+                    <span
+                      className="font-data text-[12px] font-bold"
+                      style={{ color: cleanlinessScore >= 60 ? 'var(--green-ink)' : 'var(--orange)' }}
+                    >
+                      {cleanlinessScore}%
+                    </span>
+                  </div>
+                  <div className="h-2.5 bg-[var(--paper-2)] border-[1.5px] border-[var(--ink)] overflow-hidden">
+                    <div
+                      className="h-full transition-all duration-500"
+                      style={{
+                        width:      `${cleanlinessScore}%`,
+                        background: cleanlinessScore >= 60 ? 'var(--green)' : 'var(--orange)',
+                      }}
+                    />
+                  </div>
+                  <div className="flex justify-between mt-0.5">
+                    <span className="font-data text-[9px] text-[var(--ink-4)]">dirty</span>
+                    <span className="font-data text-[9px] text-[var(--ink-4)]">clean</span>
+                  </div>
+                </div>
+              )}
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center gap-3 flex-1 px-5 py-10 text-center">
