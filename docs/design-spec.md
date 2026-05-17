@@ -121,7 +121,7 @@
 - Card marker: small mono label 'U' / 'B' (ink-3)
 - Admin card: ไม่แสดง — เข้าผ่าน `/x/admin` เท่านั้น
 - Auto-redirect: ถ้า session มีอยู่แล้ว → `ROLE_DEST[role]`
-- **หายไปจาก wireframe**: stats bar (total recycled / total shops / CO₂ saved) ควรเพิ่ม
+- **หายไปจาก wireframe**: stats bar (total recycled / total shops) ควรเพิ่ม
 
 ---
 
@@ -245,7 +245,7 @@
 │  │  ████░░░░░░░░░░░░░░░░░░░          │  │
 │  │                                   │  │
 │  │  0.82 kg × ฿24/kg × 1.00 = ฿22.10│  │
-│  │  +18 impact pts · 0.31kg CO₂ saved│  │
+│  │  +18 impact pts                    │  │
 │  │                                   │  │
 │  │  [↺ retake]  [✓ Add to basket (4)]│  │
 │  └───────────────────────────────────┘  │
@@ -264,7 +264,6 @@
 - Bounding box overlay with label
 - Size measurements display
 - Contamination % + progress bar (maps to `score`)
-- CO₂ saved calculation
 - Impact pts earned display
 - Basket count in button label
 
@@ -305,7 +304,7 @@
 
 **Items:** skip toggle (strikethrough + opacity), remove button (trash icon)  
 **Route:** Single shop vs Multi-stop dengan highlight best option  
-**Missing in code:** total CO₂ calculation, ฿/CO₂ display, better skip UI
+**Missing in code:** better skip UI
 
 ---
 
@@ -428,8 +427,8 @@
 │                                         │
 │  ┌─────────────────────────────────────┐│
 │  │ Lifetime impact                     ││
-│  │  248 kg   ฿ 4.2k   91 kg CO₂        ││
-│  │  recycled  earned   saved           ││
+│  │  248 kg   ฿ 4.2k                    ││
+│  │  recycled  earned                  ││
 │  └─────────────────────────────────────┘│
 │                                         │
 │  Scan history                           │
@@ -672,12 +671,12 @@ Moderation (N posts)
 | หน้า | สิ่งที่ขาด |
 |------|-----------|
 | **HomePage** | greeting name, weekly bar chart, buyer alert banner |
-| **ScanPage** | stage indicator chip, bounding box overlay, contamination bar, CO₂ display, impact pts |
-| **ProfilePage** | lifetime stats grid (248 kg / ฿4.2k / 91 kg CO₂), avatar initial |
+| **ScanPage** | stage indicator chip, bounding box overlay, contamination bar, impact pts |
+| **ProfilePage** | lifetime stats grid (248 kg / ฿4.2k), avatar initial |
 | **SettingsPage** | section dividers, notification rows, app version footer |
 | **EcoPointsPage** | tier system display, timeline component, progress bar |
 | **MapPage** | 5km radius circle, open/closed status, "Book pickup" from list |
-| **LandingPage** | stats bar (total recycled / shops / CO₂ saved platform-wide) |
+| **LandingPage** | stats bar (total recycled / shops platform-wide) |
 | **DashboardPage** | KPI cards (KpiCard pattern), status chips per booking |
 | **All pages** | SectionDivider component, KpiCard component, Avatar component, ProgressBar component |
 

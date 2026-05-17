@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useSelector } from 'react-redux'
 import { supabase } from '../lib/supabase'
 
-const EMPTY = { scans: [], loading: false, totalKg: 0, totalValue: 0, totalCo2: 0 }
+const EMPTY = { scans: [], loading: false, totalKg: 0, totalValue: 0 }
 
 export function useScanHistory() {
   const session = useSelector(s => s.user.session)
@@ -37,9 +37,7 @@ export function useScanHistory() {
           const v = r.calculated_value ?? (r.weight_kg ?? 0) * (r.price_per_kg ?? 0)
           return sum + v
         }, 0)
-        const totalCo2 = parseFloat((totalKg * 0.38).toFixed(1))
-
-        setState({ scans: rows ?? [], loading: false, totalKg, totalValue, totalCo2 })
+        setState({ scans: rows ?? [], loading: false, totalKg, totalValue })
       } catch {
         if (!cancelled) setState({ ...EMPTY })
       }
