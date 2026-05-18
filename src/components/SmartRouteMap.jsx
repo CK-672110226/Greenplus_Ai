@@ -1,6 +1,27 @@
 import L from 'leaflet'
+import { useState, useEffect } from 'react'
 import { MapContainer, TileLayer, Marker, Polyline, Popup } from 'react-leaflet'
 import { useSmartRoute } from '../hooks/useSmartRoute'
+
+// Public OSRM demo — replace with a self-hosted instance or paid API for production
+const OSRM_BASE = 'https://router.project-osrm.org/route/v1/driving'
+
+async function fetchRoadGeometry(waypoints) {
+  if (waypoints.length < 2) return null
+  // OSRM expects lon,lat pairs separated by semicolons
+  const coords = waypoints.map(([lat, lng]) => `${lng},${lat}`).join(';')
+  try {
+    const res = await fetch(`${OSRM_BASE}/${coords}?overview=full&geometries=geojson`)
+    if (!res.ok) return null
+    const json = await res.json()
+    const coords2 = json?.routes?.[0]?.geometry?.coordinates
+    if (!coords2) return null
+    // GeoJSON is [lng, lat]; Leaflet needs [lat, lng]
+    return coords2.map(([lng, lat]) => [lat, lng])
+  } catch {
+    return null
+  }
+}
 
 delete L.Icon.Default.prototype._getIconUrl
 L.Icon.Default.mergeOptions({
@@ -20,14 +41,31 @@ function KpiBox({ label, value }) {
 
 export default function SmartRouteMap() {
   const { stops, shopLocation, stats, loading } = useSmartRoute()
+  const [roadGeometry, setRoadGeometry] = useState(null)
 
   const center = shopLocation
     ? [shopLocation.lat, shopLocation.lng]
     : [18.7883, 98.9853]
 
-  const routePositions = shopLocation
+  // Straight-line fallback — used while OSRM loads or if it fails
+  const straightLine = shopLocation
     ? [[shopLocation.lat, shopLocation.lng], ...stops.map(s => [s.pickup_lat, s.pickup_lng])]
     : stops.map(s => [s.pickup_lat, s.pickup_lng])
+
+  useEffect(() => {
+    if (stops.length === 0) return
+    let cancelled = false
+    // straightLine is derived from stops+shopLocation — both are deps
+    const waypoints = shopLocation
+      ? [[shopLocation.lat, shopLocation.lng], ...stops.map(s => [s.pickup_lat, s.pickup_lng])]
+      : stops.map(s => [s.pickup_lat, s.pickup_lng])
+    fetchRoadGeometry(waypoints).then(geo => {
+      if (!cancelled) setRoadGeometry(geo)
+    })
+    return () => { cancelled = true }
+  }, [stops, shopLocation])
+
+  const routePositions = roadGeometry ?? straightLine
 
   if (loading) {
     return (
@@ -115,8 +153,9 @@ export default function SmartRouteMap() {
             <Polyline
               positions={routePositions}
               color="var(--green)"
-              weight={3}
-              dashArray="8 4"
+              weight={roadGeometry ? 4 : 2}
+              dashArray={roadGeometry ? undefined : '6 6'}
+              opacity={roadGeometry ? 1 : 0.5}
             />
           )}
         </MapContainer>
