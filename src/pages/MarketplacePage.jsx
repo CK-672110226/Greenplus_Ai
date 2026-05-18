@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import { useT } from '../hooks/useT'
 import { Button } from '../components/Button'
@@ -21,6 +22,7 @@ const CATEGORIES = {
 
 /* ── Shop card (replaces mock RequestCard) ────────────────────── */
 function ShopCard({ shop, language, t, marketPrice }) {
+  const navigate  = useNavigate()
   const materials = (shop.accepts ?? []).slice(0, 3)
   const bestPrice = materials.length > 0 ? marketPrice(materials[0], true) : null
 
@@ -51,12 +53,20 @@ function ShopCard({ shop, language, t, marketPrice }) {
         </div>
       )}
 
-      <a
-        href="/map"
-        className="mt-1 w-full py-2 font-data text-[11px] uppercase tracking-widest border-[1.5px] border-[var(--ink)] bg-transparent cursor-pointer hover:bg-[var(--ink)] hover:text-[var(--paper)] transition-colors shadow-[2px_2px_0_var(--ink)] active:shadow-none active:translate-x-[2px] active:translate-y-[2px] text-center block no-underline text-[var(--ink)]"
-      >
-        {t.directions ?? 'View on Map'} →
-      </a>
+      <div className="flex gap-2 mt-1">
+        <a
+          href="/map"
+          className="flex-1 py-2 font-data text-[11px] uppercase tracking-widest border-[1.5px] border-[var(--ink)] bg-transparent cursor-pointer hover:bg-[var(--ink)] hover:text-[var(--paper)] transition-colors shadow-[2px_2px_0_var(--ink)] active:shadow-none active:translate-x-[2px] active:translate-y-[2px] text-center block no-underline text-[var(--ink)]"
+        >
+          {t.directions ?? 'View on Map'} →
+        </a>
+        <button
+          onClick={() => navigate('/chat')}
+          className="flex-1 py-2 font-data text-[11px] uppercase tracking-widest border-[1.5px] border-[var(--ink)] bg-transparent cursor-pointer hover:bg-[var(--ink)] hover:text-[var(--paper)] transition-colors shadow-[2px_2px_0_var(--ink)] active:shadow-none active:translate-x-[2px] active:translate-y-[2px]"
+        >
+          {t.chat ?? 'Chat'} →
+        </button>
+      </div>
     </div>
   )
 }
