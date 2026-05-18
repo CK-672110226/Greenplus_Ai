@@ -1,6 +1,6 @@
 // Manages model_files + model_deployments CRUD for AI Studio admin UI
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useSelector } from 'react-redux'
 import { supabase } from '../lib/supabase'
 
@@ -100,13 +100,18 @@ export function useModelRegistry() {
 
   // Activate a model_file — deactivates previous for same (stage, materialType)
   async function activateModel(modelFileId, stage, materialType) {
-    // Deactivate current active for this (stage, materialType)
-    await supabase
+    // PostgREST: .eq('col', null) never matches NULL rows — use .is() for null
+    let deactivateQ = supabase
       .from('model_deployments')
       .update({ is_active: false })
       .eq('stage', stage)
-      .eq('material_type', materialType ?? null)
       .eq('is_active', true)
+
+    deactivateQ = materialType != null
+      ? deactivateQ.eq('material_type', materialType)
+      : deactivateQ.is('material_type', null)
+
+    await deactivateQ
 
     const { error } = await supabase.from('model_deployments').insert({
       stage,
@@ -119,11 +124,14 @@ export function useModelRegistry() {
     await load()
   }
 
-  const activeByKey = {}
-  for (const d of deployments.filter(d => d.is_active)) {
-    const key = d.stage === 1 ? '__stage1__' : d.material_type
-    activeByKey[key] = d.model_file_id
-  }
+  const activeByKey = useMemo(() => {
+    const map = {}
+    for (const d of deployments.filter(d => d.is_active)) {
+      const key = d.stage === 1 ? '__stage1__' : d.material_type
+      map[key] = d.model_file_id
+    }
+    return map
+  }, [deployments])
 
   return { files, deployments, activeByKey, loading, uploadModel, registerModelUrl, activateModel, reload: load }
 }
