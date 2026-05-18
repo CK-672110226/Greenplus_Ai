@@ -10,7 +10,7 @@ import { getRulesFor, SEVERITY_COLOR } from '../data/wasteRules'
 import { addToBasket, setLastScan } from '../store/wasteSlice'
 import { twoStageInfer } from '../services/twoStageAI'
 import { useScanInsert } from '../hooks/useScanInsert'
-import { supabase } from '../lib/supabase'
+import { useReportActions } from '../hooks/useReportActions'
 
 /* ── Batch queue item row ────────────────────────────────────── */
 function QueueRow({ item, onRemove }) {
@@ -47,7 +47,8 @@ export function ScanPage() {
   const videoRef  = useRef(null)
   const streamRef = useRef(null)
   const fileRef   = useRef(null)
-  const insertScan = useScanInsert()
+  const insertScan    = useScanInsert()
+  const reportActions = useReportActions()
 
   const uploadImgRef = useRef(null)   // holds Image element for re-scan in upload mode
 
@@ -334,14 +335,11 @@ export function ScanPage() {
 
   /* ── Report misidentification ─────────────────────────────── */
   async function handleSubmitReport() {
-    try {
-      await supabase.from('user_reports').insert({
-        reporter_id:      null,
-        claimed_material: reportMaterial,
-        ai_material:      result?.materialType ?? null,
-        ai_clean:         result?.stage2Pass ?? null,
-      })
-    } catch { /* silent */ }
+    await reportActions.submitReport({
+      claimedMaterial: reportMaterial,
+      aiMaterial:      result?.materialType,
+      aiClean:         result?.stage2Pass,
+    })
     toast.success(t.reportSuccess)
     setShowReport(false)
   }

@@ -5,7 +5,7 @@ import { Button } from '../components/Button'
 import { SectionDivider } from '../components/SectionDivider'
 import { markRead, markAllRead, dismiss, selectUnreadCount } from '../store/notificationSlice'
 import { useRealtimeNotifications } from '../hooks/useRealtimeNotifications'
-import { supabase } from '../lib/supabase'
+import { useNotificationActions } from '../hooks/useNotificationActions'
 
 const TYPE_ICON = {
   new_order:       '📦',
@@ -71,22 +71,21 @@ export function NotificationsPage() {
   const unread   = useSelector(selectUnreadCount)
 
   useRealtimeNotifications()
+  const notifActions = useNotificationActions()
 
   async function handleRead(id) {
     dispatch(markRead(id))
-    await supabase.from('notifications').update({ read: true }).eq('id', id)
+    await notifActions.markRead(id)
   }
 
   async function handleDismiss(id) {
     dispatch(dismiss(id))
-    await supabase.from('notifications').delete().eq('id', id)
+    await notifActions.dismissNotification(id)
   }
 
   async function handleMarkAllRead() {
     dispatch(markAllRead())
-    if (session?.user?.id) {
-      await supabase.from('notifications').update({ read: true }).eq('user_id', session.user.id)
-    }
+    await notifActions.markAllRead(session?.user?.id)
   }
 
   const TODAY   = new Date().toISOString().slice(0, 10)

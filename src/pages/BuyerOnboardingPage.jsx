@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useSelector } from 'react-redux'
 import { toast } from 'sonner'
-import { supabase } from '../lib/supabase'
+import { useOnboardingActions } from '../hooks/useOnboardingActions'
 import { WASTE_ITEMS, localName } from '../data/wasteItems'
 import { LocationPicker } from '../components/LocationPicker'
 
@@ -44,8 +44,9 @@ const BTN_PRIMARY = 'px-6 py-2 bg-[var(--ink)] text-[var(--paper)] font-data tex
 const BTN_SECONDARY = 'px-6 py-2 bg-[var(--paper)] text-[var(--ink)] font-data text-[13px] uppercase tracking-wider cursor-pointer border-[1.5px] border-[var(--ink)]'
 
 export function BuyerOnboardingPage() {
-  const navigate = useNavigate()
-  const session  = useSelector(s => s.user.session)
+  const navigate           = useNavigate()
+  const session            = useSelector(s => s.user.session)
+  const onboardingActions  = useOnboardingActions()
 
   const [step, setStep] = useState(1)
   const [saving, setSaving] = useState(false)
@@ -87,28 +88,23 @@ export function BuyerOnboardingPage() {
     }
     setSaving(true)
     try {
-      const { error: shopErr } = await supabase.from('shops').upsert({
-        owner_id:         session.user.id,
-        name:             formData.shopName,
-        description:      formData.description,
-        phone:            formData.phone,
-        line_id:          formData.lineId,
-        pickup_radius_km: formData.pickupRadius,
-        lat:              formData.lat,
-        lng:              formData.lng,
-        status:           'pending',
-      })
-      if (shopErr) throw shopErr
-
-      const { error: profileErr } = await supabase
-        .from('user_profiles')
-        .update({
-          accepted_materials: formData.selectedMaterials,
-          open_days:          formData.openDays,
+      await onboardingActions.saveOnboarding(
+        session.user.id,
+        {
+          name:             formData.shopName,
+          description:      formData.description,
+          phone:            formData.phone,
+          line_id:          formData.lineId,
+          pickup_radius_km: formData.pickupRadius,
+          lat:              formData.lat,
+          lng:              formData.lng,
+        },
+        {
+          accepted_materials:  formData.selectedMaterials,
+          open_days:           formData.openDays,
           onboarding_complete: true,
-        })
-        .eq('id', session.user.id)
-      if (profileErr) throw profileErr
+        }
+      )
 
       toast.success('Shop submitted for review')
       navigate('/dashboard')
