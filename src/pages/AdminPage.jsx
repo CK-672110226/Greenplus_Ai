@@ -12,6 +12,7 @@ import { useShops } from '../hooks/useShops'
 import { setAiConfig } from '../store/aiConfigSlice'
 import { useModelRegistry } from '../hooks/useModelRegistry'
 import { supabase } from '../lib/supabase'
+import { useAdminActions } from '../hooks/useAdminActions'
 
 
 function TabBtn({ active, onClick, children }) {
@@ -557,6 +558,7 @@ export function AdminPage() {
   const [heatmapLoading, setHeatmapLoading] = useState(false)
 
   const { reports, loading: reportsLoading, approveReport, rejectReport } = useUserReports()
+  const adminActions = useAdminActions()
   const pendingCount = reports.length
 
   // Load pending shops on mount
@@ -627,7 +629,7 @@ export function AdminPage() {
   }, [])
 
   async function handleApprove(id) {
-    const { error } = await supabase.from('shops').update({ status: 'active' }).eq('id', id)
+    const { error } = await adminActions.approveShop(id)
     if (!error) {
       setPending(p => p.filter(s => s.id !== id))
       toast.success('Shop approved')
@@ -637,7 +639,7 @@ export function AdminPage() {
   }
 
   async function handleRejectShop(id) {
-    const { error } = await supabase.from('shops').update({ status: 'rejected' }).eq('id', id)
+    const { error } = await adminActions.rejectShop(id)
     if (!error) {
       setPending(p => p.filter(s => s.id !== id))
       toast.error('Shop rejected')
@@ -648,10 +650,7 @@ export function AdminPage() {
 
   async function handleFlag(post) {
     const next = !post.flagged
-    const { error } = await supabase
-      .from('marketplace_posts')
-      .update({ flagged: next })
-      .eq('id', post.id)
+    const { error } = await adminActions.flagPost(post.id, next)
     if (!error) {
       setModPosts(ps => ps.map(p => p.id === post.id ? { ...p, flagged: next } : p))
       toast.info(next ? 'Flagged' : 'Unflagged')

@@ -58,7 +58,7 @@ export function LoginPage() {
   const rawRole              = params.get('role')
   const role                 = ['user', 'buyer'].includes(rawRole) ? rawRole : 'user'
   const t                    = useT()
-  const auth                 = useAuthActions()
+  const { signIn, signUp, signInWithGoogle, sendPasswordReset, resendVerification, updatePassword, subscribeToRecovery } = useAuthActions()
   const { session, profile } = useSelector(s => s.user)
   const darkMode             = useSelector(s => s.user.darkMode)
 
@@ -94,22 +94,22 @@ export function LoginPage() {
   }, [session, profile, recoverySession, navigate, location])
 
   useEffect(() => {
-    return auth.subscribeToRecovery(() => {
+    return subscribeToRecovery(() => {
       setRecoverySession(true)
       setMode('reset')
       setError(null)
     })
-  }, [auth.subscribeToRecovery])
+  }, [subscribeToRecovery])
 
   async function doSignUp() {
-    const { error, unverified, alreadyRegistered } = await auth.signUp(email, password, role)
+    const { error, unverified, alreadyRegistered } = await signUp(email, password, role)
     if (alreadyRegistered) setMode('signin')
     if (unverified) setUnverified(true)
     else if (error) setError(error)
   }
 
   async function doSignIn() {
-    const { error, unverified } = await auth.signIn(email, password, rememberMe)
+    const { error, unverified } = await signIn(email, password, rememberMe)
     if (unverified) setUnverified(true)
     else if (error) setError(t.invalidCredentials)
   }
@@ -125,14 +125,14 @@ export function LoginPage() {
   }
 
   async function handleResendVerification() {
-    const { error } = await auth.resendVerification(email)
+    const { error } = await resendVerification(email)
     setError(error)
   }
 
   async function handleGoogleSignIn() {
     setError(null)
     setLoading(true)
-    const { error } = await auth.signInWithGoogle(role)
+    const { error } = await signInWithGoogle(role)
     if (error) { setError(error); setLoading(false) }
   }
 
@@ -140,7 +140,7 @@ export function LoginPage() {
     e.preventDefault()
     setError(null)
     setLoading(true)
-    const { error } = await auth.sendPasswordReset(email)
+    const { error } = await sendPasswordReset(email)
     setLoading(false)
     if (error) setError(error)
     else setMode('forgot-sent')
@@ -150,7 +150,7 @@ export function LoginPage() {
     e.preventDefault()
     setForgotError(null)
     setForgotLoading(true)
-    const { error } = await auth.sendPasswordReset(forgotEmail)
+    const { error } = await sendPasswordReset(forgotEmail)
     setForgotLoading(false)
     if (error) setForgotError(error)
     else setForgotSent(true)
@@ -162,7 +162,7 @@ export function LoginPage() {
     if (newPassword !== confirmPass) { setError(t.passwordMismatch); return }
     setError(null)
     setLoading(true)
-    const { error } = await auth.updatePassword(newPassword)
+    const { error } = await updatePassword(newPassword)
     setLoading(false)
     if (error) {
       setError(error)

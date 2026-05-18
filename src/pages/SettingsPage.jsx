@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { setLanguage, toggleDarkMode, setProfile, clearUser } from '../store/userSlice'
 import { useT } from '../hooks/useT'
 import { SectionDivider } from '../components/SectionDivider'
-import { supabase } from '../lib/supabase'
+import { useSettingsActions } from '../hooks/useSettingsActions'
 import { toast } from 'sonner'
 
 function LangBtn({ active, onClick, children }) {
@@ -51,17 +51,13 @@ export function SettingsPage() {
   const { profile, session, language, darkMode } = useSelector(s => s.user)
   const t = useT()
 
+  const settingsActions = useSettingsActions()
   const prefs = { ...DEFAULT_PREFS, ...(profile?.notification_prefs ?? {}) }
 
   async function togglePref(key) {
     const next = { ...prefs, [key]: !prefs[key] }
     dispatch(setProfile({ ...profile, notification_prefs: next }))
-    if (session?.user?.id) {
-      await supabase
-        .from('user_profiles')
-        .update({ notification_prefs: next })
-        .eq('id', session.user.id)
-    }
+    await settingsActions.updatePrefs(session?.user?.id, next)
   }
 
   async function handleDeleteAccount() {
@@ -72,20 +68,10 @@ export function SettingsPage() {
     )
     if (!confirmed) return
     try {
-      // Step 1: Soft-delete the profile row so the account is invisible to the app.
-      await supabase
-        .from('user_profiles')
-        .update({ deleted_at: new Date().toISOString() })
-        .eq('id', session.user.id)
-
-      // TODO: hard-delete via Edge Function — the Supabase auth user persists
-      // until an admin calls supabase.auth.admin.deleteUser() server-side.
-      // supabase.auth.admin.deleteUser() requires the service-role key and must
-      // not be called from client code. Wire up an Edge Function or DB trigger
-      // (e.g. supabase.rpc('delete_my_account')) to complete hard-deletion.
-
-      // Step 2: End the session immediately so the user cannot re-authenticate.
-      await supabase.auth.signOut()
+      // Soft-deletes profile row, then signs out.
+      // TODO: hard-delete via Edge Function (supabase.rpc('delete_my_account'))
+      // — auth user persists until server-side admin call.
+      await settingsActions.deleteAccount(session.user.id)
       dispatch(clearUser())
       navigate('/')
     } catch {
@@ -95,41 +81,22 @@ export function SettingsPage() {
 
   async function handleExport() {
     if (!session?.user?.id) return
-    const [{ data: scans }, { data: bookings }] = await Promise.all([
-      supabase.from('scan_history').select('*').eq('user_id', session.user.id).order('scanned_at', { ascending: false }),
-      supabase.from('bookings').select('*').eq('seller_id', session.user.id).order('created_at', { ascending: false }),
-    ])
+    const { scans, bookings } = await settingsActions.exportData(session.user.id)
 
-    // Build CSV: tag each row with a "record_type" column so scans and bookings
-    // can coexist in a single file without losing context.
     function escapeCell(v) {
       return `"${String(v ?? '').replace(/"/g, '""')}"`
     }
-    const scanRows    = scans    ?? []
-    const bookingRows = bookings ?? []
 
-    // Derive headers from the first available row of each type.
-    const scanHeaders    = scanRows.length    > 0 ? Object.keys(scanRows[0])    : []
-    const bookingHeaders = bookingRows.length > 0 ? Object.keys(bookingRows[0]) : []
+    const scanHeaders    = scans.length    > 0 ? Object.keys(scans[0])    : []
+    const bookingHeaders = bookings.length > 0 ? Object.keys(bookings[0]) : []
+    const allColumns     = ['record_type', ...new Set([...scanHeaders, ...bookingHeaders])]
+    const headerRow      = allColumns.join(',')
 
-    // Collect all unique column names (order: record_type first, then union of both).
-    const allColumns = ['record_type', ...new Set([...scanHeaders, ...bookingHeaders])]
-    const headerRow  = allColumns.join(',')
-
-    // Build data rows using the full column set so every row has the same width.
     function toAlignedRow(row, type) {
-      return [
-        escapeCell(type),
-        ...allColumns.slice(1).map(col => escapeCell(row[col])),
-      ].join(',')
+      return [escapeCell(type), ...allColumns.slice(1).map(col => escapeCell(row[col]))].join(',')
     }
 
-    const dataRows = [
-      ...scanRows.map(r => toAlignedRow(r, 'scan')),
-      ...bookingRows.map(r => toAlignedRow(r, 'booking')),
-    ]
-
-    const csv  = [headerRow, ...dataRows].join('\n')
+    const csv  = [headerRow, ...scans.map(r => toAlignedRow(r, 'scan')), ...bookings.map(r => toAlignedRow(r, 'booking'))].join('\n')
     const blob = new Blob([csv], { type: 'text/csv' })
     const url  = URL.createObjectURL(blob)
     const a    = document.createElement('a')

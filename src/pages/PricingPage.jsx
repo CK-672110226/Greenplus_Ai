@@ -8,6 +8,7 @@ import { WASTE_ITEMS, localName, pricePerKg } from '../data/wasteItems'
 import { bulkSet, resetToDefault } from '../store/pricingSlice'
 import { useMyShop } from '../hooks/useMyShop'
 import { supabase } from '../lib/supabase'
+import { useShopPricingActions } from '../hooks/useShopPricingActions'
 
 const DEFAULT_CAP_KG = 100
 
@@ -25,7 +26,8 @@ export function PricingPage() {
   const language = useSelector(s => s.user.language)
 
   const [local, setLocal] = useState(() => buildDefaultLocal())
-  const { shop } = useMyShop()
+  const { shop }         = useMyShop()
+  const pricingActions   = useShopPricingActions()
 
   useEffect(() => {
     if (!shop?.id) return
@@ -80,11 +82,7 @@ export function PricingPage() {
         price_per_kg:  vals.price_per_kg ?? null,
         cap_kg:        vals.cap_kg        ?? null,
       }))
-      try {
-        await supabase.from('shop_pricing').upsert(rows, { onConflict: 'shop_id,material_type' })
-      } catch {
-        // Supabase not configured — fail silently
-      }
+      await pricingActions.savePricing(shop.id, rows)
     }
 
     toast.success(t.pricingSaved)

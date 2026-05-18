@@ -7,7 +7,7 @@ import { useT } from '../hooks/useT'
 import { localName } from '../data/wasteItems'
 import { setSlots } from '../store/scheduleSlice'
 import { useSupabaseBookings } from '../hooks/useSupabaseBookings'
-import { supabase } from '../lib/supabase'
+import { useBookingActions } from '../hooks/useBookingActions'
 import { todayBangkok } from '../utils/time'
 
 function IconClock() {
@@ -99,6 +99,7 @@ export function SchedulePage() {
   const weekDays = getWeekDays()
 
   const { bookings, loading } = useSupabaseBookings()
+  const bookingActions = useBookingActions()
 
   useEffect(() => {
     const todaySlots = bookings
@@ -116,17 +117,17 @@ export function SchedulePage() {
   }, [bookings, dispatch])
 
   async function handleConfirm(id) {
-    try { await supabase.from('bookings').update({ status: 'accepted' }).eq('id', id) } catch { /* silent */ }
+    await bookingActions.updateStatus(id, 'accepted')
     dispatch(setSlots(slots.map(s => s.id === id ? { ...s, status: 'accepted' } : s)))
     toast.success(t.confirmPickup)
   }
   async function handleCancel(id) {
-    try { await supabase.from('bookings').update({ status: 'rejected' }).eq('id', id) } catch { /* silent */ }
+    await bookingActions.updateStatus(id, 'rejected')
     dispatch(setSlots(slots.map(s => s.id === id ? { ...s, status: 'rejected' } : s)))
     toast.error(t.cancelPickup)
   }
   async function handleComplete(id) {
-    try { await supabase.from('bookings').update({ status: 'completed' }).eq('id', id) } catch { /* silent */ }
+    await bookingActions.updateStatus(id, 'completed')
     dispatch(setSlots(slots.map(s => s.id === id ? { ...s, status: 'completed' } : s)))
     toast.success(t.completePickup)
   }
