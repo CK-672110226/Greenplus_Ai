@@ -268,7 +268,7 @@ export function DashboardPage() {
 
       {/* Pricing tab */}
       {tab === 'pricing' && (
-        <div className="flex flex-col gap-0 max-w-xl">
+        <div className="flex flex-col gap-0 max-w-2xl">
           <div className="flex items-center justify-between px-0 py-3 border-b-[1.5px] border-[var(--ink)]">
             <span className="font-data text-[9px] text-[var(--ink-4)] uppercase tracking-[0.15em]">Material</span>
             <span className="font-data text-[9px] text-[var(--ink-4)] uppercase tracking-[0.15em]">Base price ฿/kg</span>

@@ -57,7 +57,7 @@ export function EcoPointsPage() {
         </h1>
       </div>
 
-      <div className="w-full max-w-2xl px-4 py-6 flex flex-col gap-6">
+      <div className="w-full max-w-4xl px-4 py-6 flex flex-col gap-6">
 
         {/* Tier progress card */}
         <div className="flex flex-col gap-3 border-[1.5px] border-[var(--ink)] p-4 bg-[var(--paper-2)] shadow-[2px_2px_0_var(--ink)]">

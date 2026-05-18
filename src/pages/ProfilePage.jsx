@@ -28,7 +28,7 @@ function UserProfile({ profile, session, t, language }) {
 
   return (
     <>
-      <Card className="w-full max-w-sm flex flex-col gap-4">
+      <Card className="w-full max-w-2xl flex flex-col gap-4">
         <div className="flex items-center gap-4">
           <Avatar name={profile?.display_name ?? session?.user?.email} />
           <div>
@@ -55,7 +55,7 @@ function UserProfile({ profile, session, t, language }) {
       </Card>
 
       {/* Scan history */}
-      <div className="w-full max-w-sm flex flex-col gap-2">
+      <div className="w-full max-w-2xl flex flex-col gap-2">
         <span className="font-data text-[12px] text-[var(--ink-2)] uppercase tracking-widest">{t.scanHistory}</span>
 
         {loading && (
@@ -118,7 +118,7 @@ function BuyerProfile({ profile, session, t, language }) {
 
   return (
     <>
-      <Card className="w-full max-w-sm flex flex-col gap-4">
+      <Card className="w-full max-w-2xl flex flex-col gap-4">
         <div className="flex items-center gap-4">
           <Avatar name={profile?.display_name ?? 'B'} />
           <div>
@@ -133,7 +133,7 @@ function BuyerProfile({ profile, session, t, language }) {
         </div>
       </Card>
 
-      <Card className="w-full max-w-sm flex flex-col gap-3">
+      <Card className="w-full max-w-2xl flex flex-col gap-3">
         <span className="font-data text-[12px] text-[var(--ink-2)] uppercase tracking-widest">{t.acceptedMaterials}</span>
         <div className="flex flex-wrap gap-2">
           {Object.keys(WASTE_ITEMS).map(mat => (
@@ -172,7 +172,7 @@ function AdminProfile({ profile, session, t }) {
   }, [])
 
   return (
-    <Card className="w-full max-w-sm flex flex-col gap-4">
+    <Card className="w-full max-w-2xl flex flex-col gap-4">
       <div className="flex items-center gap-4">
         <Avatar name={profile?.display_name ?? 'A'} />
         <div>
@@ -229,13 +229,13 @@ export function ProfilePage() {
 
   return (
     <main className="flex flex-col items-center px-4 py-10 gap-6">
-      <h1 className="font-brand text-[28px] text-[var(--ink)] m-0 self-start max-w-sm w-full">{t.profile}</h1>
+      <h1 className="font-brand text-[28px] text-[var(--ink)] m-0 self-start max-w-2xl w-full">{t.profile}</h1>
       {role === 'user'  && <UserProfile  profile={profile} session={session} t={t} language={language} />}
       {role === 'buyer' && <BuyerProfile profile={profile} session={session} t={t} language={language} />}
       {role === 'admin' && <AdminProfile profile={profile} session={session} t={t} />}
 
       {/* Quick actions */}
-      <div className="w-full max-w-sm flex flex-col border-[1.5px] border-[var(--ink)] divide-y divide-[var(--ink-4)]">
+      <div className="w-full max-w-2xl flex flex-col border-[1.5px] border-[var(--ink)] divide-y divide-[var(--ink-4)]">
         {/* Eco-points row */}
         <button
           onClick={() => navigate('/eco-points')}
