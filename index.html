@@ -3,6 +3,10 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- CSP baked into the HTML so it applies on every host (dev, preview, Vercel).
+         frame-ancestors is intentionally omitted — meta tags cannot carry it;
+         that directive lives in vercel.json as an HTTP header. -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https://*.supabase.co https://lh3.googleusercontent.com https://*.basemaps.cartocdn.com https://*.tile.openstreetmap.org https://*.openstreetmap.org; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.anthropic.com https://teachablemachine.withgoogle.com https://*.ingest.sentry.io https://*.ingest.us.sentry.io https://router.project-osrm.org; worker-src blob:" />
 
     <!-- ── Primary SEO ────────────────────────────────────────────────── -->
     <title>GreenPlus.Ai — AI คัดแยกขยะรีไซเคิล หาราคาและร้านรับซื้อใกล้คุณ</title>
