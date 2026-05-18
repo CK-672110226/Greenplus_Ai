@@ -120,6 +120,7 @@ export function useRealtimeLogistics() {
         event:  'INSERT',
         schema: 'public',
         table:  'bookings',
+        filter: 'status=eq.searching',
       }, (payload) => {
         const b = payload.new
         if (b.status !== 'searching') return

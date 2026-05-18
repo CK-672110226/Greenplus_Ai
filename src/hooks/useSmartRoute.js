@@ -24,10 +24,10 @@ export function useSmartRoute() {
           .eq('owner_id', session.user.id)
           .maybeSingle()
 
-        if (!shopData) return
+        if (!shopData || shopData.lat == null || shopData.lng == null) return
 
-        const shopLat = shopData.lat ?? 18.7883
-        const shopLng = shopData.lng ?? 98.9853
+        const shopLat = shopData.lat
+        const shopLng = shopData.lng
         setShopLocation({ lat: shopLat, lng: shopLng, name: shopData.name })
 
         const today = new Date().toISOString().slice(0, 10)

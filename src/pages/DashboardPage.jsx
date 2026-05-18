@@ -185,7 +185,7 @@ export function DashboardPage() {
   function handleAccept(id)   { acceptBooking(id);   toast.success('Order accepted') }
   function handleOpenReject(id) { setRejectModal({ id }); setRejectReason('') }
   function handleConfirmReject() {
-    rejectBooking(rejectModal.id)
+    rejectBooking(rejectModal.id, rejectReason || undefined)
     toast.error('Order rejected')
     setRejectModal(null)
     setRejectReason('')
