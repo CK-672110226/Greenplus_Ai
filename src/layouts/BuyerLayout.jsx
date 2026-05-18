@@ -221,6 +221,7 @@ export function BuyerLayout() {
             </button>
             <button
               onClick={toggleLang}
+              aria-label={language === 'th' ? 'Switch to English' : 'เปลี่ยนเป็นภาษาไทย'}
               className="font-data text-[10px] border-[1.5px] border-[var(--ink-4)] px-1.5 py-0.5 hover:border-[var(--ink)] transition-colors bg-transparent cursor-pointer"
             >
               {language === 'th' ? 'EN' : 'TH'}
@@ -241,35 +242,36 @@ export function BuyerLayout() {
           >
             <Logo height={22} />
           </button>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1">
             <button
               onClick={() => navigate('/notifications')}
-              className="relative flex items-center justify-center w-7 h-7 bg-transparent border-none cursor-pointer text-[var(--ink)] hover:text-[var(--green)] transition-colors"
-              aria-label="Notifications"
+              className="relative flex items-center justify-center w-11 h-11 bg-transparent border-none cursor-pointer text-[var(--ink)] hover:text-[var(--green)] transition-colors"
+              aria-label={unread > 0 ? `Notifications — ${unread} unread` : 'Notifications'}
             >
               <IconBell />
               {unread > 0 && (
-                <span className="absolute -top-0.5 -right-0.5 flex items-center justify-center min-w-[14px] h-[14px] px-0.5 bg-[var(--green)] text-[var(--paper)] font-data text-[9px] rounded-full leading-none">
+                <span className="absolute top-1.5 right-1.5 flex items-center justify-center min-w-[14px] h-[14px] px-0.5 bg-[var(--green)] text-[var(--paper)] font-data text-[9px] rounded-full leading-none" aria-hidden="true">
                   {unread}
                 </span>
               )}
             </button>
             <button
               onClick={handleDarkMode}
-              className="flex items-center justify-center w-7 h-7 bg-transparent border-none cursor-pointer text-[var(--ink-3)] hover:text-[var(--ink)] transition-colors"
+              className="flex items-center justify-center w-11 h-11 bg-transparent border-none cursor-pointer text-[var(--ink-3)] hover:text-[var(--ink)] transition-colors"
               aria-label="Toggle dark mode"
             >
               {darkMode ? <IconSun /> : <IconMoon />}
             </button>
             <button
               onClick={toggleLang}
-              className="font-data text-[11px] border-[1.5px] border-[var(--ink-4)] px-2 py-0.5 hover:border-[var(--ink)] transition-colors bg-transparent cursor-pointer"
+              aria-label={language === 'th' ? 'Switch to English' : 'เปลี่ยนเป็นภาษาไทย'}
+              className="font-data text-[11px] border-[1.5px] border-[var(--ink-4)] px-2 py-1 hover:border-[var(--ink)] transition-colors bg-transparent cursor-pointer min-h-[44px]"
             >
               {language === 'th' ? 'EN' : 'TH'}
             </button>
             <button
               onClick={handleLogout}
-              className="font-body text-[14px] text-[var(--ink-3)] bg-transparent border-none cursor-pointer"
+              className="font-body text-[14px] text-[var(--ink-3)] bg-transparent border-none cursor-pointer hover:text-[var(--ink)] transition-colors px-2 min-h-[44px]"
             >
               {t.logout}
             </button>

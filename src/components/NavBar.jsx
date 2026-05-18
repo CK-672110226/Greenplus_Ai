@@ -50,7 +50,8 @@ export function NavBar() {
 
         <button
           onClick={toggleLang}
-          className="font-data text-[12px] border-[1.5px] border-[var(--ink-4)] px-2 py-0.5 hover:border-[var(--ink)] transition-colors bg-transparent"
+          aria-label={language === 'th' ? 'Switch to English' : 'เปลี่ยนเป็นภาษาไทย'}
+          className="font-data text-[12px] border-[1.5px] border-[var(--ink-4)] px-2 py-0.5 hover:border-[var(--ink)] transition-colors bg-transparent cursor-pointer"
         >
           {language === 'th' ? 'EN' : 'TH'}
         </button>

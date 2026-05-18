@@ -6,6 +6,7 @@ export function ProgressBar({ value = 0, max = 100, ticks = 0, className = '', s
       style={style}
       role="progressbar"
       aria-valuenow={value}
+      aria-valuemin={0}
       aria-valuemax={max}
     >
       <div

@@ -485,7 +485,9 @@ export function LoginPage() {
                     </p>
                   ) : (
                     <form onSubmit={handleInlineForgot} className="flex flex-col gap-2">
+                      <label htmlFor="forgot-inline-email" className="sr-only">Email address for password reset</label>
                       <input
+                        id="forgot-inline-email"
                         type="email"
                         required
                         autoComplete="username"

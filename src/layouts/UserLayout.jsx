@@ -242,6 +242,7 @@ export function UserLayout() {
             </button>
             <button
               onClick={toggleLang}
+              aria-label={language === 'th' ? 'Switch to English' : 'เปลี่ยนเป็นภาษาไทย'}
               className="font-data text-[10px] border-[1.5px] border-[var(--ink-4)] px-1.5 py-0.5 hover:border-[var(--ink)] transition-colors bg-transparent cursor-pointer"
             >
               {language === 'th' ? 'EN' : 'TH'}
@@ -262,26 +263,27 @@ export function UserLayout() {
           >
             <Logo height={30} showWordmark />
           </button>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1">
             <button
               onClick={() => setDrawerOpen(true)}
-              className="relative flex items-center justify-center w-8 h-8 bg-transparent border-none cursor-pointer text-[var(--ink)] hover:text-[var(--green)] transition-colors"
-              aria-label="Notifications"
+              className="relative flex items-center justify-center w-11 h-11 bg-transparent border-none cursor-pointer text-[var(--ink)] hover:text-[var(--green)] transition-colors"
+              aria-label={unreadCount > 0 ? `Notifications — ${unreadCount} unread` : 'Notifications'}
             >
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
               {unreadCount > 0 && (
-                <span className="absolute -top-0.5 -right-0.5 flex items-center justify-center min-w-[14px] h-[14px] px-0.5 bg-[var(--green)] text-[var(--paper)] font-data text-[9px] rounded-full leading-none">
+                <span className="absolute top-1.5 right-1.5 flex items-center justify-center min-w-[14px] h-[14px] px-0.5 bg-[var(--green)] text-[var(--paper)] font-data text-[9px] rounded-full leading-none" aria-hidden="true">
                   {unreadCount}
                 </span>
               )}
             </button>
             <button
               onClick={() => navigate('/basket')}
-              className="relative flex items-center justify-center w-8 h-8 bg-transparent border-none cursor-pointer text-[var(--ink)] hover:text-[var(--green)] transition-colors"
+              className="relative flex items-center justify-center w-11 h-11 bg-transparent border-none cursor-pointer text-[var(--ink)] hover:text-[var(--green)] transition-colors"
+              aria-label={activeCount > 0 ? `Basket — ${activeCount} item${activeCount !== 1 ? 's' : ''}` : 'Basket'}
             >
               <IconBasket />
               {activeCount > 0 && (
-                <span className="absolute -top-0.5 -right-0.5 flex items-center justify-center min-w-[14px] h-[14px] px-0.5 bg-[var(--green)] text-[var(--paper)] font-data text-[9px] rounded-full leading-none">
+                <span className="absolute top-1.5 right-1.5 flex items-center justify-center min-w-[14px] h-[14px] px-0.5 bg-[var(--green)] text-[var(--paper)] font-data text-[9px] rounded-full leading-none" aria-hidden="true">
                   {activeCount}
                 </span>
               )}
