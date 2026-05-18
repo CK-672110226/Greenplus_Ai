@@ -1,10 +1,10 @@
 import { useEffect, useState, useId } from 'react'
 import { useNavigate, useSearchParams, useLocation } from 'react-router-dom'
 import { useSelector } from 'react-redux'
-import { supabase } from '../lib/supabase'
 import { Button } from '../components/Button'
 import { Logo, LogoWordmark } from '../components/Logo'
 import { useT } from '../hooks/useT'
+import { useAuthActions } from '../hooks/useAuthActions'
 import { toast } from 'sonner'
 
 const ROLE_DEST = { user: '/scan', buyer: '/dashboard', admin: '/admin' }
@@ -58,6 +58,7 @@ export function LoginPage() {
   const rawRole              = params.get('role')
   const role                 = ['user', 'buyer'].includes(rawRole) ? rawRole : 'user'
   const t                    = useT()
+  const auth                 = useAuthActions()
   const { session, profile } = useSelector(s => s.user)
   const darkMode             = useSelector(s => s.user.darkMode)
 
@@ -93,55 +94,24 @@ export function LoginPage() {
   }, [session, profile, recoverySession, navigate, location])
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-      if (event === 'PASSWORD_RECOVERY') {
-        setRecoverySession(true)
-        setMode('reset')
-        setError(null)
-      }
+    return auth.subscribeToRecovery(() => {
+      setRecoverySession(true)
+      setMode('reset')
+      setError(null)
     })
-    return () => subscription.unsubscribe()
-  }, [])
+  }, [auth.subscribeToRecovery])
 
   async function doSignUp() {
-    const { data, error: authErr } = await supabase.auth.signUp({
-      email,
-      password,
-      options: { data: { pending_role: role } },
-    })
-    if (authErr) {
-      if (authErr.message?.toLowerCase().includes('user already registered')) {
-        setMode('signin')
-        const { error: signInErr } = await supabase.auth.signInWithPassword({ email, password })
-        if (signInErr) {
-          if (signInErr.message?.toLowerCase().includes('email not confirmed')) setUnverified(true)
-          else setError(signInErr.message)
-        }
-      } else {
-        setError(authErr.message)
-      }
-      return
-    }
-    if (data.user && !data.user.confirmed_at) setUnverified(true)
+    const { error, unverified, alreadyRegistered } = await auth.signUp(email, password, role)
+    if (alreadyRegistered) setMode('signin')
+    if (unverified) setUnverified(true)
+    else if (error) setError(error)
   }
 
   async function doSignIn() {
-    const { error: authErr } = await supabase.auth.signInWithPassword({ email, password })
-    if (authErr) {
-      if (authErr.message?.toLowerCase().includes('email not confirmed')) {
-        setUnverified(true)
-      } else {
-        setError(t.invalidCredentials)
-      }
-    } else {
-      // Persist "remember me" preference — Supabase handles session storage;
-      // this flag lets other parts of the app know the user opted in.
-      if (rememberMe) {
-        localStorage.setItem('gp_remember', '1')
-      } else {
-        localStorage.removeItem('gp_remember')
-      }
-    }
+    const { error, unverified } = await auth.signIn(email, password, rememberMe)
+    if (unverified) setUnverified(true)
+    else if (error) setError(t.invalidCredentials)
   }
 
   async function handleSubmit(e) {
@@ -155,31 +125,24 @@ export function LoginPage() {
   }
 
   async function handleResendVerification() {
-    const { error: err } = await supabase.auth.resend({ type: 'signup', email })
-    if (err) setError(err.message)
-    else setError(null)
+    const { error } = await auth.resendVerification(email)
+    setError(error)
   }
 
   async function handleGoogleSignIn() {
     setError(null)
     setLoading(true)
-    localStorage.setItem('gp_pending_role', role)
-    const { error: authErr } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: { redirectTo: window.location.origin },
-    })
-    if (authErr) { setError(authErr.message); setLoading(false) }
+    const { error } = await auth.signInWithGoogle(role)
+    if (error) { setError(error); setLoading(false) }
   }
 
   async function handleForgotPassword(e) {
     e.preventDefault()
     setError(null)
     setLoading(true)
-    const { error: err } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/login`,
-    })
+    const { error } = await auth.sendPasswordReset(email)
     setLoading(false)
-    if (err) setError(err.message)
+    if (error) setError(error)
     else setMode('forgot-sent')
   }
 
@@ -187,11 +150,9 @@ export function LoginPage() {
     e.preventDefault()
     setForgotError(null)
     setForgotLoading(true)
-    const { error: err } = await supabase.auth.resetPasswordForEmail(forgotEmail, {
-      redirectTo: window.location.origin + '/login',
-    })
+    const { error } = await auth.sendPasswordReset(forgotEmail)
     setForgotLoading(false)
-    if (err) setForgotError(err.message)
+    if (error) setForgotError(error)
     else setForgotSent(true)
   }
 
@@ -201,10 +162,10 @@ export function LoginPage() {
     if (newPassword !== confirmPass) { setError(t.passwordMismatch); return }
     setError(null)
     setLoading(true)
-    const { error: err } = await supabase.auth.updateUser({ password: newPassword })
+    const { error } = await auth.updatePassword(newPassword)
     setLoading(false)
-    if (err) {
-      setError(err.message)
+    if (error) {
+      setError(error)
     } else {
       setRecoverySession(false)
       setNewPassword('')
