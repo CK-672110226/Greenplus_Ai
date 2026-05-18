@@ -75,6 +75,15 @@ function ChangeView({ center, zoom }) {
   return null
 }
 
+function FitRoute({ points }) {
+  const map = useMap()
+  useEffect(() => {
+    if (!points || points.length < 2) return
+    map.fitBounds(L.latLngBounds(points), { padding: [60, 60], animate: true, duration: 0.8 })
+  }, [points, map])
+  return null
+}
+
 const pillBase     = 'font-data text-[11px] uppercase tracking-widest border-[1.5px] border-[var(--ink)] transition-colors cursor-pointer bg-transparent'
 const pillActive   = 'bg-[var(--ink)] text-[var(--paper)]'
 const pillInactive = 'bg-[var(--paper)] text-[var(--ink)] hover:bg-[var(--paper-2)]'
@@ -89,9 +98,11 @@ export function MapPage() {
   const language   = useSelector(s => s.user.language)
   const darkMode   = useSelector(s => s.user.darkMode)
   const basket     = useSelector(s => s.waste?.basket ?? [])
-  const [filter, setFilter]   = useState('all')
-  const [routeTo, setRouteTo] = useState(null)
-  const { shops, loading }    = useShops()
+  const [filter, setFilter]         = useState('all')
+  const [routeTo, setRouteTo]       = useState(null)
+  const [walkingRoute, setWalkingRoute] = useState(null)
+  const [routeLoading, setRouteLoading] = useState(false)
+  const { shops, loading }          = useShops()
   const gps = useGPS()
   const { request: requestGPS } = gps
   const { openOrCreateRoom } = useChat()
@@ -106,6 +117,28 @@ export function MapPage() {
   useEffect(() => {
     requestGPS()
   }, [requestGPS])
+
+  // Fetch real walking route from OSRM when routeTo or user location changes
+  useEffect(() => {
+    if (!gps.lat || !gps.lng || !routeTo) {
+      setWalkingRoute(null) // eslint-disable-line react-hooks/set-state-in-effect
+      return
+    }
+    let cancelled = false
+    setRouteLoading(true)
+    const url = `https://router.project-osrm.org/route/v1/foot/${gps.lng},${gps.lat};${routeTo.lng},${routeTo.lat}?overview=full&geometries=geojson`
+    fetch(url)
+      .then(r => r.json())
+      .then(data => {
+        if (cancelled) return
+        const coords = data.routes?.[0]?.geometry?.coordinates
+        // OSRM returns [lng, lat] — Leaflet needs [lat, lng]
+        setWalkingRoute(coords ? coords.map(([lng, lat]) => [lat, lng]) : null)
+      })
+      .catch(() => { if (!cancelled) setWalkingRoute(null) })
+      .finally(() => { if (!cancelled) setRouteLoading(false) })
+    return () => { cancelled = true }
+  }, [gps.lat, gps.lng, routeTo])
 
   const userCenter = gps.lat && gps.lng ? [gps.lat, gps.lng] : null
   const mapCenter  = userCenter ?? DEFAULT_CENTER
@@ -219,7 +252,9 @@ export function MapPage() {
           >
             {routeTo && (
               <div className="absolute top-2 left-1/2 -translate-x-1/2 z-[1000] flex items-center gap-3 px-4 py-2 bg-[var(--paper)] border-[1.5px] border-[var(--ink)] shadow-[2px_2px_0_var(--ink)]" style={{ whiteSpace: 'nowrap' }}>
-                <span className="font-data text-[12px] uppercase tracking-widest text-[var(--green-ink)]">● ROUTE</span>
+                <span className="font-data text-[12px] uppercase tracking-widest text-[var(--green-ink)]">
+                  {routeLoading ? '○ ROUTING…' : '● ROUTE'}
+                </span>
                 <span className="font-body text-[14px]">{routeTo.name}</span>
                 <button onClick={() => setRouteTo(null)} className="font-data text-[11px] text-[var(--ink-3)] bg-transparent border-none cursor-pointer hover:text-[var(--ink)]">✕ clear</button>
               </div>
@@ -261,17 +296,23 @@ export function MapPage() {
                 />
               )}
 
-              {userCenter && routeTo && (
-                <Polyline
-                  positions={[userCenter, [routeTo.lat, routeTo.lng]]}
-                  pathOptions={{
-                    color: 'var(--green)',
-                    weight: 3,
-                    opacity: 0.85,
-                    dashArray: '8 5',
-                  }}
-                />
-              )}
+              {userCenter && routeTo && (() => {
+                const positions = walkingRoute ?? [userCenter, [routeTo.lat, routeTo.lng]]
+                return (
+                  <>
+                    <FitRoute points={positions} />
+                    <Polyline
+                      positions={positions}
+                      pathOptions={{
+                        color: 'var(--green)',
+                        weight: walkingRoute ? 4 : 3,
+                        opacity: 0.9,
+                        dashArray: walkingRoute ? null : '8 5',
+                      }}
+                    />
+                  </>
+                )
+              })()}
 
               {visible.map(shop => {
                 const matches = (shop.accepts ?? []).some(a => basketMaterials.has(a))
@@ -310,18 +351,10 @@ export function MapPage() {
                         </div>
                         <div style={{ display: 'flex', gap: 8, marginTop: 6 }}>
                           <button
-                            onClick={() => {
-                              const from = gps.lat ? `${gps.lat},${gps.lng}` : ''
-                              const to   = `${shop.lat},${shop.lng}`
-                              const url  = from
-                                ? `https://www.openstreetmap.org/directions?from=${from}&to=${to}`
-                                : `https://www.openstreetmap.org/?mlat=${shop.lat}&mlon=${shop.lng}`
-                              window.open(url, '_blank')
-                              setRouteTo(shop)
-                            }}
+                            onClick={() => setRouteTo(shop)}
                             style={{ fontSize: 12, color: '#22C55E', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
                           >
-                            Navigate →
+                            Show route →
                           </button>
                           <button
                             onClick={() => handleChat(shop.id)}
