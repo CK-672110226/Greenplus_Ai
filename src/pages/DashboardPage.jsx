@@ -149,7 +149,7 @@ export function DashboardPage() {
   const revenue   = bookings.filter(b => b.status === 'accepted').reduce((s, b) => s + (b.estValue ?? 0), 0)
   const newReqs   = pending
 
-  const shopName  = shop?.name ?? (language === 'th' ? 'แดชบอร์ดร้าน' : 'Your Shop')
+  const shopName  = shop?.name ?? t.shopNameFallback
 
   return (
     <main className="w-full px-4 py-8 flex flex-col gap-6 max-w-4xl mx-auto">
@@ -157,12 +157,12 @@ export function DashboardPage() {
       {/* Header */}
       <div className="flex flex-col gap-0.5">
         <span className="font-data text-[10px] text-[var(--ink-3)] uppercase tracking-[0.15em]">
-          {language === 'th' ? 'หน้าแรก / แดชบอร์ด' : 'Home / Dashboard'}
+          {t.breadcrumbDash}
         </span>
         <h1 className="font-brand text-[26px] text-[var(--ink)] m-0 leading-tight">
           {shopName}
           <span className="font-body text-[16px] text-[var(--ink-3)] ml-2">
-            — {language === 'th' ? 'วันนี้' : "today's haul"}
+            — {t.todaysHaul}
           </span>
         </h1>
       </div>
@@ -170,20 +170,20 @@ export function DashboardPage() {
       {/* KPI row — 4 cards, full-width, exact spec pattern */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <div className="flex flex-col gap-1 p-4 border-[1.5px] border-[var(--ink)] hover:shadow-[3px_3px_0_var(--ink)] hover:-translate-x-px hover:-translate-y-px transition-all duration-150">
-          <span className="font-data text-[11px] text-[var(--ink-3)] uppercase tracking-widest">Pending</span>
+          <span className="font-data text-[11px] text-[var(--ink-3)] uppercase tracking-widest">{t.kpiPending}</span>
           <div className="font-brand text-[32px] text-[var(--orange)] leading-none">{pending}</div>
         </div>
         <div className="flex flex-col gap-1 p-4 border-[1.5px] border-[var(--ink)] hover:shadow-[3px_3px_0_var(--ink)] hover:-translate-x-px hover:-translate-y-px transition-all duration-150">
-          <span className="font-data text-[11px] text-[var(--ink-3)] uppercase tracking-widest">Accepted</span>
+          <span className="font-data text-[11px] text-[var(--ink-3)] uppercase tracking-widest">{t.kpiAccepted}</span>
           <div className="font-brand text-[32px] text-[var(--green)] leading-none">{accepted}</div>
         </div>
         <div className="flex flex-col gap-1 p-4 border-[1.5px] border-[var(--ink)] hover:shadow-[3px_3px_0_var(--ink)] hover:-translate-x-px hover:-translate-y-px transition-all duration-150">
-          <span className="font-data text-[11px] text-[var(--ink-3)] uppercase tracking-widest">Completed</span>
+          <span className="font-data text-[11px] text-[var(--ink-3)] uppercase tracking-widest">{t.kpiCompleted}</span>
           <div className="font-brand text-[32px] text-[var(--ink)] leading-none">{completed}</div>
           <span className="font-data text-[10px] text-[var(--ink-4)]">7d</span>
         </div>
         <div className="flex flex-col gap-1 p-4 border-[1.5px] border-[var(--ink)] hover:shadow-[3px_3px_0_var(--ink)] hover:-translate-x-px hover:-translate-y-px transition-all duration-150">
-          <span className="font-data text-[11px] text-[var(--ink-3)] uppercase tracking-widest">Revenue</span>
+          <span className="font-data text-[11px] text-[var(--ink-3)] uppercase tracking-widest">{t.kpiRevenue}</span>
           <div className="font-brand text-[32px] text-[var(--ink)] leading-none">฿{revenue.toLocaleString()}</div>
           <span className="font-data text-[10px] text-[var(--ink-4)]">7d</span>
         </div>
@@ -193,10 +193,10 @@ export function DashboardPage() {
       <div className="flex items-center justify-between gap-3 border-b-[1.5px] border-[var(--ink-4)] pb-0">
         <div className="flex gap-0 overflow-x-auto scrollbar-hide">
           {[
-            { key: 'orders',    label: 'Bookings' },
-            { key: 'schedule',  label: language === 'th' ? 'ตารางนัด' : 'Schedule' },
-            { key: 'route',     label: language === 'th' ? 'เส้นทางอัจฉริยะ' : 'Smart Route' },
-            { key: 'pricing',   label: language === 'th' ? 'ราคา' : 'Pricing' },
+            { key: 'orders',    label: t.tabBookings },
+            { key: 'schedule',  label: t.schedule },
+            { key: 'route',     label: t.tabSmartRoute },
+            { key: 'pricing',   label: t.pricing },
           ].map(({ key, label }) => (
             <TabBtn key={key} active={tab === key} onClick={() => setTab(key)}>
               {label}
@@ -284,7 +284,7 @@ export function DashboardPage() {
             )
           })}
           <p className="font-data text-[10px] text-[var(--ink-4)] mt-4">
-            {language === 'th' ? 'ราคาแก้ไขได้ในหน้า Pricing ของร้าน' : 'Edit live prices in your shop Pricing page.'}
+            {t.pricingHint}
           </p>
         </div>
       )}

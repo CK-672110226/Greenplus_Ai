@@ -311,4 +311,53 @@ export const en = {
   materialsYouBuy:   'Materials you buy',
   locationAndHours:  'Location & hours',
   finishSetup:       'Finish setup',
+
+  // Navigation (chat was missing)
+  chat:              'Chat',
+
+  // Dashboard KPI labels + tabs
+  kpiPending:        'Pending',
+  kpiAccepted:       'Accepted',
+  kpiCompleted:      'Completed',
+  kpiRevenue:        'Revenue',
+  tabBookings:       'Bookings',
+  tabSmartRoute:     'Smart Route',
+  breadcrumbDash:    'Home / Dashboard',
+  todaysHaul:        "today's haul",
+  shopNameFallback:  'Your Shop',
+
+  // Schedule status badges
+  slotPending:       'Pending',
+  slotConfirmed:     'Confirmed',
+  slotCompleted:     'Completed',
+  slotCancelled:     'Cancelled',
+
+  // Schedule week-grid day labels
+  dayMon:            'Mon',
+  dayTue:            'Tue',
+  dayWed:            'Wed',
+  dayThu:            'Thu',
+  dayFri:            'Fri',
+  daySat:            'Sat',
+  daySun:            'Sun',
+
+  // Eco Points page
+  ecoPointsTitle:    'Eco Points',
+  ecoImpactLabel:    'Impact Points',
+  ecoCurrentTier:    'Current tier',
+  ecoPriceBonus:     'price bonus',
+  ecoTierHeader:     'Tier',
+  ecoRangeHeader:    'Range',
+  ecoBonusHeader:    'Bonus',
+  ecoHowTitle:       'How points work',
+  ecoHowBody:        'Every scan earns 10 pts per kg of recyclable material detected. Clean (Grade A) items earn a 10% bonus. Points unlock higher multipliers that boost your per-kg payout.',
+  ecoRecentHistory:  'Recent history',
+  ecoNoScans:        'No scans yet — start scanning to earn points.',
+  ecoUnknown:        'Unknown material',
+  ecoMaxTier:        'Max tier reached',
+  ecoToNext:         'pts to',
+  ecoTierBronze:     'Bronze',
+  ecoTierSilver:     'Silver',
+  ecoTierGold:       'Gold',
+  ecoTierPlatinum:   'Platinum',
 }

@@ -1,11 +1,13 @@
 import { useSelector } from 'react-redux'
 import { useScanHistory } from '../hooks/useScanHistory'
+import { useT } from '../hooks/useT'
+import { SectionDivider } from '../components/SectionDivider'
 
 const TIERS = [
-  { name: 'Bronze',   min: 0,    max: 999,  multiplier: '×1.0' },
-  { name: 'Silver',   min: 1000, max: 1999, multiplier: '×1.05' },
-  { name: 'Gold',     min: 2000, max: 2999, multiplier: '×1.1' },
-  { name: 'Platinum', min: 3000, max: Infinity, multiplier: '×1.15' },
+  { key: 'bronze',   min: 0,    max: 999,  multiplier: '×1.0' },
+  { key: 'silver',   min: 1000, max: 1999, multiplier: '×1.05' },
+  { key: 'gold',     min: 2000, max: 2999, multiplier: '×1.1' },
+  { key: 'platinum', min: 3000, max: Infinity, multiplier: '×1.15' },
 ]
 
 function getTier(pts) {
@@ -18,19 +20,17 @@ function getProgress(pts) {
   return Math.round(((pts - tier.min) / (tier.max - tier.min + 1)) * 100)
 }
 
-function SectionDivider({ label }) {
-  return (
-    <div className="flex items-center gap-3 my-2">
-      <div className="flex-1 h-[1px] bg-[var(--ink-4)]" />
-      <span className="font-data text-[9px] text-[var(--ink-4)] uppercase tracking-[0.15em]">{label}</span>
-      <div className="flex-1 h-[1px] bg-[var(--ink-4)]" />
-    </div>
-  )
-}
-
 export function EcoPointsPage() {
+  const t        = useT()
   const profile  = useSelector(s => s.user.profile)
   const { scans, loading } = useScanHistory()
+
+  const tierNames = {
+    bronze:   t.ecoTierBronze,
+    silver:   t.ecoTierSilver,
+    gold:     t.ecoTierGold,
+    platinum: t.ecoTierPlatinum,
+  }
 
   const pts      = profile?.eco_points ?? 0
   const tier     = getTier(pts)
@@ -39,7 +39,7 @@ export function EcoPointsPage() {
 
   const recentHistory = scans.slice(0, 10).map(s => ({
     id:       s.id,
-    label:    s.material_type ?? 'Unknown material',
+    label:    s.material_type ?? t.ecoUnknown,
     pts:      Math.max(1, Math.round((s.weight_kg ?? 0.5) * 10)),
     date:     s.created_at ? new Date(s.created_at) : null,
   }))
@@ -50,10 +50,10 @@ export function EcoPointsPage() {
       {/* Page header */}
       <div className="w-full px-4 pt-4 pb-2 border-b-[1.5px] border-[var(--ink-4)]">
         <div className="flex items-center gap-1.5 font-data text-[10px] uppercase tracking-widest text-[var(--ink-3)] mb-1">
-          ♻ Impact Points
+          ♻ {t.ecoImpactLabel}
         </div>
         <h1 className="font-brand text-[28px] leading-tight m-0 text-[var(--green-ink)]">
-          {pts.toLocaleString()} pts · {tier.name}
+          {pts.toLocaleString()} pts · {tierNames[tier.key]}
         </h1>
       </div>
 
@@ -63,14 +63,14 @@ export function EcoPointsPage() {
         <div className="flex flex-col gap-3 border-[1.5px] border-[var(--ink)] p-4 bg-[var(--paper-2)] shadow-[2px_2px_0_var(--ink)]">
           <div className="flex items-center justify-between">
             <span className="font-data text-[11px] text-[var(--ink-3)] uppercase tracking-widest">
-              Current tier
+              {t.ecoCurrentTier}
             </span>
             <span className="font-data text-[11px] text-[var(--green-ink)] uppercase tracking-widest">
-              {tier.multiplier} price bonus
+              {tier.multiplier} {t.ecoPriceBonus}
             </span>
           </div>
 
-          <div className="font-brand text-[36px] text-[var(--ink)] leading-none">{tier.name}</div>
+          <div className="font-brand text-[36px] text-[var(--ink)] leading-none">{tierNames[tier.key]}</div>
 
           {nextTier ? (
             <>
@@ -85,16 +85,16 @@ export function EcoPointsPage() {
                   {pts.toLocaleString()} pts
                 </span>
                 <span className="font-data text-[10px] text-[var(--ink-3)]">
-                  {nextTier.min.toLocaleString()} pts → {nextTier.name}
+                  {nextTier.min.toLocaleString()} pts → {tierNames[nextTier.key]}
                 </span>
               </div>
               <span className="font-data text-[11px] text-[var(--ink-2)]">
-                {(nextTier.min - pts).toLocaleString()} pts to {nextTier.name}
+                {(nextTier.min - pts).toLocaleString()} {t.ecoToNext} {tierNames[nextTier.key]}
               </span>
             </>
           ) : (
             <span className="font-data text-[11px] text-[var(--green-ink)]">
-              Max tier reached — {tier.multiplier} on all materials
+              {t.ecoMaxTier} — {tier.multiplier} {t.ecoPriceBonus}
             </span>
           )}
         </div>
@@ -102,17 +102,17 @@ export function EcoPointsPage() {
         {/* Tier table */}
         <div className="flex flex-col border-[1.5px] border-[var(--ink)]">
           <div className="grid grid-cols-3 px-4 py-2 border-b-[1.5px] border-[var(--ink)] bg-[var(--paper-2)]">
-            <span className="font-data text-[9px] text-[var(--ink-4)] uppercase tracking-[0.15em]">Tier</span>
-            <span className="font-data text-[9px] text-[var(--ink-4)] uppercase tracking-[0.15em]">Range</span>
-            <span className="font-data text-[9px] text-[var(--ink-4)] uppercase tracking-[0.15em] text-right">Bonus</span>
+            <span className="font-data text-[11px] text-[var(--ink-4)] uppercase tracking-[0.15em]">{t.ecoTierHeader}</span>
+            <span className="font-data text-[11px] text-[var(--ink-4)] uppercase tracking-[0.15em]">{t.ecoRangeHeader}</span>
+            <span className="font-data text-[11px] text-[var(--ink-4)] uppercase tracking-[0.15em] text-right">{t.ecoBonusHeader}</span>
           </div>
           {TIERS.map(t2 => (
             <div
-              key={t2.name}
-              className={`grid grid-cols-3 px-4 py-3 border-b-[1px] border-[var(--ink-4)] last:border-b-0 ${t2.name === tier.name ? 'bg-[var(--green-soft)]' : ''}`}
+              key={t2.key}
+              className={`grid grid-cols-3 px-4 py-3 border-b-[1px] border-[var(--ink-4)] last:border-b-0 ${t2.key === tier.key ? 'bg-[var(--green-soft)]' : ''}`}
             >
-              <span className={`font-body text-[14px] ${t2.name === tier.name ? 'text-[var(--green-ink)]' : 'text-[var(--ink)]'}`}>
-                {t2.name === tier.name ? '● ' : '  '}{t2.name}
+              <span className={`font-body text-[14px] ${t2.key === tier.key ? 'text-[var(--green-ink)]' : 'text-[var(--ink)]'}`}>
+                {t2.key === tier.key ? '● ' : '  '}{tierNames[t2.key]}
               </span>
               <span className="font-data text-[12px] text-[var(--ink-3)]">
                 {t2.min.toLocaleString()}
@@ -125,13 +125,13 @@ export function EcoPointsPage() {
 
         {/* How points work */}
         <div className="flex flex-col gap-2 border-[1.5px] border-[var(--ink-4)] p-4 bg-[var(--paper-2)]">
-          <span className="font-data text-[10px] text-[var(--ink-3)] uppercase tracking-widest">How points work</span>
+          <span className="font-data text-[10px] text-[var(--ink-3)] uppercase tracking-widest">{t.ecoHowTitle}</span>
           <p className="font-body text-[14px] text-[var(--ink)] m-0 leading-relaxed">
-            Every scan earns 10 pts per kg of recyclable material detected. Clean (Grade A) items earn a 10% bonus. Points unlock higher multipliers that boost your per-kg payout.
+            {t.ecoHowBody}
           </p>
         </div>
 
-        <SectionDivider label="Recent history" />
+        <SectionDivider label={t.ecoRecentHistory} />
 
         {/* Timeline */}
         {loading ? (
@@ -141,7 +141,7 @@ export function EcoPointsPage() {
             ))}
           </div>
         ) : recentHistory.length === 0 ? (
-          <p className="font-body text-[15px] text-[var(--ink-3)]">No scans yet — start scanning to earn points.</p>
+          <p className="font-body text-[15px] text-[var(--ink-3)]">{t.ecoNoScans}</p>
         ) : (
           <div className="flex flex-col border-[1.5px] border-[var(--ink)]">
             {recentHistory.map((entry, idx) => (
