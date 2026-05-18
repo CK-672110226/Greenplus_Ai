@@ -1,33 +1,17 @@
-// Fetch active shops from Supabase public.shops
-// Returns { shops, loading }
-// shops array has shape: { id, name, area, lat, lng, accepts (text[]), distanceKm (null if unknown) }
-// distanceKm is null since GPS distance is computed per-user in BasketPage
-
-import { useState, useEffect } from 'react'
+import { useCallback } from 'react'
 import { supabase } from '../lib/supabase'
+import { useQuery } from './useQuery'
 
 export function useShops() {
-  const [shops, setShops]     = useState([])
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    async function fetch() {
-      try {
-        const { data, error } = await supabase
-          .from('shops')
-          .select('*, shop_pricing(material_type, price_per_kg, cap_kg)')
-          .eq('status', 'active')
-        if (!error && data) {
-          setShops(data.map(s => ({ ...s, distanceKm: null })))
-        }
-      } catch {
-        // Supabase not configured — return empty
-      } finally {
-        setLoading(false)
-      }
-    }
-    fetch()
+  const fetchShops = useCallback(async () => {
+    const { data, error } = await supabase
+      .from('shops')
+      .select('*, shop_pricing(material_type, price_per_kg, cap_kg)')
+      .eq('status', 'active')
+    if (error) throw error
+    return data.map(s => ({ ...s, distanceKm: null }))
   }, [])
 
-  return { shops, loading }
+  const { data, loading, error } = useQuery(fetchShops)
+  return { shops: data ?? [], loading, error }
 }

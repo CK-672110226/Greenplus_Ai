@@ -1,36 +1,22 @@
-import { useState, useEffect } from 'react'
+import { useCallback } from 'react'
 import { useSelector } from 'react-redux'
 import { supabase } from '../lib/supabase'
+import { useQuery } from './useQuery'
 
 export function useMyShop() {
-  const session = useSelector(s => s.user.session)
-  const [shop, setShop]       = useState(null)
-  const [loading, setLoading] = useState(true)
+  const userId = useSelector(s => s.user.session?.user?.id)
 
-  useEffect(() => {
-    if (!session?.user?.id) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setLoading(false)
-      return
-    }
+  const fetchShop = useCallback(async () => {
+    if (!userId) return null
+    const { data, error } = await supabase
+      .from('shops')
+      .select('*')
+      .eq('owner_id', userId)
+      .maybeSingle()
+    if (error) throw error
+    return data
+  }, [userId])
 
-    async function fetch() {
-      try {
-        const { data, error } = await supabase
-          .from('shops')
-          .select('*')
-          .eq('owner_id', session.user.id)
-          .maybeSingle()
-
-        if (!error && data) setShop(data)
-      } catch {
-        // Supabase not configured — fail silently
-      } finally {
-        setLoading(false)
-      }
-    }
-    fetch()
-  }, [session])
-
-  return { shop, loading }
+  const { data: shop, loading, error } = useQuery(fetchShop)
+  return { shop, loading, error }
 }

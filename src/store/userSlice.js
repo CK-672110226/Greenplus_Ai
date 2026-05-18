@@ -21,10 +21,7 @@ const userSlice = createSlice({
     setLanguage:   (state, action) => { state.language = action.payload },
     clearUser:     (state)         => { state.session = null; state.profile = null; state.loading = false },
     setDarkMode:   (state, action) => { state.darkMode = action.payload },
-    toggleDarkMode:(state)         => {
-      state.darkMode = !state.darkMode
-      localStorage.setItem('gp_dark', state.darkMode ? '1' : '0')
-    },
+    toggleDarkMode:(state)         => { state.darkMode = !state.darkMode },
   },
 })
 

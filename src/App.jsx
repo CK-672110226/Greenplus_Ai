@@ -52,6 +52,7 @@ function AuthInitializer({ children }) {
 
   useEffect(() => {
     document.documentElement.classList.toggle('dark', darkMode)
+    localStorage.setItem('gp_dark', darkMode ? '1' : '0')
   }, [darkMode])
 
   useEffect(() => {
