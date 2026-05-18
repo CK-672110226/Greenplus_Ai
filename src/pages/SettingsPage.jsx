@@ -140,7 +140,7 @@ export function SettingsPage() {
   }
 
   return (
-    <main className="flex flex-col px-4 py-6 gap-4 max-w-xl mx-auto w-full">
+    <main className="flex flex-col px-4 py-6 gap-4 max-w-2xl mx-auto w-full">
       <div className="flex flex-col gap-1">
         <span className="font-data text-[10px] text-[var(--ink-3)] uppercase tracking-[0.15em]">Settings</span>
         <h1 className="font-brand text-[28px] text-[var(--ink)] m-0">{t.settings}</h1>

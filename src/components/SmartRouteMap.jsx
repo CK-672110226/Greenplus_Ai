@@ -69,7 +69,7 @@ export default function SmartRouteMap() {
 
   if (loading) {
     return (
-      <div className="w-full max-w-2xl flex flex-col gap-4">
+      <div className="w-full max-w-5xl flex flex-col gap-4">
         <div className="grid grid-cols-3 gap-3">
           {[0, 1, 2].map(i => (
             <div key={i} className="border-[1.5px] border-[var(--ink-4)] p-3 h-16 animate-pulse bg-[var(--paper-2)]" />
@@ -87,7 +87,7 @@ export default function SmartRouteMap() {
 
   if (stops.length === 0) {
     return (
-      <div className="w-full max-w-2xl flex flex-col gap-4">
+      <div className="w-full max-w-5xl flex flex-col gap-4">
         <div className="grid grid-cols-3 gap-3">
           <KpiBox label="Stops"    value={0} />
           <KpiBox label="Total kg" value="0.0 kg" />
@@ -104,7 +104,7 @@ export default function SmartRouteMap() {
   }
 
   return (
-    <div className="w-full max-w-2xl flex flex-col gap-4">
+    <div className="w-full max-w-5xl flex flex-col gap-4">
 
       <div className="grid grid-cols-3 gap-3">
         <KpiBox label="Stops"    value={stats.stopCount} />
