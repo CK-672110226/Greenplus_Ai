@@ -341,25 +341,6 @@ export const th = {
   daySat:            'ส.',
   daySun:            'อา.',
 
-  // Eco Points page
-  ecoPointsTitle:    'คะแนนสิ่งแวดล้อม',
-  ecoImpactLabel:    'คะแนนผลกระทบ',
-  ecoCurrentTier:    'ระดับปัจจุบัน',
-  ecoPriceBonus:     'โบนัสราคา',
-  ecoTierHeader:     'ระดับ',
-  ecoRangeHeader:    'ช่วงคะแนน',
-  ecoBonusHeader:    'โบนัส',
-  ecoHowTitle:       'วิธีได้รับคะแนน',
-  ecoHowBody:        'ทุกการสแกนได้รับ 10 คะแนนต่อกิโลกรัม วัสดุสะอาด (เกรด A) ได้โบนัส 10% คะแนนช่วยปลดล็อกระดับที่สูงขึ้น เพิ่มมูลค่าต่อกิโลกรัมที่คุณได้รับ',
-  ecoRecentHistory:  'ประวัติล่าสุด',
-  ecoNoScans:        'ยังไม่มีการสแกน — เริ่มสแกนเพื่อสะสมคะแนน',
-  ecoUnknown:        'วัสดุไม่ทราบชนิด',
-  ecoMaxTier:        'ถึงระดับสูงสุดแล้ว',
-  ecoToNext:         'คะแนนอีก',
-  ecoTierBronze:     'บรอนซ์',
-  ecoTierSilver:     'ซิลเวอร์',
-  ecoTierGold:       'ทอง',
-  ecoTierPlatinum:   'แพลทินัม',
 
   // Map page — new key only (others pre-existed)
   locationAcquired:   'ได้รับตำแหน่งแล้ว',
