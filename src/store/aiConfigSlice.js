@@ -2,12 +2,13 @@ import { createSlice } from '@reduxjs/toolkit'
 
 const saved = JSON.parse(localStorage.getItem('gp_ai_config') || '{}')
 
+// Fields excluded from localStorage persistence (sensitive / session-only)
+const TRANSIENT_FIELDS = ['vertexAccessToken']
+
 const aiConfigSlice = createSlice({
   name: 'aiConfig',
   initialState: {
     model:                saved.model                ?? 'mock',
-    apiKey:               saved.apiKey               ?? '',
-    systemPrompt:         saved.systemPrompt         ?? 'You are a waste classification AI for Thai recycling shops. Analyze waste items and return JSON with: materialType, grade (A/B/C), estimatedWeight (kg), confidence (0-1), explanation.',
     confidenceThreshold:  saved.confidenceThreshold  ?? 0.6,
     // YOLO ONNX — stage 1 object detection (highest priority)
     yoloStage1Url:        saved.yoloStage1Url        ?? '',
@@ -22,17 +23,21 @@ const aiConfigSlice = createSlice({
     // Active backend selector: 'teachable-machine' | 'onnx'
     modelType:            saved.modelType            ?? 'teachable-machine',
     modelVersion:         saved.modelVersion         ?? 'v0-mock',
-    // Vertex AI (fallback)
+    // Vertex AI (fallback) — vertexAccessToken is session-only, never persisted
     vertexProjectId:      saved.vertexProjectId      ?? '',
     vertexLocation:       saved.vertexLocation       ?? 'us-central1',
-    vertexAccessToken:    saved.vertexAccessToken    ?? '',
+    vertexAccessToken:    '',
     vertexStage1Endpoint: saved.vertexStage1Endpoint ?? '',
     vertexStage2Endpoint: saved.vertexStage2Endpoint ?? '',
   },
   reducers: {
     setAiConfig: (state, action) => {
       Object.assign(state, action.payload)
-      localStorage.setItem('gp_ai_config', JSON.stringify({ ...state, ...action.payload }))
+      const persisted = Object.fromEntries(
+        Object.entries({ ...state, ...action.payload })
+          .filter(([k]) => !TRANSIENT_FIELDS.includes(k))
+      )
+      localStorage.setItem('gp_ai_config', JSON.stringify(persisted))
     },
   },
 })
