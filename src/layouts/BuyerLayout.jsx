@@ -76,7 +76,7 @@ function SideLink({ to, icon, label, badge }) {
 }
 
 /* ── Mobile bottom tab ──────────────────────────────────────── */
-function BuyerTab({ to, icon, label, isHero }) {
+function BuyerTab({ to, icon, label, isHero, badge }) {
   return (
     <NavLink
       to={to}
@@ -90,7 +90,14 @@ function BuyerTab({ to, icon, label, isHero }) {
           {icon}
         </span>
       ) : (
-        <span className="relative">{icon}</span>
+        <span className="relative">
+          {icon}
+          {badge > 0 && (
+            <span className="absolute -top-1 -right-1.5 flex items-center justify-center min-w-[14px] h-[14px] px-0.5 bg-[var(--green)] text-[var(--paper)] font-data text-[9px] rounded-full leading-none">
+              {badge}
+            </span>
+          )}
+        </span>
       )}
       <span className={`font-data text-[10px] uppercase tracking-wide leading-none ${isHero ? 'text-[var(--green-ink)] font-bold mt-1' : ''}`}>{label}</span>
     </NavLink>
@@ -236,6 +243,18 @@ export function BuyerLayout() {
           </button>
           <div className="flex items-center gap-2">
             <button
+              onClick={() => navigate('/notifications')}
+              className="relative flex items-center justify-center w-7 h-7 bg-transparent border-none cursor-pointer text-[var(--ink)] hover:text-[var(--green)] transition-colors"
+              aria-label="Notifications"
+            >
+              <IconBell />
+              {unread > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 flex items-center justify-center min-w-[14px] h-[14px] px-0.5 bg-[var(--green)] text-[var(--paper)] font-data text-[9px] rounded-full leading-none">
+                  {unread}
+                </span>
+              )}
+            </button>
+            <button
               onClick={handleDarkMode}
               className="flex items-center justify-center w-7 h-7 bg-transparent border-none cursor-pointer text-[var(--ink-3)] hover:text-[var(--ink)] transition-colors"
               aria-label="Toggle dark mode"
@@ -265,11 +284,11 @@ export function BuyerLayout() {
         {/* Mobile bottom tab bar */}
         <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 flex items-stretch bg-[var(--paper)] border-t-[1.5px] border-[var(--ink)]">
           {[
-            { to: '/dashboard',   icon: <IconDashboard />,   label: 'Home' },
-            { to: '/schedule',    icon: <IconSchedule />,    label: 'Schedule' },
-            { to: '/rider',       icon: <IconRoute />,       label: 'Route', isHero: true },
-            { to: '/marketplace', icon: <IconMarketBuyer />, label: 'Market' },
-            { to: '/pricing',     icon: <IconPricing />,     label: 'Prices' },
+            { to: '/dashboard', icon: <IconDashboard />, label: 'Home' },
+            { to: '/schedule',  icon: <IconSchedule />,  label: 'Schedule' },
+            { to: '/rider',     icon: <IconRoute />,     label: 'Route', isHero: true },
+            { to: '/chat',      icon: <IconChat />,      label: 'Chat', badge: unreadChat },
+            { to: '/pricing',   icon: <IconPricing />,   label: 'Prices' },
           ].map(item => (
             <BuyerTab key={item.to} {...item} />
           ))}

@@ -169,7 +169,12 @@ export function HomePage() {
               </span>
             </div>
           </div>
-          <span className="font-data text-[12px] text-[var(--green-ink)] shrink-0">→</span>
+          <button
+            onClick={() => navigate('/map')}
+            className="font-data text-[12px] text-[var(--green-ink)] shrink-0 bg-transparent border-none cursor-pointer hover:underline"
+          >
+            View on map →
+          </button>
         </div>
       )}
 
