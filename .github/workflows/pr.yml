@@ -56,3 +56,39 @@ jobs:
           VITE_SUPABASE_URL:      ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
           VITE_SENTRY_DSN:        ${{ secrets.VITE_SENTRY_DSN }}
+
+  # ── Stage 3: Smoke tests ─────────────────────────────────────────
+  # Catches runtime crashes (blank screen, uncaught JS errors) that
+  # lint + build cannot detect. Runs only the 00-smoke.spec.js suite
+  # to keep CI fast (~60s). Full e2e suite is opt-in locally.
+  smoke:
+    name: Smoke Tests
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci
+
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Run smoke tests
+        run: npx playwright test e2e/tests/00-smoke.spec.js --project=chromium
+        env:
+          VITE_SUPABASE_URL:      ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          VITE_SENTRY_DSN:        ${{ secrets.VITE_SENTRY_DSN }}
+
+      - name: Upload Playwright report on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-smoke-report
+          path: playwright-report/
+          retention-days: 7

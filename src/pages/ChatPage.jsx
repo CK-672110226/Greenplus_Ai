@@ -1,17 +1,19 @@
 import { useState, useRef, useEffect } from 'react'
 import { useSelector } from 'react-redux'
+import { useParams } from 'react-router-dom'
 import { useChat } from '../hooks/useChat'
 import { ChatOfferModal } from '../components/ChatOfferModal'
 
 export function ChatPage() {
+  const { roomId: routeRoomId } = useParams()
   const { rooms, activeRoomId, messages, sendMessage, setActiveRoom } = useChat()
   const session  = useSelector(s => s.user.session)
   const language = useSelector(s => s.user.language)
   const [draft, setDraft]           = useState('')
   const [offerOpen, setOfferOpen]   = useState(false)
   const [dialOpen, setDialOpen]     = useState(false)
-  // Lazy init: deep-linked rooms (e.g. /chat/:roomId) start in thread view
-  const [mobileView, setMobileView] = useState(() => activeRoomId ? 'thread' : 'rooms')
+  // Use URL param (sync) not activeRoomId (async hook) for reliable deep-link detection
+  const [mobileView, setMobileView] = useState(() => routeRoomId ? 'thread' : 'rooms')
   const bottomRef = useRef(null)
 
   useEffect(() => {
