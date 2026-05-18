@@ -9,6 +9,24 @@ import { toast } from 'sonner'
 
 const ROLE_DEST = { user: '/scan', buyer: '/dashboard', admin: '/admin' }
 
+function MailIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+      <polyline points="22,6 12,13 2,6" />
+    </svg>
+  )
+}
+
+function LockIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+      <path d="M7 11V7a5 5 0 0110 0v4" />
+    </svg>
+  )
+}
+
 function EyeIcon({ open }) {
   return open ? (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -419,20 +437,28 @@ export function LoginPage() {
             {/* Email / Password form */}
             <form onSubmit={handleSubmit} className="flex flex-col gap-4">
               <Field label={t.email ?? 'Email'} id={emailId}>
-                <input
-                  id={emailId}
-                  type="email"
-                  required
-                  autoComplete="username"
-                  placeholder="you@example.com"
-                  value={email}
-                  onChange={e => setEmail(e.target.value)}
-                  className="w-full px-3 py-2.5 border-[1.5px] border-[var(--ink-4)] focus:border-[var(--ink)] bg-[var(--paper)] font-body text-[17px] outline-none"
-                />
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--ink-3)] pointer-events-none">
+                    <MailIcon />
+                  </span>
+                  <input
+                    id={emailId}
+                    type="email"
+                    required
+                    autoComplete="username"
+                    placeholder="you@example.com"
+                    value={email}
+                    onChange={e => setEmail(e.target.value)}
+                    className="w-full pl-9 pr-3 py-2.5 border-[1.5px] border-[var(--ink-4)] focus:border-[var(--ink)] bg-[var(--paper)] font-body text-[17px] outline-none"
+                  />
+                </div>
               </Field>
 
               <Field label={t.password ?? 'Password'} id={passwordId}>
                 <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--ink-3)] pointer-events-none">
+                    <LockIcon />
+                  </span>
                   <input
                     id={passwordId}
                     type={showPass ? 'text' : 'password'}
@@ -441,7 +467,7 @@ export function LoginPage() {
                     placeholder="••••••••"
                     value={password}
                     onChange={e => setPassword(e.target.value)}
-                    className="w-full pl-3 pr-10 py-2.5 border-[1.5px] border-[var(--ink-4)] focus:border-[var(--ink)] bg-[var(--paper)] font-body text-[17px] outline-none"
+                    className="w-full pl-9 pr-10 py-2.5 border-[1.5px] border-[var(--ink-4)] focus:border-[var(--ink)] bg-[var(--paper)] font-body text-[17px] outline-none"
                   />
                   <button
                     type="button"
@@ -534,6 +560,11 @@ export function LoginPage() {
                   ? `Sign in → /${role === 'buyer' ? 'dashboard' : 'home'}`
                   : 'Create account →'}
               </Button>
+              {mode === 'signin' && (
+                <p className="font-data text-[10px] text-[var(--ink-4)] uppercase tracking-widest text-center m-0">
+                  press &amp; hold to sign in
+                </p>
+              )}
             </form>
 
             {/* Divider */}

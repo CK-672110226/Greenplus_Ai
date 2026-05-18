@@ -10,7 +10,7 @@ import SmartRouteMap from '../components/SmartRouteMap'
 import { useSelector, useDispatch } from 'react-redux'
 import { localName, WASTE_ITEMS } from '../data/wasteItems'
 import { setBookings } from '../store/bookingSlice'
-import { toggleMaterial, setOpenDays, setAcceptedMaterials } from '../store/buyerSlice'
+import { setAcceptedMaterials } from '../store/buyerSlice'
 import { useSupabaseBookings } from '../hooks/useSupabaseBookings'
 import { useMyShop } from '../hooks/useMyShop'
 import { supabase } from '../lib/supabase'
@@ -109,13 +109,10 @@ export function DashboardPage() {
   const language = useSelector(s => s.user.language)
   const session  = useSelector(s => s.user.session)
 
-  const savedOpenDays     = useSelector(s => s.buyer?.openDays ?? [1, 2, 3, 4, 5, 6])
   const acceptedMaterials = useSelector(s => s.buyer?.acceptedMaterials ?? Object.keys(WASTE_ITEMS))
 
-  const [tab, setTab]                       = useState('orders')
-  const [openDays, setOpenDays_local]       = useState(savedOpenDays)
-  const [materialsSaved, setMaterialsSaved] = useState(false)
-  const [slotPopup, setSlotPopup]           = useState(null)
+  const [tab, setTab]       = useState('orders')
+  const [slotPopup, setSlotPopup] = useState(null)
 
   const { shop } = useMyShop()
   const { bookings, loading, acceptBooking, rejectBooking, completeBooking, cancelBooking } = useSupabaseBookings()
@@ -130,53 +127,16 @@ export function DashboardPage() {
       try {
         const { data } = await supabase
           .from('user_profiles')
-          .select('open_days, accepted_materials')
+          .select('accepted_materials')
           .eq('id', session.user.id)
           .single()
-        if (data) {
-          if (Array.isArray(data.open_days) && data.open_days.length > 0) {
-            setOpenDays_local(data.open_days)
-            dispatch(setOpenDays(data.open_days))
-          }
-          if (Array.isArray(data.accepted_materials) && data.accepted_materials.length > 0) {
-            dispatch(setAcceptedMaterials(data.accepted_materials))
-          }
+        if (data?.accepted_materials?.length > 0) {
+          dispatch(setAcceptedMaterials(data.accepted_materials))
         }
       } catch { /* fail silently */ }
     }
     loadSettings()
   }, [session?.user?.id, dispatch])
-
-  function handleToggleDay(dayIndex) {
-    setOpenDays_local(prev =>
-      prev.includes(dayIndex)
-        ? prev.filter(d => d !== dayIndex)
-        : [...prev, dayIndex].sort()
-    )
-  }
-
-  async function handleSaveCalendar() {
-    dispatch(setOpenDays(openDays))
-    try {
-      if (session?.user?.id) {
-        await supabase.from('user_profiles').update({ open_days: openDays }).eq('id', session.user.id)
-      }
-    } catch { /* fail silently */ }
-    toast.success(language === 'th' ? 'บันทึกวันเปิดทำการแล้ว' : 'Calendar saved')
-  }
-
-  async function handleSaveMaterials() {
-    const { error } = await supabase
-      .from('user_profiles')
-      .update({ accepted_materials: acceptedMaterials })
-      .eq('id', session.user.id)
-    if (error) {
-      toast.error(language === 'th' ? 'บันทึกไม่สำเร็จ' : 'Failed to save')
-    } else {
-      toast.success(language === 'th' ? 'บันทึกแล้ว' : 'Saved')
-      setMaterialsSaved(true)
-    }
-  }
 
   function handleAccept(id)   { acceptBooking(id);   toast.success('Order accepted') }
   function handleReject(id)   { rejectBooking(id);   toast.error('Order rejected') }
@@ -235,9 +195,8 @@ export function DashboardPage() {
           {[
             { key: 'orders',    label: 'Bookings' },
             { key: 'schedule',  label: language === 'th' ? 'ตารางนัด' : 'Schedule' },
-            { key: 'route',     label: language === 'th' ? 'เส้นทาง' : 'Route' },
-            { key: 'calendar',  label: language === 'th' ? 'วันทำการ' : 'Shop Days' },
-            { key: 'materials', label: language === 'th' ? 'วัสดุ' : 'Materials' },
+            { key: 'route',     label: language === 'th' ? 'เส้นทางอัจฉริยะ' : 'Smart Route' },
+            { key: 'pricing',   label: language === 'th' ? 'ราคา' : 'Pricing' },
           ].map(({ key, label }) => (
             <TabBtn key={key} active={tab === key} onClick={() => setTab(key)}>
               {label}
@@ -266,8 +225,8 @@ export function DashboardPage() {
               icon="📋"
               title="No bookings yet"
               body="When a recycler books a pickup, it'll appear here."
-              primaryCta="Adjust materials →"
-              onPrimary={() => setTab('materials')}
+              primaryCta="View pricing →"
+              onPrimary={() => setTab('pricing')}
             />
           )}
           {!loading && bookings.map(b => (
@@ -307,82 +266,26 @@ export function DashboardPage() {
       {/* Smart Route tab */}
       {tab === 'route' && <SmartRouteMap />}
 
-      {/* Calendar tab */}
-      {tab === 'calendar' && (
-        <div className="flex flex-col gap-4 max-w-xl">
-          <div className="flex flex-col gap-0.5">
-            <span className="font-data text-[10px] text-[var(--ink-3)] uppercase tracking-widest">Operating Days</span>
-            <p className="font-body text-[14px] text-[var(--ink-3)] m-0">
-              {language === 'th'
-                ? 'เลือกวันที่ร้านเปิดรับซื้อ เพื่อให้ลูกค้าไม่ถูกนำทางมาในวันที่ร้านหยุด'
-                : 'Select your open days so users are not routed to you when closed.'}
-            </p>
+      {/* Pricing tab */}
+      {tab === 'pricing' && (
+        <div className="flex flex-col gap-0 max-w-xl">
+          <div className="flex items-center justify-between px-0 py-3 border-b-[1.5px] border-[var(--ink)]">
+            <span className="font-data text-[9px] text-[var(--ink-4)] uppercase tracking-[0.15em]">Material</span>
+            <span className="font-data text-[9px] text-[var(--ink-4)] uppercase tracking-[0.15em]">Base price ฿/kg</span>
           </div>
-          <div className="flex flex-col border-[1.5px] border-[var(--ink)] divide-y divide-[var(--ink-4)]">
-            {['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'].map((dayName, index) => {
-              const isOpen = openDays.includes(index)
-              return (
-                <div key={index} className="flex items-center justify-between px-4 py-3">
-                  <span className="font-body text-[15px] text-[var(--ink)]">{dayName}</span>
-                  <button
-                    onClick={() => handleToggleDay(index)}
-                    className={`font-data text-[10px] uppercase tracking-widest px-3 py-1 border-[1.5px] transition-colors cursor-pointer ${
-                      isOpen
-                        ? 'bg-[var(--green)] border-[var(--green-ink)] text-[var(--ink)]'
-                        : 'bg-transparent border-[var(--ink-4)] text-[var(--ink-3)]'
-                    }`}
-                  >
-                    {isOpen ? 'Open' : 'Closed'}
-                  </button>
-                </div>
-              )
-            })}
-          </div>
-          <Button variant="primary" onClick={handleSaveCalendar}>
-            {language === 'th' ? 'บันทึก' : 'Save Calendar'}
-          </Button>
-        </div>
-      )}
-
-      {/* Materials tab */}
-      {tab === 'materials' && (
-        <div className="flex flex-col gap-4 max-w-xl">
-          <div className="flex flex-col gap-0.5">
-            <span className="font-data text-[10px] text-[var(--ink-3)] uppercase tracking-widest">Accepted Materials</span>
-            <p className="font-body text-[14px] text-[var(--ink-3)] m-0">
-              {language === 'th'
-                ? 'เลือกประเภทวัสดุที่ร้านของคุณรับซื้อ'
-                : "Select the material types your shop accepts."}
-            </p>
-          </div>
-          <div className="grid grid-cols-2 gap-2">
-            {Object.keys(WASTE_ITEMS).map(key => {
-              const isOn = acceptedMaterials.includes(key)
-              return (
-                <button
-                  key={key}
-                  onClick={() => { dispatch(toggleMaterial(key)); setMaterialsSaved(false) }}
-                  className={`py-3 px-4 font-body text-[14px] border-[1.5px] text-left transition-colors cursor-pointer ${
-                    isOn
-                      ? 'bg-[var(--green)] border-[var(--ink)] text-[var(--ink)]'
-                      : 'bg-transparent border-[var(--ink-4)] text-[var(--ink-3)]'
-                  }`}
-                >
-                  {localName(key, language)}
-                </button>
-              )
-            })}
-          </div>
-          <div className="flex items-center gap-3">
-            <Button variant="primary" onClick={handleSaveMaterials} disabled={!session?.user?.id}>
-              {language === 'th' ? 'บันทึก' : 'Save'}
-            </Button>
-            {materialsSaved && (
-              <span className="font-data text-[11px] text-[var(--green-ink)] uppercase tracking-widest">
-                ● {language === 'th' ? 'บันทึกแล้ว' : 'saved'}
-              </span>
-            )}
-          </div>
+          {acceptedMaterials.map(key => {
+            const item = WASTE_ITEMS[key]
+            if (!item) return null
+            return (
+              <div key={key} className="flex items-center justify-between py-3 border-b-[1px] border-[var(--ink-4)]">
+                <span className="font-body text-[15px] text-[var(--ink)]">{localName(key, language)}</span>
+                <span className="font-data text-[18px] text-[var(--green-ink)]">฿ {item.basePrice.toFixed(0)}</span>
+              </div>
+            )
+          })}
+          <p className="font-data text-[10px] text-[var(--ink-4)] mt-4">
+            {language === 'th' ? 'ราคาแก้ไขได้ในหน้า Pricing ของร้าน' : 'Edit live prices in your shop Pricing page.'}
+          </p>
         </div>
       )}
 

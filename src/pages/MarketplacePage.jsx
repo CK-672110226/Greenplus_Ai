@@ -194,7 +194,6 @@ export function MarketplacePage() {
   const [catFilter, setCatFilter] = useState('all')
   const [isPosting, setIsPosting] = useState(false)
   const [mktTab, setMktTab] = useState('listings')
-  const [grade, setGrade] = useState('all')
 
   const basketMaterials = new Set(basket.filter(i => !i.skipped).map(i => i.materialType))
   const basketCount     = basket.filter(i => !i.skipped).length
@@ -405,23 +404,6 @@ export function MarketplacePage() {
               ))}
             </div>
 
-            {/* Grade filter */}
-            <div className="flex gap-1.5 flex-wrap mt-3">
-              {['all', 'A', 'B', 'C'].map(g => (
-                <button
-                  key={g}
-                  onClick={() => setGrade(g)}
-                  className={[
-                    'px-2.5 py-1 font-data text-[10px] uppercase tracking-widest border-[1.5px] transition-colors cursor-pointer',
-                    grade === g
-                      ? 'bg-[var(--ink)] text-[var(--paper)] border-[var(--ink)]'
-                      : 'bg-transparent text-[var(--ink-3)] border-[var(--ink-4)] hover:border-[var(--ink)] hover:text-[var(--ink)]',
-                  ].join(' ')}
-                >
-                  {g === 'all' ? 'All grades' : `Grade ${g}`}
-                </button>
-              ))}
-            </div>
           </div>
 
           {/* Shop cards — Listings tab */}
@@ -447,8 +429,8 @@ export function MarketplacePage() {
                 )}
               </div>
 
-              {/* Post Ad section */}
-              <div className="px-5 pb-5 border-t-[1.5px] border-[var(--ink)] pt-4">
+              {/* Post Ad section — desktop only */}
+              <div className="hidden lg:block px-5 pb-5 border-t-[1.5px] border-[var(--ink)] pt-4">
                 {isPosting ? (
                   <PostAdForm
                     onClose={() => setIsPosting(false)}
