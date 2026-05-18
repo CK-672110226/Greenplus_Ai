@@ -165,10 +165,6 @@ export function UserLayout() {
   const mobileNav = [
     { to: '/home',        icon: <IconHome />,   label: t.home },
     { to: '/marketplace', icon: <IconMarket />, label: t.marketplace },
-    { to: '/scan',        icon: <IconScan />,   label: 'AI', badge: 0 },
-    { to: '/basket',      icon: <IconBasket />, label: t.basket, badge: activeCount },
-    { to: '/map',         icon: <IconMap />,    label: t.map },
-    { to: '/chat',        icon: <IconChat />,   label: t.chat ?? 'Chat', badge: unreadChat },
   ]
 
   // Avatar initial
@@ -263,19 +259,6 @@ export function UserLayout() {
             <Logo height={30} showWordmark />
           </button>
           <div className="flex items-center gap-2">
-            <button
-              onClick={handleDarkMode}
-              className="flex items-center justify-center w-7 h-7 bg-transparent border-none cursor-pointer text-[var(--ink-3)] hover:text-[var(--ink)] transition-colors"
-              aria-label="Toggle dark mode"
-            >
-              {darkMode ? <IconSun /> : <IconMoon />}
-            </button>
-            <button
-              onClick={toggleLang}
-              className="font-data text-[11px] border-[1.5px] border-[var(--ink-4)] px-2 py-0.5 hover:border-[var(--ink)] transition-colors bg-transparent cursor-pointer"
-            >
-              {language === 'th' ? 'EN' : 'TH'}
-            </button>
             <button
               onClick={() => setDrawerOpen(true)}
               className="relative flex items-center justify-center w-8 h-8 bg-transparent border-none cursor-pointer text-[var(--ink)] hover:text-[var(--green)] transition-colors"

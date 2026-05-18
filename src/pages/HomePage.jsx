@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useSelector } from 'react-redux'
 import { GradeTag } from '../components/GradeTag'
 import { SectionDivider } from '../components/SectionDivider'
-import { localName, pricePerKg, WASTE_ITEMS } from '../data/wasteItems'
+import { localName, pricePerKg } from '../data/wasteItems'
 import { useShops } from '../hooks/useShops'
 import { hourBangkok, weeklyBuckets } from '../utils/time'
 
@@ -81,21 +81,6 @@ function greeting(name) {
   return { salute, name: name ?? 'there' }
 }
 
-/* ── Tier helpers ──────────────────────────────────────────── */
-function getTierName(pts) {
-  if (pts >= 3000) return 'Platinum'
-  if (pts >= 2000) return 'Gold'
-  if (pts >= 1000) return 'Silver'
-  return 'Bronze'
-}
-
-function getTierPct(pts) {
-  if (pts >= 3000) return 100
-  if (pts >= 2000) return ((pts - 2000) / 1000) * 100
-  if (pts >= 1000) return ((pts - 1000) / 1000) * 100
-  return (pts / 1000) * 100
-}
-
 /* ── HomePage ──────────────────────────────────────────────── */
 export function HomePage() {
   const navigate  = useNavigate()
@@ -103,7 +88,7 @@ export function HomePage() {
   const basket    = useSelector(s => s.waste?.basket ?? [])
   const lastScan  = useSelector(s => s.waste?.lastScan)
 
-  const { shops, loading } = useShops()
+  const { shops } = useShops()
 
   const [lastRefresh] = useState(() => new Date())
 
@@ -111,13 +96,10 @@ export function HomePage() {
   const totalValue   = activeItems.reduce((sum, i) => sum + pricePerKg(i.materialType, i.clean ?? true) * (i.weight ?? 0), 0)
   const weeklyData   = weeklyBuckets(basket, 'weight')
   const weeklyKg     = weeklyData.reduce((s, d) => s + d.val, 0).toFixed(1)
+  const co2Saved     = parseFloat(weeklyKg) * 2.5
   const { salute, name: displayName } = greeting(profile?.display_name)
-  const ecoPoints    = profile?.eco_points ?? 0
-  const tierName     = getTierName(ecoPoints)
-  const tierPct      = getTierPct(ecoPoints)
 
   const recentItems = activeItems.length > 0 ? activeItems.slice(-5).reverse() : []
-  const nearbyShops = shops.slice(0, 3)
 
   return (
     <div className="flex flex-col min-h-full">
@@ -141,19 +123,6 @@ export function HomePage() {
             </h1>
           </div>
 
-          {/* Actions */}
-          <div className="flex items-center gap-3 flex-wrap">
-            {/* "+ New Scan" CTA */}
-            <button
-              onClick={() => navigate('/scan')}
-              className="flex items-center gap-2 px-4 py-2.5 bg-[var(--green)] text-[var(--paper)] border-[1.5px] border-[var(--ink)] shadow-[3px_3px_0_var(--ink)] hover:shadow-[1px_1px_0_var(--ink)] active:shadow-none active:translate-x-[2px] active:translate-y-[2px] transition-all cursor-pointer font-data text-[12px] uppercase tracking-widest"
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
-              </svg>
-              New Scan
-            </button>
-          </div>
         </div>
       </div>
 
@@ -173,19 +142,16 @@ export function HomePage() {
           )}
         </div>
 
-        {/* Impact pts card */}
+        {/* CO₂ saved card */}
         <div className="flex flex-col gap-2 px-6 lg:px-10 py-5 border-t-[1.5px] sm:border-t-0 border-[var(--ink)]">
           <span className="font-data text-[9px] text-[var(--ink-4)] uppercase tracking-[0.15em]">
-            Impact pts
+            CO₂ Saved
           </span>
           <div className="flex items-baseline gap-2">
-            <span className="font-brand text-[28px] text-[var(--green-ink)] leading-none">{ecoPoints.toLocaleString()} pts</span>
+            <span className="font-brand text-[32px] text-[var(--green-ink)] leading-none">{co2Saved.toFixed(1)}</span>
+            <span className="font-data text-[11px] text-[var(--ink-3)]">kg CO₂</span>
           </div>
-          {/* Tier progress bar */}
-          <div className="w-full h-2 bg-[var(--paper-2)] border-[1.5px] border-[var(--ink)]">
-            <div style={{ width: `${tierPct}%` }} className="h-full bg-[var(--green)] transition-all" />
-          </div>
-          <span className="font-data text-[10px] text-[var(--ink-3)] uppercase tracking-widest">{tierName} tier</span>
+          <span className="font-data text-[11px] text-[var(--ink-3)]">est. this week</span>
         </div>
       </div>
 
@@ -224,37 +190,6 @@ export function HomePage() {
             </div>
           </div>
 
-          {/* Quick actions */}
-          <div className="px-6 lg:px-10 py-6">
-            <SectionDivider label="Quick actions" />
-            <div className="mt-3 grid grid-cols-2 lg:grid-cols-4 gap-3">
-              {[
-                { action: () => navigate('/scan'),        sub: 'use AI camera',   title: 'Scan an item' },
-                { action: () => navigate('/marketplace'), sub: 'buy & sell',      title: 'Marketplace' },
-                { action: () => navigate('/map'),         sub: 'live rates',      title: "Today's prices" },
-                { action: () => navigate('/map'),         sub: 'find shops',      title: 'Nearby buyer' },
-              ].map(({ action, sub, title }) => (
-                <button
-                  key={title}
-                  onClick={action}
-                  className="flex flex-col gap-2 border-[1.5px] border-[var(--ink)] px-4 py-5 text-left bg-[var(--paper-2)] cursor-pointer hover:bg-[var(--ink)] hover:text-[var(--paper)] transition-colors group shadow-[3px_3px_0_var(--ink)] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none"
-                >
-                  <span className="font-data text-[9px] text-[var(--ink-3)] uppercase tracking-widest group-hover:text-[var(--ink-4)]">
-                    {sub}
-                  </span>
-                  <span className="font-brand text-[17px] text-[var(--ink)] group-hover:text-[var(--paper)] leading-tight">
-                    {title}
-                  </span>
-                </button>
-              ))}
-            </div>
-            <button
-              onClick={() => navigate('/map')}
-              className="mt-3 font-data text-[10px] text-[var(--ink-4)] uppercase tracking-widest bg-transparent border-none cursor-pointer hover:text-[var(--ink)] transition-colors"
-            >
-              see all shortcuts →
-            </button>
-          </div>
         </div>
 
         {/* Right column */}
@@ -325,59 +260,6 @@ export function HomePage() {
             )}
           </div>
 
-          {/* Nearby buying requests */}
-          <div className="px-6 py-6">
-            <SectionDivider label="Nearby buying requests" />
-            <div className="flex flex-col mt-3">
-              {loading && (
-                <div className="flex flex-col gap-2 w-full">
-                  {[1,2,3].map(i => (
-                    <div key={i} className="h-16 border-[1.5px] border-[var(--ink-4)] animate-pulse bg-[var(--paper-2)]" />
-                  ))}
-                </div>
-              )}
-              {!loading && nearbyShops.length > 0 && nearbyShops.map(shop => {
-                const topMaterial = (shop.accepts ?? [])[0]
-                const price = topMaterial ? pricePerKg(topMaterial, 'A') : 0
-                return (
-                  <div
-                    key={shop.id}
-                    className="flex items-start justify-between py-3 border-b-[1px] border-[var(--ink-4)] last:border-b-0"
-                  >
-                    <div className="flex flex-col gap-0.5">
-                      <span className="font-body text-[14px] text-[var(--ink)]">{shop.name}</span>
-                      <span className="font-data text-[10px] text-[var(--ink-3)]">
-                        {shop.distanceKm ?? '—'} km
-                      </span>
-                      {topMaterial && (
-                        <span className="font-data text-[10px] text-[var(--ink-4)] mt-0.5">
-                          {language === 'th'
-                            ? (WASTE_ITEMS[topMaterial]?.nameTh ?? topMaterial)
-                            : (WASTE_ITEMS[topMaterial]?.nameEn ?? topMaterial)}
-                        </span>
-                      )}
-                    </div>
-                    {topMaterial && (
-                      <span className="font-data text-[13px] text-[var(--green-ink)] mt-0.5 shrink-0">
-                        ฿{price.toFixed(0)}/kg
-                      </span>
-                    )}
-                  </div>
-                )
-              })}
-            </div>
-            <div className="flex items-center justify-between mt-4">
-              <span className="font-data text-[10px] text-[var(--ink-4)]">
-                {nearbyShops.length} active · within 4km
-              </span>
-              <button
-                onClick={() => navigate('/map')}
-                className="font-data text-[11px] text-[var(--ink-3)] uppercase tracking-widest bg-transparent border-none cursor-pointer hover:text-[var(--ink)] transition-colors"
-              >
-                view all →
-              </button>
-            </div>
-          </div>
         </div>
       </div>
     </div>
