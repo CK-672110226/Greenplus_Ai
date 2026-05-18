@@ -31,15 +31,15 @@ export function useMarketPricing() {
     return { pricing, shopPricing: rawRows }
   }, [rows])
 
-  function marketPrice(materialType) {
+  const marketPrice = useCallback((materialType) => {
     return pricing[materialType] ?? pricePerKg(materialType)
-  }
+  }, [pricing])
 
-  function shopPrice(shopId, materialType) {
+  const shopPrice = useCallback((shopId, materialType) => {
     const row = shopPricing.find(r => r.shop_id === shopId && r.material_type === materialType)
     if (!row) return null
     return row.price_per_kg != null ? Number(row.price_per_kg) : null
-  }
+  }, [shopPricing])
 
   return { pricing, shopPricing, loading, error, marketPrice, shopPrice }
 }
