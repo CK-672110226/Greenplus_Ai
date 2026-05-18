@@ -25,9 +25,10 @@ export function PricingPage() {
   const dispatch = useDispatch()
   const language = useSelector(s => s.user.language)
 
-  const [local, setLocal] = useState(() => buildDefaultLocal())
-  const { shop }         = useMyShop()
-  const pricingActions   = useShopPricingActions()
+  const [local, setLocal]     = useState(() => buildDefaultLocal())
+  const [isDirty, setIsDirty] = useState(false)
+  const { shop }              = useMyShop()
+  const pricingActions        = useShopPricingActions()
 
   useEffect(() => {
     if (!shop?.id) return
@@ -50,6 +51,7 @@ export function PricingPage() {
             }
           })
           setLocal(merged)
+          setIsDirty(false)
         }
       } catch {
         // Supabase not configured — fail silently
@@ -61,11 +63,13 @@ export function PricingPage() {
   function handlePriceChange(mat, raw) {
     const value = parseFloat(raw) || 0
     setLocal(prev => ({ ...prev, [mat]: { ...prev[mat], price_per_kg: value } }))
+    setIsDirty(true)
   }
 
   function handleCapChange(mat, raw) {
     const value = parseFloat(raw) || 0
     setLocal(prev => ({ ...prev, [mat]: { ...prev[mat], cap_kg: value } }))
+    setIsDirty(true)
   }
 
   async function handleSave() {
@@ -82,15 +86,23 @@ export function PricingPage() {
         price_per_kg:  vals.price_per_kg ?? null,
         cap_kg:        vals.cap_kg        ?? null,
       }))
-      await pricingActions.savePricing(shop.id, rows)
+      try {
+        await pricingActions.savePricing(shop.id, rows)
+        setIsDirty(false)
+        toast.success(t.pricingSaved)
+      } catch {
+        toast.error(language === 'th' ? 'บันทึกไม่สำเร็จ — กรุณาลองใหม่' : 'Failed to save — please try again')
+      }
+    } else {
+      setIsDirty(false)
+      toast.success(t.pricingSaved)
     }
-
-    toast.success(t.pricingSaved)
   }
 
   function handleReset() {
     dispatch(resetToDefault())
     setLocal(buildDefaultLocal())
+    setIsDirty(false)
     toast.success(t.pricingReset)
   }
 
@@ -102,10 +114,17 @@ export function PricingPage() {
           <span className="font-data text-[10px] text-[var(--ink-3)] uppercase tracking-[0.15em]">Material Pricing</span>
           <h1 className="font-brand text-[28px] text-[var(--ink)] m-0">{t.pricingTitle}</h1>
           <p className="font-body text-[13px] text-[var(--ink-3)] m-0">{t.pricingHint}</p>
+          {isDirty && (
+            <span className="font-data text-[10px] text-[var(--orange)] uppercase tracking-widest">
+              ● Unsaved changes
+            </span>
+          )}
         </div>
         <div className="flex gap-2">
           <Button variant="secondary" onClick={handleReset}>{t.resetToMarket}</Button>
-          <Button variant="primary"   onClick={handleSave}>{t.saveChanges}</Button>
+          <Button variant="primary"   onClick={handleSave}>
+            {isDirty ? '● ' : ''}{t.saveChanges}
+          </Button>
         </div>
       </div>
 

@@ -1,8 +1,10 @@
+import { useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { useNavigate } from 'react-router-dom'
 import { setLanguage, toggleDarkMode, setProfile, clearUser } from '../store/userSlice'
 import { useT } from '../hooks/useT'
 import { SectionDivider } from '../components/SectionDivider'
+import { Button } from '../components/Button'
 import { useSettingsActions } from '../hooks/useSettingsActions'
 import { toast } from 'sonner'
 
@@ -54,28 +56,31 @@ export function SettingsPage() {
   const settingsActions = useSettingsActions()
   const prefs = { ...DEFAULT_PREFS, ...(profile?.notification_prefs ?? {}) }
 
+  const [deleteModal, setDeleteModal]           = useState(false)
+  const [deleteConfirmText, setDeleteConfirmText] = useState('')
+  const [deleting, setDeleting]                 = useState(false)
+
   async function togglePref(key) {
     const next = { ...prefs, [key]: !prefs[key] }
     dispatch(setProfile({ ...profile, notification_prefs: next }))
     await settingsActions.updatePrefs(session?.user?.id, next)
   }
 
-  async function handleDeleteAccount() {
-    const confirmed = window.confirm(
-      language === 'th'
-        ? 'ลบบัญชีถาวร? ไม่สามารถกู้คืนได้'
-        : 'Permanently delete your account? This cannot be undone.'
-    )
-    if (!confirmed) return
+  function handleDeleteAccount() {
+    setDeleteModal(true)
+    setDeleteConfirmText('')
+  }
+
+  async function performDeleteAccount() {
+    setDeleting(true)
     try {
-      // Soft-deletes profile row, then signs out.
-      // TODO: hard-delete via Edge Function (supabase.rpc('delete_my_account'))
-      // — auth user persists until server-side admin call.
       await settingsActions.deleteAccount(session.user.id)
       dispatch(clearUser())
       navigate('/')
     } catch {
       toast.error('Could not delete account. Please contact support.')
+      setDeleting(false)
+      setDeleteModal(false)
     }
   }
 
@@ -175,6 +180,64 @@ export function SettingsPage() {
           v0.5.0 · build {new Date().toISOString().slice(0, 10).replace(/-/g, '')}
         </span>
       </div>
+
+      {/* Delete account modal */}
+      {deleteModal && (
+        <div className="fixed inset-0 bg-[#1A1A1Ae6] flex items-center justify-center z-50 px-4">
+          <div className="w-full max-w-sm bg-[var(--paper)] border-[2px] border-[var(--orange)] shadow-[4px_4px_0_var(--orange)] p-6 flex flex-col gap-4">
+            <h2 className="font-brand text-[20px] text-[var(--orange)] m-0">
+              {language === 'th' ? 'ลบบัญชีถาวร' : 'Delete account'}
+            </h2>
+            <div className="flex flex-col gap-2">
+              <p className="font-body text-[14px] text-[var(--ink)] m-0 leading-relaxed">
+                {language === 'th'
+                  ? 'การดำเนินการนี้จะลบโปรไฟล์ ประวัติการสแกน และการจองทั้งหมด ไม่สามารถกู้คืนได้'
+                  : 'This will permanently delete your profile, scan history, and all bookings. This cannot be undone.'}
+              </p>
+              <div className="flex items-start gap-2 p-3 border-[1.5px] border-[var(--orange)] bg-[rgba(255,165,0,0.07)]">
+                <span className="font-data text-[10px] text-[var(--orange)] uppercase tracking-widest shrink-0 mt-0.5">!</span>
+                <p className="font-data text-[10px] text-[var(--orange)] m-0 leading-relaxed">
+                  {language === 'th'
+                    ? 'บัญชีจะถูกปิดการใช้งานภายใน 24 ชั่วโมง — ติดต่อ support@greenplus.ai เพื่อขอยกเลิก'
+                    : 'Account will be deactivated within 24 hours. Contact support@greenplus.ai to cancel.'}
+                </p>
+              </div>
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className="font-data text-[10px] text-[var(--ink-3)] uppercase tracking-widest">
+                {language === 'th' ? 'พิมพ์ DELETE เพื่อยืนยัน' : 'Type DELETE to confirm'}
+              </label>
+              <input
+                type="text"
+                value={deleteConfirmText}
+                onChange={e => setDeleteConfirmText(e.target.value)}
+                placeholder="DELETE"
+                autoComplete="off"
+                className="px-3 py-2 border-[1.5px] border-[var(--ink)] bg-[var(--paper)] font-data text-[14px] outline-none focus:border-[var(--orange)]"
+              />
+            </div>
+            <div className="flex gap-2">
+              <Button
+                variant="secondary"
+                onClick={() => { setDeleteModal(false); setDeleteConfirmText('') }}
+                disabled={deleting}
+              >
+                {language === 'th' ? 'ยกเลิก' : 'Cancel'}
+              </Button>
+              <button
+                type="button"
+                disabled={deleteConfirmText !== 'DELETE' || deleting}
+                onClick={performDeleteAccount}
+                className="flex-1 py-2.5 font-data text-[11px] uppercase tracking-widest border-[1.5px] border-[var(--orange)] bg-[var(--orange)] text-[var(--ink)] cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed transition-opacity"
+              >
+                {deleting
+                  ? (language === 'th' ? 'กำลังลบ…' : 'Deleting…')
+                  : (language === 'th' ? 'ลบถาวร' : 'Permanently delete')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   )
 }
