@@ -73,6 +73,8 @@ export function ScanPage() {
 
   const [isDragging, setIsDragging]  = useState(false)
 
+  const [editedWeight, setEditedWeight] = useState('')
+
   const [touchStart, setTouchStart] = useState(null)
   const [touchEnd, setTouchEnd]     = useState(null)
   const minSwipeDistance = 50
@@ -93,8 +95,9 @@ export function ScanPage() {
 
   function handleSwipeRight() {
     if (!result) return
+    const weight = Math.max(0.01, parseFloat(editedWeight) || result.weight || 0.5)
     // eslint-disable-next-line react-hooks/purity
-    const item = { ...result, id: `${result.materialType}_${Date.now()}` }
+    const item = { ...result, id: `${result.materialType}_${Date.now()}`, weight }
     if (result.stage2Pass === false) {
       setPendingItem(item)
       setDirtyAlert(true)
@@ -249,6 +252,7 @@ export function ScanPage() {
         // Always update Live Analysis with the first (highest-confidence) detection
         const first = infer.multiResult[0]
         setResult(first)
+        setEditedWeight(String(first.weight ?? 0.5))
         setBbox(first.bbox ?? null)
         setCleanlinessScore(first.cleanlinessScore ?? null)
         setStage(null)
@@ -276,6 +280,7 @@ export function ScanPage() {
 
       navigator.vibrate?.(100)
       setResult(infer)
+      setEditedWeight(String(infer.weight ?? 0.5))
       setBbox(infer.bbox ?? null)
       setCleanlinessScore(infer.cleanlinessScore ?? null)
       setStage(null)
@@ -383,6 +388,7 @@ export function ScanPage() {
     setUploadSrc(null)
     uploadImgRef.current = null
     setResult(null)
+    setEditedWeight('')
     setBbox(null)
     setCleanlinessScore(null)
     setStage(null)
@@ -969,14 +975,25 @@ export function ScanPage() {
 
           <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 border-[1px] border-[var(--ink-4)] p-3">
             <span className="font-data text-[11px] text-[var(--ink-3)] uppercase">{t.estWeight}</span>
-            <span className="font-data text-[13px] text-[var(--ink)] text-right">{result.weight} kg</span>
+            <div className="flex items-center gap-1.5 justify-end">
+              <input
+                type="number"
+                min="0.01"
+                step="0.1"
+                value={editedWeight}
+                onChange={e => setEditedWeight(e.target.value)}
+                className="w-16 font-data text-[13px] text-[var(--ink)] text-right border-b-[1.5px] border-[var(--green)] bg-transparent outline-none"
+                aria-label="Weight kg"
+              />
+              <span className="font-data text-[11px] text-[var(--ink-3)]">kg</span>
+            </div>
             <span className="font-data text-[11px] text-[var(--ink-3)] uppercase">฿/kg</span>
             <span className="font-data text-[13px] text-[var(--ink)] text-right">
               ฿{pricePerKg(result.materialType, result.stage2Pass ?? true).toFixed(2)}
             </span>
             <span className="font-data text-[11px] text-[var(--ink-3)] uppercase">Total</span>
             <span className="font-data text-[14px] text-[var(--green)] font-bold text-right">
-              ฿{(pricePerKg(result.materialType, result.stage2Pass ?? true) * result.weight).toFixed(2)}
+              ฿{(pricePerKg(result.materialType, result.stage2Pass ?? true) * (parseFloat(editedWeight) || result.weight || 0)).toFixed(2)}
             </span>
           </div>
 
