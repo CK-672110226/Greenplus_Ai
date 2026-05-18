@@ -7,9 +7,9 @@ if (!supabaseUrl || !supabaseAnonKey) {
   console.error('[greenplus] Missing Supabase env vars — set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY.')
 }
 
-// Fallback to placeholder so the client initialises and the app mounts.
+// || guards against both undefined and empty-string env vars (secrets absent in CI).
 // All DB calls will fail gracefully at runtime when env vars are absent.
 export const supabase = createClient(
-  supabaseUrl     ?? 'https://placeholder.supabase.co',
-  supabaseAnonKey ?? 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.placeholder'
+  supabaseUrl     || 'https://placeholder.supabase.co',
+  supabaseAnonKey || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.placeholder'
 )
