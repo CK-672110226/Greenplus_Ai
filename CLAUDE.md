@@ -9,53 +9,80 @@ npm run dev       # Start dev server with HMR at http://localhost:5173
 npm run build     # Production build to dist/
 npm run preview   # Preview the production build locally
 npm run lint      # Run ESLint on all JS/JSX files
+npm test          # Vitest unit tests (interactive)
+npm run test:run  # Vitest unit tests (single run)
+npm run e2e       # Playwright end-to-end tests
 ```
-
-No test runner is configured. Validation is done via lint + manual browser verification.
 
 ## Architecture
 
-This is a **React 19 + Vite 8** single-page application. Entry point: `index.html` → `src/main.jsx` → `src/App.jsx`.
+This is a **React 19 + Vite 8** single-page application. Entry: `index.html` → `src/main.jsx` → `src/App.jsx`.
 
-- `src/main.jsx` — mounts `<App />` into `#root` using React 19 `createRoot`
-- `src/App.jsx` — currently the single component; all application logic lives here
-- `src/index.css` — global styles
-- `src/App.css` — component-scoped styles for App
-- `src/assets/` — static images (hero.png, SVG logos)
-- `public/` — files served as-is (icons.svg referenced via `<use href="/icons.svg#...">` in JSX)
+**Bootstrap chain** (`src/main.jsx`):
+`<StrictMode>` → `<Provider store>` → `<PersistGate>` → `<App />`
 
-ESLint is configured with `react-hooks` and `react-refresh` rules (see `eslint.config.js`). No TypeScript.
+**`src/App.jsx`** wraps all routes in `<AuthInitializer>` which runs:
+- `useAuth()` — Supabase session listener → Redux
+- `useActiveModels()` — loads AI model registry
+- dark mode sync with `localStorage` and `prefers-color-scheme`
+
+**Role-based routing** (all authenticated routes live inside `<SmartLayout>`):
+- `role === 'user'` → `<UserLayout>` (bottom tab bar: home, scan, basket, map, profile)
+- `role === 'buyer'` → `<BuyerLayout>` (sidebar: dashboard, schedule, pricing, marketplace, etc.)
+- `role === 'admin'` → plain `<NavBar>` shell
+- `<ProtectedRoute requiredRole="X">` redirects to `/login` if no session, or `/` if wrong role
+
+**Auth flow** (`src/hooks/useAuth.js`):
+- `supabase.auth.getSession()` on mount + `onAuthStateChange` → dispatches `setSession` / `setProfile`
+- First Google OAuth login: reads `gp_pending_role` from `localStorage`, creates `user_profiles` row in Supabase
+
+**Redux store** (`src/store/index.js`) — 12 slices:
+- **Persisted** via redux-persist: `waste` (basket, lastScan), `pricing` (prices, savedAt)
+- **Not persisted**: user, marketplace, aiConfig, bookings, buyer, notifications, schedule, customLabels, logistics, chat
+
+**Key data** (`src/data/`):
+- `wasteItems.js` — 8 recyclable materials with `nameEn`, `nameTh`, `basePrice`; use `localName(key, language)` for bilingual display
+- `wasteRules.js` — classification rules for ONNX/TensorFlow scan model
+
+**Backend**: Supabase (PostgreSQL). Client at `src/lib/supabase.js`. Main tables: `user_profiles`, `scan_history`, `shops`, `marketplace_posts`, `bookings`, `schedules`.
+
+**AI scanning**: ONNX Runtime Web (`onnxruntime-web`) + TensorFlow.js (`@teachablemachine/image`) loaded lazily in `ScanPage`.
+
+**Maps**: Leaflet + react-leaflet in `MapPage`. Import `leaflet/dist/leaflet.css` is in `src/main.jsx`.
+
+**Error monitoring**: Sentry (`@sentry/react`) initialized in `src/main.jsx`, gated on `VITE_SENTRY_DSN`.
 
 ## Design Specification
 
-Before building or restyling any page, read **`docs/design-spec.md`**. It is the visual source-of-truth derived from the wireframes and covers:
-
-- Design language (neo-brutalist, borders, shadows, hatch charts, font roles)
-- Navigation anatomy (UserLayout / BuyerLayout / Admin shell with ASCII diagrams)
-- Every page spec: layout zones, exact UI zones, data shown, missing pieces vs wireframe
-- Shared micro-patterns: KpiCard, SectionDivider, ProgressBar, Timeline, Toggle pill, BookingRow, hatch bar chart
-- List of what's missing per page and what's not yet wireframed
+Before building or restyling any page, read **`docs/design-spec.md`**. It is the visual source-of-truth and covers:
+- Design language (neo-brutalist, 1.5px ink borders, flat shadows, hatch bar charts)
+- Navigation anatomy for each role with ASCII diagrams
+- Every page spec: layout zones, exact UI zones, data shown
+- Shared micro-patterns: KpiCard, SectionDivider, ProgressBar, Timeline, BookingRow, hatch bar chart
 
 ## User Flow & Page Composition
 
 Before creating or editing any page, read **`docs/user-flow.md`**. It covers:
-
-- Entry points and role-based routing (`user` → UserLayout, `buyer` → BuyerLayout, `admin` → default shell)
+- Entry points and role-based routing
 - Full navigation flow for each role (user / buyer / admin)
-- Per-page composition: which components, Redux slices, services, and data each page needs
-- Redux state ↔ page map (which slice is read/written where)
-- Checklist for adding a new page correctly
+- Per-page composition: components, Redux slices, services, and data each page needs
+- Redux state ↔ page map
 
 ## UI Design System
 
-Before writing any JSX or CSS, read **`docs/ui-components.md`**. It covers:
+Before writing any JSX or CSS, read **`docs/ui-components.md`**. Key rules:
+- CSS tokens: `--ink`, `--ink-2`, `--ink-3`, `--ink-4`, `--paper`, `--paper-2`, `--green`, `--green-soft`, `--green-ink`, `--orange` — **never use raw hex values**
+- Only `--ink` through `--ink-4` exist; `--ink-5` does not exist
+- Typography classes: `font-brand` (display/headings), `font-body` (prose), `font-data` (labels/data)
+- Component APIs: `<Button>`, `<Card>`, `<GradeTag>`, `<KpiCard>`, `<SectionDivider>`, `<ProgressBar>`, `<NavBar>`, `<ProtectedRoute>`
+- Layout: `<SmartLayout>`, `<UserLayout>`, `<BuyerLayout>`
 
-- All CSS custom property tokens (`--ink`, `--paper`, `--green`, etc.) — never use raw hex values
-- Typography classes: `font-brand`, `font-body`, `font-data`
-- Component APIs: `<Button>`, `<Card>`, `<GradeTag>`, `<NavBar>`, `<ProtectedRoute>`
-- Layout components: `<SmartLayout>`, `<UserLayout>`, `<BuyerLayout>`
-- Common patterns (uppercase labels, key/value grids, tab buttons)
-- Anti-patterns to avoid (e.g. `--ink-5` does not exist, only `--ink` through `--ink-4`)
+## i18n
+
+- Two locale files: `src/i18n/en.js` and `src/i18n/th.js`
+- **Always add new keys to both files simultaneously** — missing a key in `th.js` means Thai users see English
+- Access via `useT()` hook (`src/hooks/useT.js`), which wraps `useTranslation()`
+- **No `?? 'fallback'` guards** — if the key exists in both files, no fallback is needed; if the key is genuinely missing, add it to both files
 
 ## AI Working Rules (from PROJECT_AI_WORKING_RULES.md)
 
@@ -74,7 +101,6 @@ These rules govern all AI-assisted work in this repository.
 HistoryVersions/
   Feature/<ScopeKey>/Feature-<ScopeKey>.YY.md   ← new feature work
   Fix/<ScopeKey>/Fix-<ScopeKey>.YY.md            ← bug fix work
-  Assignment1/Assignment1.00.md                  ← legacy, do not delete
 
 HistorySystem/
   System1.YY.md    ← AI workflow / process / rule changes only
@@ -82,30 +108,20 @@ HistorySystem/
 
 - First revision for any scope is always `.00`; each follow-up increments by `.01` in filename.
 - Never overwrite or delete existing history files.
-- Mis-scoped files go into a `LegacyFromWrongScope/` subfolder, not deleted.
-- When `HistoryVersions/` structure changes, update `HistoryVersions/README.md` in the same task.
+- When `HistoryVersions/` structure changes, update `HistoryVersions/README.md`.
 
 ### Required content for each history file
 
 1. Title with exact version name
-2. Date in English and Thai (e.g. `12 May 2026 (12 พฤษภาคม 2569)`)
+2. Date in English and Thai (e.g. `18 May 2026 (18 พฤษภาคม 2569)`)
 3. Overview, Reason, Changes (file-by-file), Validation, Notes
 
 ### When history must be updated
 
 Any feature addition, bug fix, UI/styling change, data structure change, file reorganization, or meaningful refactor requires a new history version file. Do not skip this step.
 
-### AI-Native Engineering additions (System1.03)
+### Git workflow
 
-The following rule sections were added to `PROJECT_AI_WORKING_RULES.md`:
-
-- **AI-Native Engineering Principles** — Machine-Understandability, architecture docs in Mermaid (`docs/architecture.mermaid`), rule-category table, strict workflow order.
-- **Git History Standards** — Conventional Commits format, commit message rules (AI drafts *what*, developer adds *why*), PR summary standards, AI code-review checklist.
-- **Automated Testing Standards** — Self-healing/agentic testing principles, required test levels (unit/integration/smoke), visual regression notes.
-- **Technology Maintenance Monitoring** — Signal ingestion, relevance filtering, breaking-change detection signals, impact analysis output format.
-- **Risk Assessment Heuristics** — Risk-score formula, observable signals table, conditions that require a risk note in history.
-- **MCP Integration** — Allowed MCP use cases, MCP rules (log all actions, no auto-push without approval).
-
-### System history
-
-Changes to AI workflow rules, tooling policy, or process (not tied to a feature/fix) go in `HistorySystem/` as `System1.YY.md` increments.
+- Always create a branch for fixes/features — never commit directly to `main`
+- Ask before running `git commit` — user reviews before committing
+- Use Conventional Commits format: `fix:`, `feat:`, `chore:`, etc.
