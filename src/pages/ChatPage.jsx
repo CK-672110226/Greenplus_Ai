@@ -113,33 +113,42 @@ export function ChatPage() {
 
   const startRecording = useCallback(async () => {
     if (recording) return
+    if (!navigator.mediaDevices?.getUserMedia) {
+      toast.error('Microphone not supported in this browser')
+      return
+    }
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
-      const mr = new MediaRecorder(stream, { mimeType: 'audio/webm' })
+      const stream   = await navigator.mediaDevices.getUserMedia({ audio: true })
+      const mimeType = MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm'
+                     : MediaRecorder.isTypeSupported('audio/mp4')  ? 'audio/mp4'
+                     : ''
+      const mr = new MediaRecorder(stream, mimeType ? { mimeType } : {})
       chunksRef.current = []
       mr.ondataavailable = e => { if (e.data.size > 0) chunksRef.current.push(e.data) }
       mr.start()
+      mr._mimeType = mimeType || mr.mimeType
       mediaRecorderRef.current = mr
       recordStartRef.current = Date.now()
       setRecording(true)
     } catch {
-      toast.error('Microphone not available')
+      toast.error('Microphone not available — check browser permissions')
     }
   }, [recording])
 
   const stopRecording = useCallback(async () => {
     if (!recording || !mediaRecorderRef.current) return
-    const mr = mediaRecorderRef.current
+    const mr       = mediaRecorderRef.current
+    const mimeType = mr._mimeType || 'audio/webm'
     const duration = (Date.now() - (recordStartRef.current ?? Date.now())) / 1000
     await new Promise(resolve => { mr.onstop = resolve; mr.stop() })
     mr.stream.getTracks().forEach(t => t.stop())
     mediaRecorderRef.current = null
     setRecording(false)
     if (chunksRef.current.length === 0) return
-    const blob = new Blob(chunksRef.current, { type: 'audio/webm' })
+    const blob = new Blob(chunksRef.current, { type: mimeType })
     setUploading(true)
     try {
-      await sendVoice(blob, duration)
+      await sendVoice(blob, duration, mimeType)
     } catch (err) {
       toast.error(err.message ?? 'Voice send failed')
     } finally {

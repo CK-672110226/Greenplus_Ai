@@ -94,13 +94,14 @@ export function useChat() {
     })
   }, [activeRoomId, session])
 
-  const sendVoice = useCallback(async (blob, durationSec) => {
+  const sendVoice = useCallback(async (blob, durationSec, mimeType = 'audio/webm') => {
     if (!activeRoomId || !blob || !session?.user?.id) return
-    const path = `${activeRoomId}/voice-${Date.now()}.webm`
+    const ext  = mimeType.includes('mp4') ? 'mp4' : 'webm'
+    const path = `${activeRoomId}/voice-${Date.now()}.${ext}`
 
     const { error: upErr } = await supabase.storage
       .from(BUCKET)
-      .upload(path, blob, { contentType: 'audio/webm', upsert: false })
+      .upload(path, blob, { contentType: mimeType, upsert: false })
     if (upErr) throw new Error(upErr.message)
 
     const { data: urlData } = supabase.storage.from(BUCKET).getPublicUrl(path)

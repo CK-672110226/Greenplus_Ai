@@ -16,7 +16,7 @@ function IconClock() {
 
 const TODAY = todayBangkok()
 
-const DAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+const DAY_KEYS = ['dayMon', 'dayTue', 'dayWed', 'dayThu', 'dayFri', 'daySat', 'daySun']
 
 function getWeekDays() {
   const now    = new Date()
@@ -39,12 +39,12 @@ function slotHour(time) {
   return parseInt(time.split(':')[0], 10)
 }
 
-function statusBadge(status) {
+function statusBadge(status, t) {
   const map = {
-    pending:   { color: 'var(--orange)', label: 'Pending' },
-    accepted:  { color: 'var(--green)',  label: 'Confirmed' },
-    completed: { color: 'var(--ink-3)',  label: 'Completed' },
-    rejected:  { color: 'var(--orange)', label: 'Cancelled' },
+    pending:   { color: 'var(--orange)', label: t.slotPending },
+    accepted:  { color: 'var(--green)',  label: t.slotConfirmed },
+    completed: { color: 'var(--ink-3)',  label: t.slotCompleted },
+    rejected:  { color: 'var(--orange)', label: t.slotCancelled },
   }
   const entry = map[status] ?? { color: 'var(--ink-3)', label: status }
   return (
@@ -63,7 +63,7 @@ function SlotCard({ slot, language, t, onConfirm, onCancel, onComplete }) {
           <span className="font-body text-[14px] text-[var(--ink)]">{slot.seller}</span>
         </div>
         <div className="flex flex-col items-end gap-1">
-          {statusBadge(slot.status)}
+          {statusBadge(slot.status, t)}
           <span className="font-data text-[12px] text-[var(--ink-3)]">
             {(slot.materials ?? []).map(m => localName(m, language)).join(', ')} · {slot.totalKg}kg
           </span>
@@ -147,7 +147,7 @@ export function SchedulePage() {
   return (
     <main className="px-4 py-8 flex flex-col gap-6">
       <div className="flex flex-col gap-1">
-        <span className="font-data text-[10px] text-[var(--ink-3)] uppercase tracking-[0.15em]">Schedule</span>
+        <span className="font-data text-[10px] text-[var(--ink-3)] uppercase tracking-[0.15em]">{t.schedule}</span>
         <h1 className="font-brand text-[28px] text-[var(--ink)] m-0">{t.scheduleTitle}</h1>
         <span className="font-data text-[12px] text-[var(--ink-3)]">{TODAY}</span>
       </div>
@@ -158,7 +158,7 @@ export function SchedulePage() {
           <span className="font-brand text-[28px]" style={{ color: 'var(--green)' }}>{confirmed}</span>
         </Card>
         <Card className="flex flex-col gap-1 items-center">
-          <span className="font-data text-[10px] text-[var(--ink-3)] uppercase tracking-widest text-center">Pending</span>
+          <span className="font-data text-[10px] text-[var(--ink-3)] uppercase tracking-widest text-center">{t.slotPending}</span>
           <span className="font-brand text-[28px]" style={{ color: 'var(--orange)' }}>{pending}</span>
         </Card>
         <Card className="flex flex-col gap-1 items-center">
@@ -210,10 +210,10 @@ export function SchedulePage() {
                 {/* Day header */}
                 <div className="text-center">
                   <span className={[
-                    'font-data text-[9px] uppercase tracking-widest block',
+                    'font-data text-[11px] uppercase tracking-widest block',
                     isToday ? 'text-[var(--green-ink)]' : 'text-[var(--ink-3)]',
                   ].join(' ')}>
-                    {DAY_LABELS[idx]}
+                    {t[DAY_KEYS[idx]]}
                   </span>
                   <span className={[
                     'font-data text-[13px] leading-none',

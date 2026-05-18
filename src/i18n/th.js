@@ -311,4 +311,53 @@ export const th = {
   materialsYouBuy:   'วัสดุที่คุณรับซื้อ',
   locationAndHours:  'ที่ตั้งและเวลาทำการ',
   finishSetup:       'เสร็จสิ้นการตั้งค่า',
+
+  // Navigation (chat was missing)
+  chat:              'แชท',
+
+  // Dashboard KPI labels + tabs
+  kpiPending:        'รอดำเนินการ',
+  kpiAccepted:       'รับแล้ว',
+  kpiCompleted:      'เสร็จสิ้น',
+  kpiRevenue:        'รายได้',
+  tabBookings:       'การจอง',
+  tabSmartRoute:     'เส้นทางอัจฉริยะ',
+  breadcrumbDash:    'หน้าแรก / แดชบอร์ด',
+  todaysHaul:        'วันนี้',
+  shopNameFallback:  'แดชบอร์ดร้าน',
+
+  // Schedule status badges
+  slotPending:       'รอดำเนินการ',
+  slotConfirmed:     'ยืนยันแล้ว',
+  slotCompleted:     'เสร็จสิ้น',
+  slotCancelled:     'ยกเลิก',
+
+  // Schedule week-grid day labels
+  dayMon:            'จ.',
+  dayTue:            'อ.',
+  dayWed:            'พ.',
+  dayThu:            'พฤ.',
+  dayFri:            'ศ.',
+  daySat:            'ส.',
+  daySun:            'อา.',
+
+  // Eco Points page
+  ecoPointsTitle:    'คะแนนสิ่งแวดล้อม',
+  ecoImpactLabel:    'คะแนนผลกระทบ',
+  ecoCurrentTier:    'ระดับปัจจุบัน',
+  ecoPriceBonus:     'โบนัสราคา',
+  ecoTierHeader:     'ระดับ',
+  ecoRangeHeader:    'ช่วงคะแนน',
+  ecoBonusHeader:    'โบนัส',
+  ecoHowTitle:       'วิธีได้รับคะแนน',
+  ecoHowBody:        'ทุกการสแกนได้รับ 10 คะแนนต่อกิโลกรัม วัสดุสะอาด (เกรด A) ได้โบนัส 10% คะแนนช่วยปลดล็อกระดับที่สูงขึ้น เพิ่มมูลค่าต่อกิโลกรัมที่คุณได้รับ',
+  ecoRecentHistory:  'ประวัติล่าสุด',
+  ecoNoScans:        'ยังไม่มีการสแกน — เริ่มสแกนเพื่อสะสมคะแนน',
+  ecoUnknown:        'วัสดุไม่ทราบชนิด',
+  ecoMaxTier:        'ถึงระดับสูงสุดแล้ว',
+  ecoToNext:         'คะแนนอีก',
+  ecoTierBronze:     'บรอนซ์',
+  ecoTierSilver:     'ซิลเวอร์',
+  ecoTierGold:       'ทอง',
+  ecoTierPlatinum:   'แพลทินัม',
 }
