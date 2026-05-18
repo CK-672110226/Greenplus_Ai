@@ -157,15 +157,15 @@ export function UserLayout() {
   const mainNav = [
     { to: '/home',        icon: <IconHome />,    label: t.home },
     { to: '/scan',        icon: <IconScan />,    label: 'AI Scanner' },
-    { to: '/basket',      icon: <IconBasket />,  label: t.basket ?? 'Basket', badge: activeCount },
+    { to: '/basket',      icon: <IconBasket />,  label: t.basket, badge: activeCount },
     { to: '/marketplace', icon: <IconMarket />,  label: t.marketplace },
     { to: '/map',         icon: <IconMap />,     label: t.map },
-    { to: '/chat',        icon: <IconChat />,    label: t.chat ?? 'Chat', badge: unreadChat },
+    { to: '/chat',        icon: <IconChat />,    label: t.chat, badge: unreadChat },
   ]
 
   const mobileNav = [
     { to: '/home',        icon: <IconHome />,   label: t.home },
-    { to: '/basket',      icon: <IconBasket />, label: t.basket ?? 'Basket', badge: activeCount },
+    { to: '/basket',      icon: <IconBasket />, label: t.basket, badge: activeCount },
     { to: '/scan',        icon: <IconScan />,   label: 'Scan' },
     { to: '/map',         icon: <IconMap />,    label: t.map },
     { to: '/marketplace', icon: <IconMarket />, label: t.marketplace },

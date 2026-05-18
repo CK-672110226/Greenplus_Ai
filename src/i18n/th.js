@@ -360,4 +360,7 @@ export const th = {
   ecoTierSilver:     'ซิลเวอร์',
   ecoTierGold:       'ทอง',
   ecoTierPlatinum:   'แพลทินัม',
+
+  // Map page — new key only (others pre-existed)
+  locationAcquired:   'ได้รับตำแหน่งแล้ว',
 }

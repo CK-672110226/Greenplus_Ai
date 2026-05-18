@@ -131,7 +131,7 @@ export function LoginPage() {
       if (authErr.message?.toLowerCase().includes('email not confirmed')) {
         setUnverified(true)
       } else {
-        setError(t.invalidCredentials ?? 'Invalid email or password')
+        setError(t.invalidCredentials)
       }
     } else {
       // Persist "remember me" preference — Supabase handles session storage;
@@ -197,8 +197,8 @@ export function LoginPage() {
 
   async function handleSetNewPassword(e) {
     e.preventDefault()
-    if (newPassword.length < 6) { setError(t.passwordTooShort ?? 'Password must be at least 6 characters'); return }
-    if (newPassword !== confirmPass) { setError(t.passwordMismatch ?? 'Passwords do not match'); return }
+    if (newPassword.length < 6) { setError(t.passwordTooShort); return }
+    if (newPassword !== confirmPass) { setError(t.passwordMismatch); return }
     setError(null)
     setLoading(true)
     const { error: err } = await supabase.auth.updateUser({ password: newPassword })
@@ -209,7 +209,7 @@ export function LoginPage() {
       setRecoverySession(false)
       setNewPassword('')
       setConfirmPass('')
-      toast.success(t.passwordUpdated ?? 'Password updated — you can now sign in.')
+      toast.success(t.passwordUpdated)
       setMode('signin')
     }
   }
@@ -234,9 +234,9 @@ export function LoginPage() {
             </span>
             <h1 className="font-brand text-[26px] m-0 leading-tight" style={{ color: 'var(--ink)' }}>
               {mode === 'forgot' || mode === 'forgot-sent'
-                ? <>{t.resetPassword ?? 'Reset password'}</>
+                ? <>{t.resetPassword}</>
                 : mode === 'reset'
-                ? <>{t.setNewPassword ?? 'Set new password'}</>
+                ? <>{t.setNewPassword}</>
                 : <>Welcome back —<br /><span style={{ color: roleColor }}>continue as {role}</span></>
               }
             </h1>
@@ -253,14 +253,14 @@ export function LoginPage() {
         {unverified && (mode === 'signin' || mode === 'signup') && (
           <div className="flex flex-col gap-3 border-[1.5px] border-[var(--orange)] p-4">
             <p className="font-body text-[14px] text-[var(--orange)] m-0">
-              {t.emailNotVerified ?? 'กรุณายืนยันอีเมลก่อนเข้าสู่ระบบ — เช็กกล่องจดหมายของคุณ'}
+              {t.emailNotVerified}
             </p>
             <button
               type="button"
               onClick={handleResendVerification}
               className="font-data text-[11px] uppercase tracking-widest text-[var(--ink)] underline bg-transparent border-none cursor-pointer text-left p-0"
             >
-              {t.resendVerification ?? 'ส่งอีเมลยืนยันอีกครั้ง'}
+              {t.resendVerification}
             </button>
           </div>
         )}
@@ -270,14 +270,14 @@ export function LoginPage() {
           <form onSubmit={handleForgotPassword} className="flex flex-col gap-4">
             <div className="flex flex-col gap-0.5">
               <span className="font-data text-[11px] text-[var(--ink-3)] uppercase tracking-widest">
-                {t.resetPassword ?? 'Reset password'}
+                {t.resetPassword}
               </span>
               <p className="font-body text-[14px] text-[var(--ink-2)] m-0">
-                {t.resetPasswordSub ?? "Enter your email and we'll send you a reset link."}
+                {t.resetPasswordSub}
               </p>
             </div>
 
-            <Field label={t.email ?? 'Email'} id={emailId}>
+            <Field label={t.email} id={emailId}>
               <input
                 id={emailId}
                 type="email"
@@ -296,7 +296,7 @@ export function LoginPage() {
 
             <Button type="submit" variant="primary" fullWidth disabled={loading}
               style={{ height: 48, fontSize: 18 }}>
-              {loading ? '...' : (t.sendResetLink ?? 'Send reset link')}
+              {loading ? '...' : t.sendResetLink}
             </Button>
 
             <button
@@ -304,7 +304,7 @@ export function LoginPage() {
               onClick={() => { setMode('signin'); setError(null) }}
               className="font-data text-[11px] text-[var(--ink-3)] uppercase tracking-widest bg-transparent border-none cursor-pointer p-0 hover:opacity-75 text-center"
             >
-              ← {t.backToSignIn ?? 'Back to sign in'}
+              ← {t.backToSignIn}
             </button>
           </form>
         )}
@@ -314,10 +314,10 @@ export function LoginPage() {
           <div className="flex flex-col gap-5">
             <div className="border-[1.5px] border-[var(--green)] bg-[var(--green-soft)] p-4 flex flex-col gap-2">
               <p className="font-data text-[12px] text-[var(--green-ink)] uppercase tracking-widest m-0">
-                {t.checkInbox ?? 'Check your inbox'}
+                {t.checkInbox}
               </p>
               <p className="font-body text-[14px] text-[var(--ink)] m-0">
-                {t.resetLinkSent ?? 'We sent a reset link to'}{' '}
+                {t.resetLinkSent}{' '}
                 <strong>{email}</strong>.
               </p>
               <p className="font-body text-[13px] text-[var(--ink-3)] m-0">
@@ -326,13 +326,13 @@ export function LoginPage() {
             </div>
 
             <div className="font-data text-[11px] text-[var(--ink-3)] uppercase tracking-widest text-center">
-              {t.didntReceive ?? "Didn't receive it?"}{' '}
+              {t.didntReceive}{' '}
               <button
                 type="button"
                 onClick={() => setMode('forgot')}
                 className="text-[var(--green-ink)] bg-transparent border-none cursor-pointer p-0 font-data text-[11px] uppercase tracking-widest hover:opacity-75"
               >
-                {t.resendLink ?? 'Resend'}
+                {t.resendLink}
               </button>
             </div>
 
@@ -341,7 +341,7 @@ export function LoginPage() {
               onClick={() => { setMode('signin'); setError(null) }}
               className="font-data text-[11px] text-[var(--ink-3)] uppercase tracking-widest bg-transparent border-none cursor-pointer p-0 hover:opacity-75 text-center"
             >
-              ← {t.backToSignIn ?? 'Back to sign in'}
+              ← {t.backToSignIn}
             </button>
           </div>
         )}
@@ -351,14 +351,14 @@ export function LoginPage() {
           <form onSubmit={handleSetNewPassword} className="flex flex-col gap-4">
             <div className="flex flex-col gap-0.5">
               <span className="font-data text-[11px] text-[var(--ink-3)] uppercase tracking-widest">
-                {t.setNewPassword ?? 'Set new password'}
+                {t.setNewPassword}
               </span>
               <p className="font-body text-[14px] text-[var(--ink-2)] m-0">
-                {t.setNewPasswordSub ?? 'Choose a strong password for your account.'}
+                {t.setNewPasswordSub}
               </p>
             </div>
 
-            <Field label={t.newPassword ?? 'New password'} id={newPassId}>
+            <Field label={t.newPassword} id={newPassId}>
               <div className="relative">
                 <input
                   id={newPassId}
@@ -382,7 +382,7 @@ export function LoginPage() {
               </div>
             </Field>
 
-            <Field label={t.confirmNewPassword ?? 'Confirm new password'} id={confirmPassId}>
+            <Field label={t.confirmNewPassword} id={confirmPassId}>
               <div className="relative">
                 <input
                   id={confirmPassId}
@@ -427,7 +427,7 @@ export function LoginPage() {
 
             <Button type="submit" variant="primary" fullWidth disabled={loading}
               style={{ height: 48, fontSize: 18 }}>
-              {loading ? '...' : (t.setNewPassword ?? 'Set new password') + ' →'}
+              {loading ? '...' : t.setNewPassword + ' →'}
             </Button>
           </form>
         )}
@@ -436,7 +436,7 @@ export function LoginPage() {
           <>
             {/* Email / Password form */}
             <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-              <Field label={t.email ?? 'Email'} id={emailId}>
+              <Field label={t.email} id={emailId}>
                 <div className="relative">
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--ink-3)] pointer-events-none">
                     <MailIcon />
@@ -454,7 +454,7 @@ export function LoginPage() {
                 </div>
               </Field>
 
-              <Field label={t.password ?? 'Password'} id={passwordId}>
+              <Field label={t.password} id={passwordId}>
                 <div className="relative">
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--ink-3)] pointer-events-none">
                     <LockIcon />
@@ -511,7 +511,7 @@ export function LoginPage() {
                   }}
                   className="font-data text-[11px] text-[var(--green-ink)] uppercase tracking-widest bg-transparent border-none cursor-pointer p-0 hover:opacity-75 transition-opacity"
                 >
-                  {t.forgotPassword ?? 'Forgot password?'}
+                  {t.forgotPassword}
                 </button>
               </div>
 

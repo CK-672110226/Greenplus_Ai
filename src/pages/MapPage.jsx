@@ -126,7 +126,7 @@ export function MapPage() {
           CHIANG MAI AREA
         </div>
         <h1 className="font-brand text-[24px] leading-tight m-0">
-          {t.mapTitle ?? 'Nearby Buyers'}
+          {t.mapTitle}
           <span className="text-[var(--green-ink)] font-data text-[16px] ml-2">· {shopCount} shops</span>
         </h1>
       </div>
@@ -161,13 +161,13 @@ export function MapPage() {
               onClick={gps.request}
               className="font-data text-[11px] uppercase tracking-widest px-3 py-1 border-[1.5px] border-[var(--ink)] bg-transparent hover:bg-[var(--ink)] hover:text-[var(--paper)] transition-colors cursor-pointer"
             >
-              {t.useMyLocation ?? 'Use my location'}
+              {t.useMyLocation}
             </button>
           </>
         )}
         {userCenter && (
           <span className="font-data text-[11px] text-[var(--green-ink)] uppercase tracking-widest">
-            ✓ {t.useMyLocation ?? 'Location acquired'}
+            ✓ {t.locationAcquired}
           </span>
         )}
       </div>
