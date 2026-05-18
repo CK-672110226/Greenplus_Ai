@@ -252,7 +252,7 @@ export function BasketPage() {
                 filterMat === m ? 'bg-[var(--ink)] text-[var(--paper)]' : 'bg-[var(--paper)] text-[var(--ink)]',
               ].join(' ')}
             >
-              {m === 'all' ? (t.allItems ?? 'All') : localName(m, language)}
+              {m === 'all' ? t.allItems : localName(m, language)}
             </button>
           ))}
         </div>

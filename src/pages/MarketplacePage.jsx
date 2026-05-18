@@ -58,13 +58,13 @@ function ShopCard({ shop, language, t, marketPrice }) {
           href="/map"
           className="flex-1 py-2 font-data text-[11px] uppercase tracking-widest border-[1.5px] border-[var(--ink)] bg-transparent cursor-pointer hover:bg-[var(--ink)] hover:text-[var(--paper)] transition-colors shadow-[2px_2px_0_var(--ink)] active:shadow-none active:translate-x-[2px] active:translate-y-[2px] text-center block no-underline text-[var(--ink)]"
         >
-          {t.directions ?? 'View on Map'} →
+          {t.directions} →
         </a>
         <button
           onClick={() => navigate('/chat')}
           className="flex-1 py-2 font-data text-[11px] uppercase tracking-widest border-[1.5px] border-[var(--ink)] bg-transparent cursor-pointer hover:bg-[var(--ink)] hover:text-[var(--paper)] transition-colors shadow-[2px_2px_0_var(--ink)] active:shadow-none active:translate-x-[2px] active:translate-y-[2px]"
         >
-          {t.chat ?? 'Chat'} →
+          {t.chat} →
         </button>
       </div>
     </div>
@@ -423,7 +423,7 @@ export function MarketplacePage() {
                 {visibleShops.length === 0 ? (
                   <div className="flex items-center justify-center py-10">
                     <span className="font-data text-[11px] text-[var(--ink-4)] uppercase tracking-widest">
-                      {t.noShopsNear ?? 'No shops found'}
+                      {t.noShopsNear}
                     </span>
                   </div>
                 ) : (

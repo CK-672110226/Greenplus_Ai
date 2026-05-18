@@ -174,17 +174,17 @@ export function BuyerLayout() {
         {/* Nav sections */}
         <div className="flex flex-col pt-4 flex-1">
           <span className="px-5 pb-1.5 font-data text-[9px] uppercase tracking-[0.15em] text-[var(--ink-4)]">Main</span>
-          <SideLink to="/dashboard"   icon={<IconDashboard />}   label={t.dashboard ?? 'Dashboard'} />
-          <SideLink to="/schedule"    icon={<IconSchedule />}    label={t.schedule ?? 'Schedule'} />
+          <SideLink to="/dashboard"   icon={<IconDashboard />}   label={t.dashboard} />
+          <SideLink to="/schedule"    icon={<IconSchedule />}    label={t.schedule} />
           <SideLink to="/rider"       icon={<IconRoute />}       label="Smart Route" />
-          <SideLink to="/marketplace" icon={<IconMarketBuyer />} label={t.marketplace ?? 'Marketplace'} />
-          <SideLink to="/pricing"     icon={<IconPricing />}     label={t.pricing ?? 'Pricing'} />
-          <SideLink to="/chat"        icon={<IconChat />}        label={t.chat ?? 'Chat'} badge={unreadChat} />
+          <SideLink to="/marketplace" icon={<IconMarketBuyer />} label={t.marketplace} />
+          <SideLink to="/pricing"     icon={<IconPricing />}     label={t.pricing} />
+          <SideLink to="/chat"        icon={<IconChat />}        label={t.chat} badge={unreadChat} />
 
           <span className="px-5 pt-5 pb-1.5 font-data text-[9px] uppercase tracking-[0.15em] text-[var(--ink-4)]">Account</span>
-          <SideLink to="/notifications" icon={<IconBell />}     label={t.notifications ?? 'Notifications'} badge={unread} />
-          <SideLink to="/profile"       icon={<IconProfile />}  label={t.profile ?? 'Profile'} />
-          <SideLink to="/settings"      icon={<IconSettings />} label={t.settings ?? 'Settings'} />
+          <SideLink to="/notifications" icon={<IconBell />}     label={t.notifications} badge={unread} />
+          <SideLink to="/profile"       icon={<IconProfile />}  label={t.profile} />
+          <SideLink to="/settings"      icon={<IconSettings />} label={t.settings} />
         </div>
 
         {/* Sign out */}
@@ -208,7 +208,7 @@ export function BuyerLayout() {
               {profile?.display_name ?? '—'}
             </span>
             <span className="font-data text-[10px] text-[var(--ink-3)] uppercase tracking-wide">
-              {t.roleBuyer ?? 'buyer'}
+              {t.roleBuyer}
             </span>
           </div>
           <div className="ml-auto flex items-center gap-1 shrink-0">

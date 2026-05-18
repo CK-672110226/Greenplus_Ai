@@ -342,7 +342,7 @@ export function ScanPage() {
         ai_clean:         result?.stage2Pass ?? null,
       })
     } catch { /* silent */ }
-    toast.success(t.reportSuccess ?? 'Report submitted. Thank you!')
+    toast.success(t.reportSuccess)
     setShowReport(false)
   }
 
@@ -642,8 +642,8 @@ export function ScanPage() {
 
             {phase === 'lowConfidence' && (
               <div className="flex flex-col items-center gap-3 py-4 px-4 border-[1.5px] border-[var(--ink-3)]">
-                <span className="font-data text-[12px] text-[var(--ink-2)] uppercase tracking-widest">{t.lowConfidenceTitle ?? 'Low confidence'}</span>
-                <p className="font-body text-[14px] text-[var(--ink-3)] m-0 text-center">{t.lowConfidenceHint ?? "AI couldn't identify the item clearly. Try better lighting or a clearer angle."}</p>
+                <span className="font-data text-[12px] text-[var(--ink-2)] uppercase tracking-widest">{t.lowConfidenceTitle}</span>
+                <p className="font-body text-[14px] text-[var(--ink-3)] m-0 text-center">{t.lowConfidenceHint}</p>
                 <Button variant="secondary" onClick={handleReset}>{t.scanAgain}</Button>
               </div>
             )}
@@ -705,12 +705,12 @@ export function ScanPage() {
                       onClick={() => setShowReport(true)}
                       className="font-data text-[10px] uppercase tracking-widest text-[var(--ink-4)] hover:text-[var(--orange)] bg-transparent border-none cursor-pointer py-1 self-start transition-colors"
                     >
-                      {t.reportIssue ?? 'Report Issue'}
+                      {t.reportIssue}
                     </button>
                   ) : (
                     <div className="flex flex-col gap-2 border-[1.5px] border-[var(--orange)] p-3">
-                      <span className="font-data text-[11px] text-[var(--orange)] uppercase tracking-widest">{t.reportTitle ?? 'Report Misidentification'}</span>
-                      <span className="font-body text-[13px] text-[var(--ink-3)]">{t.reportHint ?? 'What type of waste is this actually?'}</span>
+                      <span className="font-data text-[11px] text-[var(--orange)] uppercase tracking-widest">{t.reportTitle}</span>
+                      <span className="font-body text-[13px] text-[var(--ink-3)]">{t.reportHint}</span>
                       <select
                         value={reportMaterial}
                         onChange={e => setReportMaterial(e.target.value)}
@@ -721,9 +721,9 @@ export function ScanPage() {
                         ))}
                       </select>
                       <div className="flex gap-2">
-                        <Button variant="secondary" onClick={handleSubmitReport}>{t.reportSubmit ?? 'Submit Report'}</Button>
+                        <Button variant="secondary" onClick={handleSubmitReport}>{t.reportSubmit}</Button>
                         <button type="button" onClick={() => setShowReport(false)} className="font-data text-[11px] uppercase tracking-widest text-[var(--ink-3)] bg-transparent border-none cursor-pointer hover:text-[var(--ink)] transition-colors">
-                          {t.reportCancel ?? 'Cancel'}
+                          {t.reportCancel}
                         </button>
                       </div>
                     </div>
@@ -857,7 +857,7 @@ export function ScanPage() {
               {getRulesFor(liveResult.materialType).length > 0 && (
                 <div className="flex flex-col gap-2 border-t-[1px] border-[var(--ink-4)] pt-3">
                   <span className="font-data text-[9px] text-[var(--ink-4)] uppercase tracking-[0.15em]">
-                    {t.handlingGuide ?? 'Handling Guide'}
+                    {t.handlingGuide}
                   </span>
                   <div className="flex flex-col gap-1.5">
                     {getRulesFor(liveResult.materialType).map((rule, i) => (

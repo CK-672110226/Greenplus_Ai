@@ -360,4 +360,7 @@ export const en = {
   ecoTierSilver:     'Silver',
   ecoTierGold:       'Gold',
   ecoTierPlatinum:   'Platinum',
+
+  // Map page — new key only (others pre-existed)
+  locationAcquired:   'Location acquired',
 }
