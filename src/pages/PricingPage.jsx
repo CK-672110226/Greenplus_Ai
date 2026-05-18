@@ -97,7 +97,7 @@ export function PricingPage() {
   }
 
   return (
-    <main className="px-4 py-8 flex flex-col gap-6">
+    <main className="px-4 py-8 flex flex-col gap-6 max-w-3xl mx-auto w-full">
       {/* Page header */}
       <div className="flex items-start justify-between flex-wrap gap-3">
         <div className="flex flex-col gap-1">
