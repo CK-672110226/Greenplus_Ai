@@ -10,6 +10,6 @@ if (!supabaseUrl || !supabaseAnonKey) {
 // Fallback to placeholder so the client initialises and the app mounts.
 // All DB calls will fail gracefully at runtime when env vars are absent.
 export const supabase = createClient(
-  supabaseUrl     ?? 'http://localhost',
-  supabaseAnonKey ?? 'placeholder'
+  supabaseUrl     ?? 'https://placeholder.supabase.co',
+  supabaseAnonKey ?? 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.placeholder'
 )
