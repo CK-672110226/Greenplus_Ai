@@ -1,4 +1,4 @@
-import { useEffect, useReducer, useCallback } from 'react'
+import { useEffect, useReducer } from 'react'
 
 function reducer(state, action) {
   switch (action.type) {
@@ -34,5 +34,3 @@ export function useQuery(queryFn) {
 
   return { data: state.data, loading: state.loading, error: state.error }
 }
-
-export { useCallback }

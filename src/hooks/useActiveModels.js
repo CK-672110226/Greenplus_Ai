@@ -1,7 +1,9 @@
 // Loads active models from Supabase model_deployments → model_files
 // Falls back to local public/model_ai/ models when Supabase has nothing.
+// Subscribes to model_deployments INSERT events so admin activations propagate
+// to all live sessions without requiring a page refresh.
 
-import { useEffect } from 'react'
+import { useEffect, useCallback } from 'react'
 import { useDispatch } from 'react-redux'
 import { supabase } from '../lib/supabase'
 import { setAiConfig } from '../store/aiConfigSlice'
@@ -10,57 +12,65 @@ import { LOCAL_STAGE1_URL, LOCAL_STAGE1_LABELS, LOCAL_STAGE2_URLS, LOCAL_YOLO_ST
 export function useActiveModels() {
   const dispatch = useDispatch()
 
-  useEffect(() => {
-    async function load() {
-      try {
-        const { data, error } = await supabase
-          .from('model_deployments')
-          .select('stage, material_type, model_files(model_url, metadata_url, class_labels, format, version_tag)')
-          .eq('is_active', true)
+  const load = useCallback(async () => {
+    try {
+      const { data, error } = await supabase
+        .from('model_deployments')
+        .select('stage, material_type, model_files(model_url, metadata_url, class_labels, format, version_tag)')
+        .eq('is_active', true)
 
-        if (!error && data?.length) {
-          let tmStage1Url       = ''
-          let stage1ClassLabels = []
-          const tmStage2Urls    = {}
+      if (!error && data?.length) {
+        let tmStage1Url       = ''
+        let stage1ClassLabels = []
+        const tmStage2Urls    = {}
 
-          for (const row of data) {
-            const mf = row.model_files
-            if (!mf?.model_url) continue
-            if (row.stage === 1) {
-              tmStage1Url       = mf.model_url
-              stage1ClassLabels = mf.class_labels ?? []
-            } else if (row.stage === 2 && row.material_type) {
-              tmStage2Urls[row.material_type] = mf.model_url
-            }
-          }
-
-          if (tmStage1Url) {
-            const modelVersion = data.find(r => r.stage === 1)?.model_files?.version_tag ?? 'v1-supabase'
-            const resolvedLabels = stage1ClassLabels.length > 0 ? stage1ClassLabels : LOCAL_STAGE1_LABELS
-            const resolvedStage2 = { ...LOCAL_STAGE2_URLS, ...tmStage2Urls }
-            dispatch(setAiConfig({
-              yoloStage1Url:   LOCAL_YOLO_STAGE1_URL,
-              yoloClassLabels: LOCAL_YOLO_CLASS_LABELS,
-              tmStage1Url, stage1ClassLabels: resolvedLabels, tmStage2Urls: resolvedStage2, modelVersion,
-            }))
-            return
+        for (const row of data) {
+          const mf = row.model_files
+          if (!mf?.model_url) continue
+          if (row.stage === 1) {
+            tmStage1Url       = mf.model_url
+            stage1ClassLabels = mf.class_labels ?? []
+          } else if (row.stage === 2 && row.material_type) {
+            tmStage2Urls[row.material_type] = mf.model_url
           }
         }
-      } catch {
-        // Supabase not configured — fall through to local models
-      }
 
-      // Use local models from public/model_ai/
-      dispatch(setAiConfig({
-        yoloStage1Url:     LOCAL_YOLO_STAGE1_URL,
-        yoloClassLabels:   LOCAL_YOLO_CLASS_LABELS,
-        tmStage1Url:       LOCAL_STAGE1_URL,
-        stage1ClassLabels: LOCAL_STAGE1_LABELS,
-        tmStage2Urls:      LOCAL_STAGE2_URLS,
-        modelVersion:      'v1-local',
-      }))
+        if (tmStage1Url) {
+          const modelVersion   = data.find(r => r.stage === 1)?.model_files?.version_tag ?? 'v1-supabase'
+          const resolvedLabels = stage1ClassLabels.length > 0 ? stage1ClassLabels : LOCAL_STAGE1_LABELS
+          const resolvedStage2 = { ...LOCAL_STAGE2_URLS, ...tmStage2Urls }
+          dispatch(setAiConfig({
+            yoloStage1Url:   LOCAL_YOLO_STAGE1_URL,
+            yoloClassLabels: LOCAL_YOLO_CLASS_LABELS,
+            tmStage1Url, stage1ClassLabels: resolvedLabels, tmStage2Urls: resolvedStage2, modelVersion,
+          }))
+          return
+        }
+      }
+    } catch {
+      // Supabase not configured — fall through to local models
     }
 
-    load()
+    // No active Supabase models — use local models from public/model_ai/
+    dispatch(setAiConfig({
+      yoloStage1Url:     LOCAL_YOLO_STAGE1_URL,
+      yoloClassLabels:   LOCAL_YOLO_CLASS_LABELS,
+      tmStage1Url:       LOCAL_STAGE1_URL,
+      stage1ClassLabels: LOCAL_STAGE1_LABELS,
+      tmStage2Urls:      LOCAL_STAGE2_URLS,
+      modelVersion:      'v1-local',
+    }))
   }, [dispatch])
+
+  useEffect(() => {
+    load()
+
+    // Re-fetch when admin activates a new deployment so all live sessions update
+    const channel = supabase
+      .channel('model-deployments-live')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'model_deployments' }, load)
+      .subscribe()
+
+    return () => { supabase.removeChannel(channel) }
+  }, [load])
 }

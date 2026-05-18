@@ -1,4 +1,4 @@
-export function Button({ children, variant = 'primary', onClick, type = 'button', fullWidth = false, disabled = false }) {
+export function Button({ children, variant = 'primary', onClick, type = 'button', fullWidth = false, disabled = false, loading = false }) {
   const base = [
     'inline-flex items-center justify-center px-5 py-2.5',
     'font-body text-[17px]',
@@ -18,7 +18,13 @@ export function Button({ children, variant = 'primary', onClick, type = 'button'
   }
 
   return (
-    <button type={type} onClick={onClick} disabled={disabled} className={`${base} ${variants[variant]}`}>
+    <button
+      type={type}
+      onClick={onClick}
+      disabled={disabled || loading}
+      aria-busy={loading || undefined}
+      className={`${base} ${variants[variant]}`}
+    >
       {children}
     </button>
   )

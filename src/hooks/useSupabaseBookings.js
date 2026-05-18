@@ -68,11 +68,13 @@ export function useSupabaseBookings() {
     }
   }, [])
 
-  const rejectBooking = useCallback(async (id) => {
+  const rejectBooking = useCallback(async (id, reason) => {
     try {
+      const update = { status: 'rejected' }
+      if (reason) update.rejection_reason = reason
       const { error } = await supabase
         .from('bookings')
-        .update({ status: 'rejected' })
+        .update(update)
         .eq('id', id)
       if (!error) {
         setBookings(prev => prev.map(b => b.id === id ? { ...b, status: 'rejected' } : b))

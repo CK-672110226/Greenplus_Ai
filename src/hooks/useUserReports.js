@@ -55,10 +55,10 @@ export function useUserReports() {
         }
 
         dispatch(addNotification({
-          id:      Date.now(),
-          message: `Report approved: ${trainingLabel}`,
-          type:    'success',
-          at:      new Date().toISOString(),
+          id:        Date.now(),
+          body:      `Report approved: ${trainingLabel}`,
+          type:      'success',
+          createdAt: new Date().toISOString(),
         }))
       }
     } catch {

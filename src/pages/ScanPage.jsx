@@ -43,6 +43,7 @@ export function ScanPage() {
   const language = useSelector(s => s.user.language)
   const aiConfig = useSelector(s => s.aiConfig)
   const basket   = useSelector(s => s.waste?.basket ?? [])
+  const userId   = useSelector(s => s.user.session?.user?.id ?? null)
   const resolve  = useResolvedName()
   const videoRef  = useRef(null)
   const streamRef = useRef(null)
@@ -344,6 +345,7 @@ export function ScanPage() {
       claimedMaterial: reportMaterial,
       aiMaterial:      result?.materialType,
       aiClean:         result?.stage2Pass,
+      userId,
     })
     toast.success(t.reportSuccess)
     setShowReport(false)

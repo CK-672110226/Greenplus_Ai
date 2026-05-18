@@ -1,11 +1,16 @@
 export function Tabs({ items = [], active, onChange, trailing, className = '' }) {
   return (
-    <div className={`flex items-center border-b-[1.5px] border-[var(--ink)] overflow-x-auto ${className}`}>
+    <div
+      role="tablist"
+      className={`flex items-center border-b-[1.5px] border-[var(--ink)] overflow-x-auto ${className}`}
+    >
       {items.map(item => {
         const isActive = item === active
         return (
           <button
             key={item}
+            role="tab"
+            aria-selected={isActive}
             onClick={() => onChange?.(item)}
             className={`px-4 py-2.5 font-data text-[11px] uppercase tracking-widest shrink-0 border-none border-b-[2px] transition-colors cursor-pointer ${
               isActive

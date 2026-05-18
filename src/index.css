@@ -105,6 +105,30 @@ body {
   animation: shimmer 1.4s ease-in-out infinite;
 }
 
+/* ── Focus rings (keyboard nav) ─────────────────────── */
+:focus-visible {
+  outline: 2px solid var(--green);
+  outline-offset: 2px;
+}
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* ── Reduced motion ──────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .scan-laser,
+  .map-ping,
+  .flagged-pulse,
+  .skeleton {
+    animation: none;
+  }
+  .bbox-draw {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+}
+
 /* ── Cursor utilities ────────────────────────────────── */
 .cursor-pointer    { cursor: pointer !important; }
 .cursor-wait       { cursor: wait !important; }

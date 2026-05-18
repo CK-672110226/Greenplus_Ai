@@ -5,49 +5,57 @@ import { setSession, setProfile, clearUser } from '../store/userSlice'
 import { setOpenDays, setAcceptedMaterials } from '../store/buyerSlice'
 
 async function fetchOrCreateProfile(user, dispatch) {
-  const { data } = await supabase
-    .from('user_profiles')
-    .select('*')
-    .eq('id', user.id)
-    .single()
+  try {
+    const { data } = await supabase
+      .from('user_profiles')
+      .select('*')
+      .eq('id', user.id)
+      .single()
 
-  if (data) {
-    dispatch(setProfile(data))
-    // open_days / accepted_materials exist after migration 008 — guard for older deployments
-    if (Array.isArray(data.open_days)) dispatch(setOpenDays(data.open_days))
-    if (Array.isArray(data.accepted_materials)) dispatch(setAcceptedMaterials(data.accepted_materials))
-    return
+    if (data) {
+      dispatch(setProfile(data))
+      // open_days / accepted_materials exist after migration 008 — guard for older deployments
+      if (Array.isArray(data.open_days)) dispatch(setOpenDays(data.open_days))
+      if (Array.isArray(data.accepted_materials)) dispatch(setAcceptedMaterials(data.accepted_materials))
+      return
+    }
+
+    // First-time Google OAuth user — create profile
+    const role = localStorage.getItem('gp_pending_role') ?? 'user'
+    localStorage.removeItem('gp_pending_role')
+    const displayName = user.user_metadata?.full_name ?? user.email?.split('@')[0] ?? 'User'
+
+    const { data: created } = await supabase
+      .from('user_profiles')
+      .insert({
+        id:            user.id,
+        role,
+        display_name:  displayName,
+        language_pref: 'th',
+      })
+      .select()
+      .single()
+
+    if (created) dispatch(setProfile(created))
+  } catch {
+    // Supabase not configured or network error — fail silently
   }
-
-  // First-time Google OAuth user — create profile
-  const role = localStorage.getItem('gp_pending_role') ?? 'user'
-  localStorage.removeItem('gp_pending_role')
-  const displayName = user.user_metadata?.full_name ?? user.email?.split('@')[0] ?? 'User'
-
-  const { data: created } = await supabase
-    .from('user_profiles')
-    .insert({
-      id:            user.id,
-      role,
-      display_name:  displayName,
-      language_pref: 'th',
-    })
-    .select()
-    .single()
-
-  if (created) dispatch(setProfile(created))
 }
 
 export function useAuth() {
   const dispatch = useDispatch()
 
   useEffect(() => {
+    // getSession() resolves from the local cache synchronously, giving us the
+    // initial session before the onAuthStateChange subscription fires.
     supabase.auth.getSession().then(({ data: { session } }) => {
       dispatch(setSession(session))
       if (session) fetchOrCreateProfile(session.user, dispatch)
     })
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      // Skip INITIAL_SESSION — getSession() already dispatched it above.
+      if (event === 'INITIAL_SESSION') return
       dispatch(setSession(session))
       if (session) fetchOrCreateProfile(session.user, dispatch)
       else dispatch(clearUser())

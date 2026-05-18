@@ -1,8 +1,9 @@
 // M-08: Second Brain — Claude API text-based waste classifier
 // Fallback when ONNX is unavailable or low-confidence.
-// API key is stored in Redux/localStorage (gp_ai_config). MVP limitation:
-// production should proxy this call through a Supabase Edge Function.
+// Routes through the classify-waste Supabase Edge Function (keeps API key server-side).
+// Falls back to mock classification if the function is unreachable.
 
+import { supabase }   from '../lib/supabase'
 import { WASTE_ITEMS } from '../data/wasteItems'
 
 export const WASTE_MATERIALS = Object.keys(WASTE_ITEMS)
@@ -54,50 +55,45 @@ export const DEFAULT_SYSTEM_PROMPT = [
 ].join('\n')
 
 const API_TIMEOUT_MS = 15_000
+const EDGE_FN_URL    = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/classify-waste`
 
 export async function classifyWaste(description, config = {}) {
   const {
-    model               = 'mock',
-    apiKey              = null,
-    systemPrompt        = DEFAULT_SYSTEM_PROMPT,
+    model               = 'claude-haiku-4-5-20251001',
     confidenceThreshold = 0.6,
   } = config
 
-  if (model === 'mock' || !apiKey) return mockClassify(description)
+  if (model === 'mock') return mockClassify(description)
+
+  // Require an active session — API key lives server-side in the Edge Function
+  const { data: { session } } = await supabase.auth.getSession()
+  if (!session) return { ...mockClassify(description), source: 'mock-fallback' }
 
   const controller = new AbortController()
   const timeout    = setTimeout(() => controller.abort(), API_TIMEOUT_MS)
 
   const t0 = performance.now()
   try {
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
+    const response = await fetch(EDGE_FN_URL, {
       method:  'POST',
       signal:  controller.signal,
       headers: {
-        'x-api-key':                            apiKey,
-        'anthropic-version':                    '2023-06-01',
-        'content-type':                         'application/json',
-        'anthropic-dangerous-direct-browser-access': 'true',
+        'Authorization': `Bearer ${session.access_token}`,
+        'Content-Type':  'application/json',
       },
-      body: JSON.stringify({
-        model,
-        max_tokens: 300,
-        system: systemPrompt,
-        messages: [{
-          role: 'user',
-          content: `Classify this recycled waste item.\nItem description: ${description}`,
-        }],
-      }),
+      // systemPrompt is hardcoded server-side; only description and model are sent
+      body: JSON.stringify({ description, model }),
     })
     clearTimeout(timeout)
 
     if (!response.ok) {
       const body = await response.text().catch(() => '')
-      throw new Error(`API ${response.status}: ${body.slice(0, 120)}`)
+      throw new Error(`Edge Function ${response.status}: ${body.slice(0, 120)}`)
     }
 
-    const data = await response.json()
-    const text = data.content?.[0]?.text ?? ''
+    // Edge Function proxies the Anthropic response verbatim
+    const data  = await response.json()
+    const text  = data.content?.[0]?.text ?? ''
     const match = text.match(/\{[\s\S]*\}/)
     if (!match) throw new Error('No JSON object in response')
 

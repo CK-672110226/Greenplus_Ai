@@ -46,7 +46,8 @@ async function fetchTmMetadata(modelUrl) {
 
 function ModelRegistrySection() {
   const { files, activeByKey, loading, uploadModel, registerModelUrl, activateModel } = useModelRegistry()
-  const dispatch = useDispatch()
+  const dispatch       = useDispatch()
+  const currentStage2  = useSelector(s => s.aiConfig.tmStage2Urls)
 
   const [stage,       setStage]       = useState(1)
   const [materialKey, setMaterialKey] = useState('')
@@ -117,7 +118,7 @@ function ModelRegistrySection() {
       dispatch(setAiConfig(
         file.stage === 1
           ? { tmStage1Url: file.model_url, stage1ClassLabels: file.class_labels ?? [], modelVersion: file.version_tag ?? 'custom' }
-          : { tmStage2Urls: { [file.material_type]: file.model_url } }
+          : { tmStage2Urls: { ...currentStage2, [file.material_type]: file.model_url } }
       ))
       toast.success('Model activated')
     } catch (err) {

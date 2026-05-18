@@ -1,15 +1,7 @@
 import { createSlice } from '@reduxjs/toolkit'
+import { WASTE_ITEMS } from '../data/wasteItems'
 
-const ALL_MATERIALS = [
-  'pet_bottle_clear',
-  'aluminum_can',
-  'cardboard',
-  'newspaper',
-  'mixed_plastic',
-  'copper',
-  'glass',
-  'cooking_oil',
-]
+const ALL_MATERIALS = Object.keys(WASTE_ITEMS)
 
 const STORAGE_KEY = 'buyer_settings'
 
