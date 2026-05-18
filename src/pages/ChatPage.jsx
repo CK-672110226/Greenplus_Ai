@@ -10,6 +10,8 @@ export function ChatPage() {
   const [draft, setDraft]           = useState('')
   const [offerOpen, setOfferOpen]   = useState(false)
   const [dialOpen, setDialOpen]     = useState(false)
+  // Lazy init: deep-linked rooms (e.g. /chat/:roomId) start in thread view
+  const [mobileView, setMobileView] = useState(() => activeRoomId ? 'thread' : 'rooms')
   const bottomRef = useRef(null)
 
   useEffect(() => {
@@ -55,9 +57,13 @@ export function ChatPage() {
   return (
     <div className="flex h-[calc(100vh-64px)] overflow-hidden">
 
-      {/* Room list — hidden on mobile, visible md+ */}
+      {/* Room list — full screen on mobile when mobileView==='rooms', sidebar on md+ */}
       <div
-        className="w-[280px] flex-shrink-0 border-r-[1.5px] border-[var(--ink-4)] flex-col overflow-y-auto hidden md:flex"
+        className={[
+          'flex-shrink-0 border-r-[1.5px] border-[var(--ink-4)] flex-col overflow-y-auto',
+          'md:flex md:w-[280px]',
+          mobileView === 'rooms' ? 'flex w-full' : 'hidden',
+        ].join(' ')}
         style={{ background: 'var(--paper)' }}
       >
         <div className="p-4 border-b-[1.5px] border-[var(--ink-4)]">
@@ -73,7 +79,7 @@ export function ChatPage() {
         {rooms.map(room => (
           <button
             key={room.id}
-            onClick={() => setActiveRoom(room.id)}
+            onClick={() => { setActiveRoom(room.id); setMobileView('thread') }}
             className="w-full text-left px-4 py-3 border-b-[1px] border-[var(--ink-4)] cursor-pointer transition-colors hover:bg-[var(--paper-2)]"
             style={{
               background:  room.id === activeRoomId ? 'var(--green-soft)' : 'transparent',
@@ -99,8 +105,11 @@ export function ChatPage() {
         />
       )}
 
-      {/* Message thread */}
-      <div className="flex-1 flex flex-col overflow-hidden" style={{ background: 'var(--paper)' }}>
+      {/* Message thread — hidden on mobile when showing room list */}
+      <div
+        className={['flex-1 flex flex-col overflow-hidden', mobileView === 'rooms' ? 'hidden md:flex' : 'flex'].join(' ')}
+        style={{ background: 'var(--paper)' }}
+      >
         {!activeRoomId ? (
           <div className="flex-1 flex items-center justify-center">
             <div className="font-data text-[12px] text-[var(--ink-3)] uppercase tracking-widest text-center">
@@ -111,6 +120,13 @@ export function ChatPage() {
           <>
             {/* Thread header */}
             <div className="px-5 py-3 border-b-[1.5px] border-[var(--ink-4)] flex items-center gap-3">
+              {/* Back button — mobile only */}
+              <button
+                onClick={() => setMobileView('rooms')}
+                className="md:hidden flex-shrink-0 font-data text-[11px] uppercase tracking-widest text-[var(--ink-3)] border-[1.5px] border-[var(--ink-4)] px-2 py-1 hover:border-[var(--ink)] hover:text-[var(--ink)] transition-colors cursor-pointer"
+              >
+                ← Back
+              </button>
               <h2 className="font-brand text-[16px] text-[var(--ink)] m-0">
                 {activeRoom?.shop?.name ?? 'Chat'}
               </h2>
