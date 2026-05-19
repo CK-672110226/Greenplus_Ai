@@ -8,6 +8,7 @@ import { ProtectedRoute } from './components/ProtectedRoute'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import { useAuth } from './hooks/useAuth'
 import { useActiveModels } from './hooks/useActiveModels'
+import { usePresence } from './hooks/usePresence'
 import { setDarkMode } from './store/userSlice'
 
 // Eagerly loaded — always needed on first paint
@@ -30,6 +31,7 @@ const AdminPage         = lazy(() => import('./pages/AdminPage').then(m => ({ de
 const SettingsPage          = lazy(() => import('./pages/SettingsPage').then(m => ({ default: m.SettingsPage })))
 const ProfilePage           = lazy(() => import('./pages/ProfilePage').then(m => ({ default: m.ProfilePage })))
 const RiderDashboardPage    = lazy(() => import('./pages/RiderDashboardPage').then(m => ({ default: m.RiderDashboardPage })))
+const DriverDashboardPage   = lazy(() => import('./pages/DriverDashboardPage').then(m => ({ default: m.DriverDashboardPage })))
 const ChatPage              = lazy(() => import('./pages/ChatPage').then(m => ({ default: m.ChatPage })))
 const BuyerOnboardingPage   = lazy(() => import('./pages/BuyerOnboardingPage').then(m => ({ default: m.BuyerOnboardingPage })))
 
@@ -46,6 +48,7 @@ function PageFallback() {
 function AuthInitializer({ children }) {
   useAuth()
   useActiveModels()
+  usePresence()
   const dispatch = useDispatch()
   const darkMode = useSelector(s => s.user.darkMode)
 
@@ -101,6 +104,7 @@ function App() {
 
               {/* Buyer rider routes */}
               <Route path="/rider"      element={<ProtectedRoute requiredRole="buyer"><RiderDashboardPage /></ProtectedRoute>} />
+              <Route path="/driver"     element={<ProtectedRoute requiredRole="buyer" allowIfDriver><DriverDashboardPage /></ProtectedRoute>} />
               <Route path="/onboarding" element={<ProtectedRoute requiredRole="buyer"><BuyerOnboardingPage /></ProtectedRoute>} />
 
               {/* All authenticated roles */}

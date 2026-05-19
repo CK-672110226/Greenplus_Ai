@@ -13,6 +13,7 @@ import { setAiConfig } from '../store/aiConfigSlice'
 import { useModelRegistry } from '../hooks/useModelRegistry'
 import { supabase } from '../lib/supabase'
 import { useAdminActions } from '../hooks/useAdminActions'
+import { useSystemMonitor } from '../hooks/useSystemMonitor'
 
 
 function TabBtn({ active, onClick, children }) {
@@ -567,6 +568,7 @@ export function AdminPage() {
   const { reports, loading: reportsLoading, approveReport, rejectReport } = useUserReports()
   const adminActions = useAdminActions()
   const pendingCount = reports.length
+  const { shopStatus, userActivity, driverStatus, anomalies, loading: monLoading, refreshedAt, refresh: monRefresh, onlineThresholdMs } = useSystemMonitor()
 
   // Load pending shops on mount
   useEffect(() => {
@@ -749,6 +751,9 @@ export function AdminPage() {
       {/* Tab bar — horizontal scroll on mobile */}
       <div className="w-full max-w-2xl overflow-x-auto scrollbar-hide">
         <div className="flex gap-2 flex-nowrap min-w-max">
+          <TabBtn active={tab === 'monitor'}    onClick={() => setTab('monitor')}>
+            {t.monitorTab}{anomalies.length > 0 ? ` ⚠ ${anomalies.length}` : ''}
+          </TabBtn>
           <TabBtn active={tab === 'shops'}      onClick={() => setTab('shops')}>{t.shopManagement}</TabBtn>
           <TabBtn active={tab === 'users'}      onClick={() => setTab('users')}>{t.adminUsers}</TabBtn>
           <TabBtn active={tab === 'heatmap'}    onClick={() => setTab('heatmap')}>{t.heatmap}</TabBtn>
@@ -762,6 +767,131 @@ export function AdminPage() {
       </div>
 
       {/* Shops tab */}
+      {/* ── Monitor tab ──────────────────────────────────────── */}
+      {tab === 'monitor' && (
+        <div className="w-full max-w-2xl flex flex-col gap-5">
+
+          {/* Header row */}
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex flex-col gap-0.5">
+              <span className="font-data text-[10px] text-[var(--ink-3)] uppercase tracking-widest">
+                {refreshedAt ? `${t.monitorRefreshedAt} ${refreshedAt.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false })}` : '—'}
+              </span>
+            </div>
+            <button
+              onClick={monRefresh}
+              disabled={monLoading}
+              className="font-data text-[10px] uppercase tracking-widest px-4 py-2 border-[1.5px] border-[var(--ink)] text-[var(--ink)] bg-[var(--paper)] cursor-pointer hover:bg-[var(--paper-2)] disabled:opacity-40 transition-colors"
+            >
+              {monLoading ? '…' : t.monitorRefresh}
+            </button>
+          </div>
+
+          {/* KPI row */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {[
+              { label: t.monitorShopsOpen,     value: shopStatus.open,     accent: 'var(--green-ink)' },
+              { label: t.monitorShopsClosed,   value: shopStatus.closed,   accent: 'var(--ink-3)' },
+              { label: t.monitorUsersOnline,   value: userActivity.online, accent: 'var(--green-ink)' },
+              { label: t.monitorDriversOnline, value: driverStatus.online, accent: 'var(--orange)' },
+            ].map(kpi => (
+              <div key={kpi.label} className="flex flex-col gap-1 p-4 border-[1.5px] border-[var(--ink)] shadow-[2px_2px_0_var(--ink)]">
+                <span className="font-data text-[9px] text-[var(--ink-4)] uppercase tracking-widest">{kpi.label}</span>
+                <span className="font-brand text-[28px] leading-none" style={{ color: kpi.accent }}>{kpi.value}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* Anomaly feed */}
+          <div className="flex flex-col gap-2">
+            <span className="font-data text-[10px] text-[var(--ink-3)] uppercase tracking-widest">
+              {t.monitorAnomalies} {anomalies.length > 0 && `(${anomalies.length})`}
+            </span>
+            {anomalies.length === 0 && !monLoading && (
+              <div className="border-[1.5px] border-dashed border-[var(--ink-4)] px-4 py-6 text-center">
+                <span className="font-data text-[11px] text-[var(--ink-3)] uppercase tracking-widest">{t.monitorNoAnomalies}</span>
+              </div>
+            )}
+            {anomalies.map(a => {
+              const sevStyle = {
+                high:   'border-[var(--orange)] bg-[var(--orange)] text-[var(--paper)]',
+                medium: 'border-[var(--orange)] text-[var(--orange)]',
+                low:    'border-[var(--ink-3)] text-[var(--ink-3)]',
+              }[a.severity] ?? ''
+              const sevLabel = { high: t.monitorSevHigh, medium: t.monitorSevMedium, low: t.monitorSevLow }[a.severity]
+              const typeLabel = {
+                rapid_booking:    t.monitorTypeRapid,
+                weight_outlier:   t.monitorTypeWeight,
+                high_cancellation:t.monitorTypeCancel,
+                ghost_ondemand:   t.monitorTypeGhost,
+                stale_group:      t.monitorTypeStale,
+              }[a.type] ?? a.type
+              return (
+                <div key={a.id} className="flex items-start gap-3 px-3 py-3 border-[1.5px] border-[var(--ink-4)] bg-[var(--paper)]">
+                  <div className="flex flex-col items-center gap-1 shrink-0">
+                    <span className={`font-data text-[8px] uppercase tracking-widest px-1.5 py-0.5 border-[1.5px] ${sevStyle}`}>
+                      {sevLabel}
+                    </span>
+                    <span className="font-data text-[8px] text-[var(--ink-3)] uppercase tracking-widest">{typeLabel}</span>
+                  </div>
+                  <span className="font-body text-[13px] text-[var(--ink)] leading-snug">{a.label}</span>
+                </div>
+              )
+            })}
+          </div>
+
+          {/* Shop status list */}
+          <div className="flex flex-col gap-2">
+            <span className="font-data text-[10px] text-[var(--ink-3)] uppercase tracking-widest">{t.monitorShopsSection}</span>
+            {shopStatus.list.map(s => (
+              <div key={s.id} className="flex items-center justify-between gap-3 px-3 py-2.5 border-[1px] border-[var(--ink-4)]">
+                <span className="font-body text-[14px] text-[var(--ink)]">{s.name ?? '—'}</span>
+                <span className={`font-data text-[9px] uppercase tracking-widest px-2 py-0.5 border-[1.5px] ${s.is_open ? 'border-[var(--green)] text-[var(--green-ink)] bg-[var(--green-soft)]' : 'border-[var(--ink-4)] text-[var(--ink-3)]'}`}>
+                  {s.is_open ? t.monitorOnline : t.monitorOffline}
+                </span>
+              </div>
+            ))}
+          </div>
+
+          {/* Active users list */}
+          <div className="flex flex-col gap-2">
+            <span className="font-data text-[10px] text-[var(--ink-3)] uppercase tracking-widest">
+              {t.monitorUsersSection} ({userActivity.online}/{userActivity.total})
+            </span>
+            {userActivity.list.slice(0, 20).map(u => {
+              const threshold = refreshedAt ? new Date(refreshedAt.getTime() - onlineThresholdMs).toISOString() : ''
+              const isActive  = threshold && u.last_seen >= threshold
+              const lastSeen = u.last_seen
+                ? new Date(u.last_seen).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', hour12: false })
+                : t.monitorNeverSeen
+              return (
+                <div key={u.id} className="flex items-center justify-between gap-3 px-3 py-2 border-[1px] border-[var(--ink-4)]">
+                  <span className="font-body text-[13px] text-[var(--ink)] truncate">{u.display_name ?? '—'}</span>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <span className="font-data text-[10px] text-[var(--ink-3)]">{lastSeen}</span>
+                    <span className={`w-2 h-2 rounded-full ${isActive ? 'bg-[var(--green-ink)]' : 'bg-[var(--ink-4)]'}`} />
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+
+          {/* Driver status list */}
+          <div className="flex flex-col gap-2">
+            <span className="font-data text-[10px] text-[var(--ink-3)] uppercase tracking-widest">
+              {t.monitorDriversSection} ({driverStatus.online}/{driverStatus.total})
+            </span>
+            {driverStatus.list.map(d => (
+              <div key={d.id} className="flex items-center justify-between gap-3 px-3 py-2.5 border-[1px] border-[var(--ink-4)]">
+                <span className="font-body text-[13px] text-[var(--ink)]">{d.display_name ?? '—'}</span>
+                <span className={`w-2 h-2 rounded-full ${d.is_online ? 'bg-[var(--green-ink)]' : 'bg-[var(--ink-4)]'}`} />
+              </div>
+            ))}
+          </div>
+
+        </div>
+      )}
+
       {tab === 'shops' && (
         <div className="w-full max-w-2xl flex flex-col gap-6">
           <section className="flex flex-col gap-3">

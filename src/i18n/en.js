@@ -216,6 +216,31 @@ export const en = {
   reportCancel:        'Cancel',
   adminReports:        'Reports',
   pendingReports:      'Pending Reports',
+
+  // System monitor tab
+  monitorTab:           'Monitor',
+  monitorRefresh:       'Refresh',
+  monitorRefreshedAt:   'Updated',
+  monitorShopsOpen:     'Open',
+  monitorShopsClosed:   'Closed',
+  monitorUsersOnline:   'Users online',
+  monitorDriversOnline: 'Drivers online',
+  monitorAnomalies:     'Anomalies',
+  monitorNoAnomalies:   'No anomalies detected',
+  monitorSevHigh:       'HIGH',
+  monitorSevMedium:     'MED',
+  monitorSevLow:        'LOW',
+  monitorTypeRapid:     'Rapid bookings',
+  monitorTypeWeight:    'Weight outlier',
+  monitorTypeCancel:    'Cancellations',
+  monitorTypeGhost:     'No GPS',
+  monitorTypeStale:     'Stale group',
+  monitorShopsSection:  'Shops',
+  monitorUsersSection:  'Active users',
+  monitorDriversSection:'Drivers',
+  monitorOnline:        'Online',
+  monitorOffline:       'Offline',
+  monitorNeverSeen:     'Never',
   approveAsLabel:      'Approve as',
   noReports:           'No pending reports.',
   vertexConfig:        'Vertex AI Config',
@@ -389,4 +414,90 @@ export const en = {
 
   // Buyer profile — shop info edit
   saveShopInfo:      'Save Shop Info',
+
+  // Settings page strings
+  settingsAccount:      'Account',
+  priceAlertsLabel:     'Price alerts',
+  pickupRemindersLabel: 'Pickup reminders',
+  marketingLabel:       'Promotions & marketing',
+  linkedAccountsLabel:  'Linked accounts',
+  exportMyData:         'Export my data',
+  deleteAccountLabel:   'Delete account',
+  settingsRole:         'Role',
+
+  // Basket pickup modes
+  modeDropOff:          'Drop off',
+  modeOnDemand:         'Request pickup',
+  onDemandTitle:        'On-demand pickup',
+  onDemandDesc:         'A buyer will come to your location. Place your waste in a visible spot.',
+  callPickupRider:      'Call a pickup rider →',
+  noGpsWarning:         'Enable GPS first',
+
+  // Shop profile extra fields
+  shopPhone:            'Phone',
+  pickupRadius:         'Pickup radius (km)',
+  shopLocation:         'Shop location',
+  addBranch:            'Add branch',
+
+  // Dashboard pricing table volumes
+  volPending:           'Pending kg',
+  volCompleted:         'Completed kg',
+
+  // Map proximity notification
+  nearbyShopNotifTitle: 'Recycler nearby',
+
+  // On-demand multi-shop scheduling
+  computingRoute:       'Computing route…',
+  minGapBetweenShops:   'Min 30 min between shops',
+  sendPickupRequests:   'Send Pickup Requests →',
+  waitingForShops:      'Waiting for shops',
+  statusSearching:      'Waiting',
+  statusAccepted:       'Accepted',
+  statusRejected:       'Declined',
+  cancelPickupRequest:  'Cancel all requests',
+  noShopAccepted:       'No shop accepted',
+  disposalAlternatives: 'Consider these alternatives:',
+  altCityDrop:          'City recycling drop-off point',
+  altMunicipal:         'Municipal collection day',
+  altScheduleLater:     'Schedule for another day',
+  tryAgain:             'Try again',
+  findDropOff:          'Find drop-off →',
+  allShopsAccepted:     'All shops accepted',
+  trackPickupOnMap:     'Your riders are on their way. Track them on the map.',
+  viewOnMap:            'View on Map →',
+
+  // Driver dashboard
+  driverModeBreadcrumb: 'Buyer / Driver',
+  driverModeTitle:      'Driver Mode',
+  driverOnline:         'You are now online',
+  driverOffline:        'You are offline',
+  driverOnlineLabel:    'Online',
+  driverOfflineLabel:   'Offline',
+  toggleOnlineToSee:    'Toggle online to see nearby jobs',
+  tabCustomerPickups:   'Customer Pickups',
+  tabInterShop:         'Inter-shop Jobs',
+  noNearbyPickups:      'No orders within 5 km',
+  noTransferJobs:       'No transfer jobs available',
+  driverEnRoute:        'En route',
+  driverArrived:        'Arrived — verify weight',
+  iArrived:             "I've Arrived",
+
+  // Driver assignment
+  assignDriver:         'Assign Driver',
+  assignDriverTitle:    'Assign a Driver',
+  driverPickupsToday:   'jobs today',
+  noDriversAvailable:   'No drivers registered yet',
+  conflictWarning:      'Driver already has a pickup within 30 min of this slot',
+  assignmentInvited:    'Invited',
+  assignmentAccepted:   'Assigned',
+  assignmentRejected:   'Declined',
+  tabMyAssignments:     'My Assignments',
+  noMyAssignments:      'No assignments for today',
+  acceptAssignment:     'Accept',
+  declineAssignment:    'Decline',
+
+  // Driver QR invite
+  driverQrTitle:        'Share with Driver',
+  driverQrDesc:         '{name} has been invited. Show them this QR code to open their assignments.',
+  driverQrInviteHint:   'Share this QR code so drivers can register and see their jobs:',
 }

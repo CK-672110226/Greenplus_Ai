@@ -216,6 +216,31 @@ export const th = {
   reportCancel:        'ยกเลิก',
   adminReports:        'รายงาน',
   pendingReports:      'รอตรวจสอบ',
+
+  // แท็บ System Monitor
+  monitorTab:           'มอนิเตอร์',
+  monitorRefresh:       'รีเฟรช',
+  monitorRefreshedAt:   'อัปเดต',
+  monitorShopsOpen:     'เปิดรับ',
+  monitorShopsClosed:   'ปิดรับ',
+  monitorUsersOnline:   'ผู้ใช้ออนไลน์',
+  monitorDriversOnline: 'คนขับออนไลน์',
+  monitorAnomalies:     'รายการผิดปกติ',
+  monitorNoAnomalies:   'ไม่พบรายการผิดปกติ',
+  monitorSevHigh:       'สูง',
+  monitorSevMedium:     'กลาง',
+  monitorSevLow:        'ต่ำ',
+  monitorTypeRapid:     'จองเร็วผิดปกติ',
+  monitorTypeWeight:    'น้ำหนักเกินกว่าปกติ',
+  monitorTypeCancel:    'ยกเลิกบ่อย',
+  monitorTypeGhost:     'ไม่มี GPS',
+  monitorTypeStale:     'กลุ่มค้าง',
+  monitorShopsSection:  'ร้านค้า',
+  monitorUsersSection:  'ผู้ใช้ที่เคลื่อนไหว',
+  monitorDriversSection:'คนขับ',
+  monitorOnline:        'ออนไลน์',
+  monitorOffline:       'ออฟไลน์',
+  monitorNeverSeen:     'ไม่เคยเข้าใช้',
   approveAsLabel:      'อนุมัติเป็น',
   noReports:           'ไม่มีรายงานที่รอตรวจสอบ',
   vertexConfig:        'Vertex AI Config',
@@ -389,4 +414,90 @@ export const th = {
 
   // Buyer profile — shop info edit
   saveShopInfo:      'บันทึกข้อมูลร้าน',
+
+  // Settings page strings
+  settingsAccount:      'บัญชี',
+  priceAlertsLabel:     'แจ้งเตือนราคา',
+  pickupRemindersLabel: 'แจ้งเตือนนัดรับขยะ',
+  marketingLabel:       'โปรโมชันและการตลาด',
+  linkedAccountsLabel:  'บัญชีที่เชื่อมต่อ',
+  exportMyData:         'ส่งออกข้อมูลของฉัน',
+  deleteAccountLabel:   'ลบบัญชี',
+  settingsRole:         'บทบาท',
+
+  // Basket pickup modes
+  modeDropOff:          'ไปส่งเอง',
+  modeOnDemand:         'ขอให้มารับ',
+  onDemandTitle:        'นัดรับถึงที่',
+  onDemandDesc:         'ผู้รับซื้อจะมาถึงตำแหน่งของคุณ วางขยะในจุดที่มองเห็นได้ชัดเจน',
+  callPickupRider:      'เรียกรถรับขยะ →',
+  noGpsWarning:         'กรุณาเปิด GPS ก่อน',
+
+  // Shop profile extra fields
+  shopPhone:            'เบอร์โทร',
+  pickupRadius:         'รัศมีรับขยะ (กม.)',
+  shopLocation:         'ที่ตั้งร้าน',
+  addBranch:            'เพิ่มสาขา',
+
+  // Dashboard pricing table volumes
+  volPending:           'รอดำเนินการ (กก.)',
+  volCompleted:         'เสร็จแล้ว (กก.)',
+
+  // Map proximity notification
+  nearbyShopNotifTitle: 'ร้านรับซื้อใกล้คุณ',
+
+  // On-demand multi-shop scheduling
+  computingRoute:       'กำลังคำนวณเส้นทาง…',
+  minGapBetweenShops:   'ต้องห่างกันอย่างน้อย 30 นาที',
+  sendPickupRequests:   'ส่งคำขอรับขยะ →',
+  waitingForShops:      'รอการตอบรับจากร้าน',
+  statusSearching:      'รอ',
+  statusAccepted:       'รับแล้ว',
+  statusRejected:       'ปฏิเสธ',
+  cancelPickupRequest:  'ยกเลิกทุกคำขอ',
+  noShopAccepted:       'ไม่มีร้านตอบรับ',
+  disposalAlternatives: 'แนะนำวิธีทางเลือก:',
+  altCityDrop:          'จุดทิ้งขยะรีไซเคิลในเมือง',
+  altMunicipal:         'วันจัดเก็บขยะของเทศบาล',
+  altScheduleLater:     'นัดวันอื่น',
+  tryAgain:             'ลองอีกครั้ง',
+  findDropOff:          'หาจุดทิ้ง →',
+  allShopsAccepted:     'ทุกร้านตอบรับแล้ว',
+  trackPickupOnMap:     'รถกำลังมาหาคุณ ติดตามได้ที่แผนที่',
+  viewOnMap:            'ดูบนแผนที่ →',
+
+  // Driver dashboard
+  driverModeBreadcrumb: 'ผู้รับซื้อ / คนขับ',
+  driverModeTitle:      'โหมดคนขับ',
+  driverOnline:         'คุณออนไลน์แล้ว',
+  driverOffline:        'คุณออฟไลน์',
+  driverOnlineLabel:    'ออนไลน์',
+  driverOfflineLabel:   'ออฟไลน์',
+  toggleOnlineToSee:    'เปิดออนไลน์เพื่อดูงานใกล้เคียง',
+  tabCustomerPickups:   'รับขยะจากลูกค้า',
+  tabInterShop:         'งานส่งระหว่างร้าน',
+  noNearbyPickups:      'ไม่มีออเดอร์ในรัศมี 5 กม.',
+  noTransferJobs:       'ไม่มีงานส่งระหว่างร้านในขณะนี้',
+  driverEnRoute:        'กำลังเดินทาง',
+  driverArrived:        'ถึงแล้ว — ยืนยันน้ำหนัก',
+  iArrived:             'ถึงแล้ว',
+
+  // การมอบหมายคนขับ
+  assignDriver:         'มอบหมายคนขับ',
+  assignDriverTitle:    'เลือกคนขับ',
+  driverPickupsToday:   'งานวันนี้',
+  noDriversAvailable:   'ยังไม่มีคนขับลงทะเบียน',
+  conflictWarning:      'คนขับมีงานอยู่ภายใน 30 นาทีของช่วงเวลานี้แล้ว',
+  assignmentInvited:    'รอยืนยัน',
+  assignmentAccepted:   'รับงานแล้ว',
+  assignmentRejected:   'ปฏิเสธ',
+  tabMyAssignments:     'งานที่ได้รับมอบหมาย',
+  noMyAssignments:      'ไม่มีงานที่ได้รับมอบหมายวันนี้',
+  acceptAssignment:     'รับงาน',
+  declineAssignment:    'ปฏิเสธ',
+
+  // QR คนขับ
+  driverQrTitle:        'แชร์ให้คนขับ',
+  driverQrDesc:         'ส่งคำเชิญถึง {name} แล้ว ให้เขาสแกน QR นี้เพื่อเปิดดูงานที่ได้รับ',
+  driverQrInviteHint:   'แชร์ QR นี้ให้คนขับสแกนเพื่อลงทะเบียนและดูงาน:',
 }

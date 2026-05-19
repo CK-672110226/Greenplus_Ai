@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import { useDispatch } from 'react-redux'
 import { supabase } from '../lib/supabase'
-import { setSession, setProfile, clearUser } from '../store/userSlice'
+import { setSession, setProfile, setLanguage, clearUser } from '../store/userSlice'
 import { setOpenDays, setAcceptedMaterials } from '../store/buyerSlice'
 
 async function fetchOrCreateProfile(user, dispatch) {
@@ -14,6 +14,7 @@ async function fetchOrCreateProfile(user, dispatch) {
 
     if (data) {
       dispatch(setProfile(data))
+      if (data.language_pref) dispatch(setLanguage(data.language_pref))
       // open_days / accepted_materials exist after migration 008 — guard for older deployments
       if (Array.isArray(data.open_days)) dispatch(setOpenDays(data.open_days))
       if (Array.isArray(data.accepted_materials)) dispatch(setAcceptedMaterials(data.accepted_materials))

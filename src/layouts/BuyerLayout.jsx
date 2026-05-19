@@ -38,6 +38,9 @@ function IconSignOut() {
 function IconChat() {
   return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" /></svg>
 }
+function IconDriver() {
+  return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+}
 function IconSun() {
   return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="5" /><line x1="12" y1="1" x2="12" y2="3" /><line x1="12" y1="21" x2="12" y2="23" /><line x1="4.22" y1="4.22" x2="5.64" y2="5.64" /><line x1="18.36" y1="18.36" x2="19.78" y2="19.78" /><line x1="1" y1="12" x2="3" y2="12" /><line x1="21" y1="12" x2="23" y2="12" /><line x1="4.22" y1="19.78" x2="5.64" y2="18.36" /><line x1="18.36" y1="5.64" x2="19.78" y2="4.22" /></svg>
 }
@@ -177,6 +180,7 @@ export function BuyerLayout() {
           <SideLink to="/dashboard"   icon={<IconDashboard />}   label={t.dashboard} />
           <SideLink to="/schedule"    icon={<IconSchedule />}    label={t.schedule} />
           <SideLink to="/rider"       icon={<IconRoute />}       label="Smart Route" />
+          <SideLink to="/driver"      icon={<IconDriver />}      label={t.driverModeTitle} />
           <SideLink to="/marketplace" icon={<IconMarketBuyer />} label={t.marketplace} />
           <SideLink to="/pricing"     icon={<IconPricing />}     label={t.pricing} />
           <SideLink to="/chat"        icon={<IconChat />}        label={t.chat} badge={unreadChat} />
@@ -289,7 +293,7 @@ export function BuyerLayout() {
           {[
             { to: '/dashboard', icon: <IconDashboard />, label: 'Home' },
             { to: '/schedule',  icon: <IconSchedule />,  label: 'Schedule' },
-            { to: '/rider',     icon: <IconRoute />,     label: 'Route', isHero: true },
+            { to: '/driver',    icon: <IconDriver />,    label: 'Driver', isHero: true },
             { to: '/chat',      icon: <IconChat />,      label: 'Chat', badge: unreadChat },
             { to: '/profile',   icon: <IconProfile />,   label: 'Profile' },
           ].map(item => (
