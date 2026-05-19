@@ -122,6 +122,9 @@ Any feature addition, bug fix, UI/styling change, data structure change, file re
 
 ### Git workflow
 
-- Always create a branch for fixes/features — never commit directly to `main`
-- Ask before running `git commit` — user reviews before committing
-- Use Conventional Commits format: `fix:`, `feat:`, `chore:`, etc.
+1. Always create a branch: `git checkout -b fix/<scope>` or `feat/<scope>`
+2. Stage only the changed source files (never `.claude-flow/`, `.env`, secrets)
+3. Commit with Conventional Commits format: `fix:`, `feat:`, `chore:`, etc.
+4. Push and open a PR: `git push -u origin <branch> && gh pr create …`
+5. CI gate runs automatically: lint → unit tests → build (see `.github/workflows/pr.yml`)
+6. Merge with `gh pr merge --squash --auto` once CI passes — never commit directly to `main`

@@ -199,6 +199,143 @@
       "createdAt": "2026-05-14T09:03:29.388Z",
       "startedAt": null,
       "completedAt": null
+    },
+    "task-1779006052387-a8fk99": {
+      "taskId": "task-1779006052387-a8fk99",
+      "type": "refactor",
+      "description": "UI pass: DashboardPage — 4-column KPI cards, status chips per spec 3.11",
+      "priority": "high",
+      "status": "completed",
+      "progress": 100,
+      "assignedTo": [],
+      "tags": [
+        "ui-pass",
+        "dashboard"
+      ],
+      "createdAt": "2026-05-17T08:20:52.387Z",
+      "startedAt": null,
+      "completedAt": "2026-05-17T08:23:20.643Z",
+      "result": {
+        "status": "done",
+        "files": [
+          "src/pages/DashboardPage.jsx"
+        ]
+      }
+    },
+    "task-1779006056381-ceo3hj": {
+      "taskId": "task-1779006056381-ceo3hj",
+      "type": "refactor",
+      "description": "UI pass: MarketplacePage + LoginPage — heading eyebrow labels, filter pills active state",
+      "priority": "high",
+      "status": "completed",
+      "progress": 100,
+      "assignedTo": [],
+      "tags": [
+        "ui-pass",
+        "marketplace",
+        "login"
+      ],
+      "createdAt": "2026-05-17T08:20:56.382Z",
+      "startedAt": null,
+      "completedAt": "2026-05-17T08:23:21.889Z",
+      "result": {
+        "status": "done",
+        "files": [
+          "src/pages/MarketplacePage.jsx",
+          "src/pages/LoginPage.jsx"
+        ]
+      }
+    },
+    "task-1779006060274-qy90kv": {
+      "taskId": "task-1779006060274-qy90kv",
+      "type": "refactor",
+      "description": "UI pass: SchedulePage + AdminPage — heading patterns, table styles, status chips",
+      "priority": "normal",
+      "status": "completed",
+      "progress": 100,
+      "assignedTo": [],
+      "tags": [
+        "ui-pass",
+        "schedule",
+        "admin"
+      ],
+      "createdAt": "2026-05-17T08:21:00.274Z",
+      "startedAt": null,
+      "completedAt": "2026-05-17T08:23:23.325Z",
+      "result": {
+        "status": "done",
+        "files": [
+          "src/pages/SchedulePage.jsx",
+          "src/pages/AdminPage.jsx"
+        ]
+      }
+    },
+    "task-1779006412839-kaewyr": {
+      "taskId": "task-1779006412839-kaewyr",
+      "type": "feature",
+      "description": "Forgot password flow in LoginPage + Marketplace CSV export",
+      "priority": "high",
+      "status": "pending",
+      "progress": 0,
+      "assignedTo": [],
+      "tags": [
+        "p4",
+        "login",
+        "marketplace"
+      ],
+      "createdAt": "2026-05-17T08:26:52.839Z",
+      "startedAt": null,
+      "completedAt": null
+    },
+    "task-1779006416830-iegzem": {
+      "taskId": "task-1779006416830-iegzem",
+      "type": "feature",
+      "description": "AdminPage heatmap from scan_history + Sentry error monitoring setup",
+      "priority": "high",
+      "status": "pending",
+      "progress": 0,
+      "assignedTo": [],
+      "tags": [
+        "p3",
+        "admin",
+        "m10"
+      ],
+      "createdAt": "2026-05-17T08:26:56.830Z",
+      "startedAt": null,
+      "completedAt": null
+    },
+    "task-1779006421539-xx1l0g": {
+      "taskId": "task-1779006421539-xx1l0g",
+      "type": "feature",
+      "description": "Chat unread count badge + ChatOfferModal (price/item/date offers in chat)",
+      "priority": "high",
+      "status": "pending",
+      "progress": 0,
+      "assignedTo": [],
+      "tags": [
+        "m8",
+        "chat"
+      ],
+      "createdAt": "2026-05-17T08:27:01.539Z",
+      "startedAt": null,
+      "completedAt": null
+    },
+    "task-1779006427683-nwni7l": {
+      "taskId": "task-1779006427683-nwni7l",
+      "type": "feature",
+      "description": "M9: Admin rider assignment UI + rider rating system",
+      "priority": "normal",
+      "status": "pending",
+      "progress": 0,
+      "assignedTo": [],
+      "tags": [
+        "m9",
+        "logistics",
+        "admin"
+      ],
+      "createdAt": "2026-05-17T08:27:07.683Z",
+      "startedAt": null,
+      "completedAt": null
     }
   },
   "version": "3.0.0"
