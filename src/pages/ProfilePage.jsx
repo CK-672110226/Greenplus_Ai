@@ -4,6 +4,7 @@ import { useSelector, useDispatch } from 'react-redux'
 import { useNavigate } from 'react-router-dom'
 import { useT } from '../hooks/useT'
 import { useScanHistory } from '../hooks/useScanHistory'
+import { useMyShop } from '../hooks/useMyShop'
 import { Card } from '../components/Card'
 import { Button } from '../components/Button'
 import { WASTE_ITEMS, localName } from '../data/wasteItems'
@@ -101,23 +102,61 @@ function UserProfile({ profile, session, t, language }) {
 }
 
 function BuyerProfile({ profile, session, t, language }) {
-  const [accepted, setAccepted] = useState(profile?.accepted_materials ?? [])
+  const { shop } = useMyShop()
 
-  function toggle(mat) {
+  const [accepted,   setAccepted]   = useState(profile?.accepted_materials ?? [])
+  const [shopName,   setShopName]   = useState('')
+  const [shopArea,   setShopArea]   = useState('')
+  const [isOpen,     setIsOpen]     = useState(true)
+  const [editingShop, setEditingShop] = useState(false)
+
+  // Sync shop data once loaded
+  useEffect(() => {
+    if (!shop) return
+    async function sync() {
+      setShopName(shop.name ?? '')
+      setShopArea(shop.area ?? '')
+      setIsOpen(shop.is_open ?? true)
+    }
+    sync()
+  }, [shop])
+
+  function toggleMaterial(mat) {
     setAccepted(a => a.includes(mat) ? a.filter(m => m !== mat) : [...a, mat])
   }
 
-  async function handleSave() {
+  async function handleSaveMaterials() {
     if (!session?.user?.id) return
-    await supabase
-      .from('user_profiles')
-      .update({ accepted_materials: accepted })
-      .eq('id', session.user.id)
-    toast.success('Materials saved')
+    await supabase.from('user_profiles').update({ accepted_materials: accepted }).eq('id', session.user.id)
+    toast.success(t.shopUpdated)
+  }
+
+  async function handleSaveShop() {
+    if (!shop?.id) return
+    const { error } = await supabase
+      .from('shops')
+      .update({ name: shopName.trim(), area: shopArea.trim() })
+      .eq('id', shop.id)
+    if (error) { toast.error(error.message); return }
+    toast.success(t.saveShopInfo)
+    setEditingShop(false)
+  }
+
+  async function handleToggleOpen() {
+    if (!shop?.id) return
+    const next = !isOpen
+    setIsOpen(next)
+    try {
+      await supabase.from('shops').update({ is_open: next }).eq('id', shop.id)
+      toast.success(next ? t.shopResumeIntake : t.shopPauseIntake)
+    } catch {
+      setIsOpen(!next)
+    }
   }
 
   return (
     <>
+      {/* Identity card */}
       <Card className="w-full max-w-2xl flex flex-col gap-4">
         <div className="flex items-center gap-4">
           <Avatar name={profile?.display_name ?? 'B'} />
@@ -133,13 +172,73 @@ function BuyerProfile({ profile, session, t, language }) {
         </div>
       </Card>
 
+      {/* Shop info */}
+      <Card className="w-full max-w-2xl flex flex-col gap-3">
+        <div className="flex items-center justify-between gap-2">
+          <span className="font-data text-[12px] text-[var(--ink-2)] uppercase tracking-widest">{t.shopInfo}</span>
+          <div className="flex items-center gap-2">
+            {/* Open/close toggle */}
+            {shop?.id && (
+              <button
+                onClick={handleToggleOpen}
+                className={[
+                  'flex items-center gap-1.5 px-3 py-1 font-data text-[10px] uppercase tracking-widest border-[1.5px] cursor-pointer transition-colors',
+                  isOpen
+                    ? 'border-[var(--green)] bg-[var(--green-soft)] text-[var(--green-ink)]'
+                    : 'border-[var(--orange)] text-[var(--orange)]',
+                ].join(' ')}
+              >
+                <span className={`w-1.5 h-1.5 rounded-full ${isOpen ? 'bg-[var(--green-ink)]' : 'bg-[var(--orange)]'}`} />
+                {isOpen ? t.shopOpen : t.shopClosed}
+              </button>
+            )}
+            <button
+              onClick={() => setEditingShop(e => !e)}
+              className="font-data text-[10px] uppercase tracking-widest text-[var(--ink-3)] hover:text-[var(--ink)] bg-transparent border-none cursor-pointer"
+            >
+              {editingShop ? t.cancelLabel : t.editShop}
+            </button>
+          </div>
+        </div>
+
+        {editingShop ? (
+          <div className="flex flex-col gap-3">
+            <div className="flex flex-col gap-1">
+              <label className="font-data text-[10px] text-[var(--ink-3)] uppercase tracking-widest">{t.shopName}</label>
+              <input
+                type="text"
+                value={shopName}
+                onChange={e => setShopName(e.target.value)}
+                className="w-full px-3 py-2 border-[1.5px] border-[var(--ink)] bg-[var(--paper)] font-body text-[15px] outline-none focus:border-[var(--green)]"
+              />
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className="font-data text-[10px] text-[var(--ink-3)] uppercase tracking-widest">{t.shopArea}</label>
+              <input
+                type="text"
+                value={shopArea}
+                onChange={e => setShopArea(e.target.value)}
+                className="w-full px-3 py-2 border-[1.5px] border-[var(--ink)] bg-[var(--paper)] font-body text-[15px] outline-none focus:border-[var(--green)]"
+              />
+            </div>
+            <Button variant="primary" onClick={handleSaveShop}>{t.saveShopInfo}</Button>
+          </div>
+        ) : (
+          <div className="flex flex-col gap-1">
+            <span className="font-body text-[15px] text-[var(--ink)]">{shopName || '—'}</span>
+            {shopArea && <span className="font-data text-[11px] text-[var(--ink-3)]">{shopArea}</span>}
+          </div>
+        )}
+      </Card>
+
+      {/* Accepted materials */}
       <Card className="w-full max-w-2xl flex flex-col gap-3">
         <span className="font-data text-[12px] text-[var(--ink-2)] uppercase tracking-widest">{t.acceptedMaterials}</span>
         <div className="flex flex-wrap gap-2">
           {Object.keys(WASTE_ITEMS).map(mat => (
             <button
               key={mat}
-              onClick={() => toggle(mat)}
+              onClick={() => toggleMaterial(mat)}
               className={[
                 'px-3 py-1 font-data text-[11px] uppercase tracking-widest border-[1.5px] transition-colors cursor-pointer',
                 accepted.includes(mat)
@@ -151,7 +250,7 @@ function BuyerProfile({ profile, session, t, language }) {
             </button>
           ))}
         </div>
-        <Button variant="primary" onClick={handleSave}>{t.savePricing}</Button>
+        <Button variant="primary" onClick={handleSaveMaterials}>{t.savePricing}</Button>
       </Card>
     </>
   )

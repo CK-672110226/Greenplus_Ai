@@ -128,13 +128,13 @@ function BookingRow({ b, language, t, onAccept, onReject, onComplete, onCancel }
         <div className="flex gap-2 pl-12">
           <button
             onClick={() => onComplete(b.id)}
-            className="font-data text-[10px] uppercase tracking-[0.1em] px-3 py-1 border-[1.5px] border-[var(--green)] text-[var(--green)] bg-[var(--paper)] cursor-pointer transition-colors duration-150 hover:bg-[var(--green-soft)] active:scale-[0.97]"
+            className="font-data text-[10px] uppercase tracking-[0.1em] px-3 py-2.5 border-[1.5px] border-[var(--green)] text-[var(--green)] bg-[var(--paper)] cursor-pointer transition-colors duration-150 hover:bg-[var(--green-soft)] active:scale-[0.97]"
           >
             COMPLETE
           </button>
           <button
             onClick={() => onCancel(b.id)}
-            className="font-data text-[10px] uppercase tracking-[0.1em] px-3 py-1 border-[1.5px] border-[var(--ink-2)] text-[var(--ink-2)] bg-[var(--paper)] cursor-pointer transition-colors duration-150 hover:bg-[var(--paper-2)] active:scale-[0.97]"
+            className="font-data text-[10px] uppercase tracking-[0.1em] px-3 py-2.5 border-[1.5px] border-[var(--ink-2)] text-[var(--ink-2)] bg-[var(--paper)] cursor-pointer transition-colors duration-150 hover:bg-[var(--paper-2)] active:scale-[0.97]"
           >
             CANCEL
           </button>
@@ -157,6 +157,7 @@ export function DashboardPage() {
   const [rejectModal, setRejectModal] = useState(null)  // { id } | null
   const [rejectReason, setRejectReason] = useState('')
   const rejectCustomRef = useRef(null)
+  const [isOpen, setIsOpen]           = useState(null)  // null = loading
 
   const { shop } = useMyShop()
   const { bookings, loading, acceptBooking, rejectBooking, completeBooking, cancelBooking } = useSupabaseBookings()
@@ -164,6 +165,24 @@ export function DashboardPage() {
   useEffect(() => {
     dispatch(setBookings(bookings))
   }, [bookings, dispatch])
+
+  useEffect(() => {
+    if (shop == null) return
+    async function sync() { setIsOpen(shop.is_open ?? true) }
+    sync()
+  }, [shop])
+
+  async function handleToggleOpen() {
+    if (!shop?.id) return
+    const next = !isOpen
+    setIsOpen(next)
+    try {
+      await supabase.from('shops').update({ is_open: next }).eq('id', shop.id)
+      toast.success(next ? t.shopResumeIntake : t.shopPauseIntake)
+    } catch {
+      setIsOpen(!next)
+    }
+  }
 
   useEffect(() => {
     if (!session?.user?.id) return
@@ -205,16 +224,32 @@ export function DashboardPage() {
     <main className="w-full px-4 py-8 flex flex-col gap-6 max-w-4xl mx-auto">
 
       {/* Header */}
-      <div className="flex flex-col gap-0.5">
-        <span className="font-data text-[10px] text-[var(--ink-3)] uppercase tracking-[0.15em]">
-          {t.breadcrumbDash}
-        </span>
-        <h1 className="font-brand text-[26px] text-[var(--ink)] m-0 leading-tight">
-          {shopName}
-          <span className="font-body text-[16px] text-[var(--ink-3)] ml-2">
-            — {t.todaysHaul}
+      <div className="flex items-start justify-between gap-3 flex-wrap">
+        <div className="flex flex-col gap-0.5">
+          <span className="font-data text-[10px] text-[var(--ink-3)] uppercase tracking-[0.15em]">
+            {t.breadcrumbDash}
           </span>
-        </h1>
+          <h1 className="font-brand text-[26px] text-[var(--ink)] m-0 leading-tight flex items-baseline gap-2 flex-wrap">
+            <span className="truncate max-w-[60vw]">{shopName}</span>
+            <span className="font-body text-[16px] text-[var(--ink-3)] shrink-0">— {t.todaysHaul}</span>
+          </h1>
+        </div>
+
+        {/* Shop open/close toggle */}
+        {shop?.id && (
+          <button
+            onClick={handleToggleOpen}
+            className={[
+              'flex items-center gap-2 px-4 py-2 font-data text-[11px] uppercase tracking-widest border-[1.5px] cursor-pointer transition-colors whitespace-nowrap shrink-0',
+              isOpen
+                ? 'border-[var(--green)] bg-[var(--green-soft)] text-[var(--green-ink)] hover:bg-[var(--green)]'
+                : 'border-[var(--orange)] bg-transparent text-[var(--orange)] hover:bg-[var(--paper-2)]',
+            ].join(' ')}
+          >
+            <span className={`w-2 h-2 rounded-full ${isOpen ? 'bg-[var(--green-ink)]' : 'bg-[var(--orange)]'}`} />
+            {isOpen == null ? '…' : isOpen ? t.shopOpen : t.shopClosed}
+          </button>
+        )}
       </div>
 
       {/* KPI row — 4 cards, full-width, exact spec pattern */}

@@ -373,7 +373,7 @@ function RiderAssignmentPanel() {
           {unassigned.map(b => (
             <div
               key={b.id}
-              className="flex items-center justify-between gap-3 py-3 border-b-[1px] border-[var(--ink-4)] last:border-0"
+              className="flex flex-col gap-2 py-3 border-b-[1px] border-[var(--ink-4)] last:border-0 sm:flex-row sm:items-center sm:justify-between"
             >
               <div className="flex flex-col gap-0.5 min-w-0">
                 <span className="font-body text-[14px] text-[var(--ink)]">
@@ -383,11 +383,11 @@ function RiderAssignmentPanel() {
                   {new Date(b.created_at).toLocaleDateString()}
                 </span>
               </div>
-              <div className="flex items-center gap-2 shrink-0">
+              <div className="flex items-center gap-2">
                 <select
                   value={assignments[b.id] ?? ''}
                   onChange={e => setAssignments(prev => ({ ...prev, [b.id]: e.target.value }))}
-                  className="px-2 py-1 border-[1.5px] border-[var(--ink-4)] focus:border-[var(--ink)] bg-[var(--paper)] font-data text-[11px] outline-none"
+                  className="flex-1 sm:flex-none px-2 py-2.5 border-[1.5px] border-[var(--ink-4)] focus:border-[var(--ink)] bg-[var(--paper)] font-data text-[11px] outline-none"
                 >
                   <option value="">Select rider…</option>
                   {riders.map(r => (
@@ -397,7 +397,7 @@ function RiderAssignmentPanel() {
                 <button
                   onClick={() => handleAssign(b.id)}
                   disabled={!assignments[b.id]}
-                  className="font-data text-[11px] uppercase tracking-widest px-3 py-1.5 bg-[var(--green)] border-[1.5px] border-[var(--ink)] text-[var(--paper)] cursor-pointer disabled:opacity-40"
+                  className="font-data text-[11px] uppercase tracking-widest px-3 py-2.5 bg-[var(--green)] border-[1.5px] border-[var(--ink)] text-[var(--paper)] cursor-pointer disabled:opacity-40 shrink-0"
                 >
                   Assign
                 </button>
@@ -555,8 +555,14 @@ export function AdminPage() {
   const [modLoading, setModLoading] = useState(true)
   const [scanPoints, setScanPoints] = useState([])
   const [heatLoading, setHeatLoading] = useState(true)
-  const [heatmapData, setHeatmapData]       = useState(null)  // { [material_type]: { count, totalKg } }
+  const [heatmapData, setHeatmapData]       = useState(null)
   const [heatmapLoading, setHeatmapLoading] = useState(false)
+  const [users, setUsers]           = useState([])
+  const [usersLoading, setUsersLoading] = useState(false)
+  const [editingShopId, setEditingShopId] = useState(null)
+  const [editShopForm, setEditShopForm]   = useState({ name: '', area: '' })
+  const [editingUserId, setEditingUserId] = useState(null)
+  const [editUserForm, setEditUserForm]   = useState({ display_name: '', role: '' })
 
   const { reports, loading: reportsLoading, approveReport, rejectReport } = useUserReports()
   const adminActions = useAdminActions()
@@ -611,7 +617,7 @@ export function AdminPage() {
   useEffect(() => {
     supabase
       .from('marketplace_posts')
-      .select('*')
+      .select('*, seller:user_id(display_name)')
       .neq('status', 'removed')
       .order('created_at', { ascending: false })
       .then(({ data }) => {
@@ -621,13 +627,32 @@ export function AdminPage() {
           grade:        p.grade,
           qty:          p.quantity_kg,
           pricePerKg:   p.price_per_kg,
-          shop:         p.user_id?.slice(0, 8) ?? '—',
+          shop:         p.seller?.display_name ?? p.user_id?.slice(0, 8) ?? '—',
           flagged:      p.flagged ?? false,
           status:       p.status,
         })))
       })
       .finally(() => setModLoading(false))
   }, [])
+
+  // Load users only when users tab is active
+  useEffect(() => {
+    if (tab !== 'users') return
+    let cancelled = false
+    async function load() {
+      setUsersLoading(true)
+      const { data } = await supabase
+        .from('user_profiles')
+        .select('id, display_name, role, is_banned, created_at')
+        .order('created_at', { ascending: false })
+      if (!cancelled) {
+        if (data) setUsers(data)
+        setUsersLoading(false)
+      }
+    }
+    load()
+    return () => { cancelled = true }
+  }, [tab])
 
   async function handleApprove(id) {
     const { error } = await adminActions.approveShop(id)
@@ -646,6 +671,47 @@ export function AdminPage() {
       toast.error('Shop rejected')
     } else {
       toast.error('Failed to reject shop')
+    }
+  }
+
+  async function handleBanShop(id) {
+    const { error } = await adminActions.banShop(id)
+    if (!error) toast.success(t.shopBanned)
+    else toast.error('Failed to ban shop')
+  }
+
+  async function handleToggleUserBan(user) {
+    const isBanned = user.is_banned
+    const { error } = isBanned
+      ? await adminActions.unbanUser(user.id)
+      : await adminActions.banUser(user.id)
+    if (!error) {
+      setUsers(prev => prev.map(u => u.id === user.id ? { ...u, is_banned: !isBanned } : u))
+      toast.success(isBanned ? t.userUnbanned : t.userBanned)
+    } else {
+      toast.error('Failed to update user')
+    }
+  }
+
+  async function handleSaveShop(id) {
+    const { error } = await adminActions.updateShop(id, { name: editShopForm.name.trim(), area: editShopForm.area.trim() })
+    if (!error) {
+      setPending(prev => prev.map(s => s.id === id ? { ...s, name: editShopForm.name.trim(), area: editShopForm.area.trim() } : s))
+      toast.success(t.shopUpdated)
+      setEditingShopId(null)
+    } else {
+      toast.error('Failed to update shop')
+    }
+  }
+
+  async function handleSaveUser(id) {
+    const { error } = await adminActions.updateUser(id, { display_name: editUserForm.display_name.trim(), role: editUserForm.role })
+    if (!error) {
+      setUsers(prev => prev.map(u => u.id === id ? { ...u, display_name: editUserForm.display_name.trim(), role: editUserForm.role } : u))
+      toast.success(t.userUpdated)
+      setEditingUserId(null)
+    } else {
+      toast.error('Failed to update user')
     }
   }
 
@@ -680,16 +746,19 @@ export function AdminPage() {
         <h1 className="font-brand text-[28px] text-[var(--ink)] m-0">{t.admin}</h1>
       </div>
 
-      {/* Tab bar */}
-      <div className="w-full max-w-2xl flex gap-2 flex-wrap">
-        <TabBtn active={tab === 'shops'}      onClick={() => setTab('shops')}>{t.shopManagement}</TabBtn>
-        <TabBtn active={tab === 'heatmap'}    onClick={() => setTab('heatmap')}>{t.heatmap}</TabBtn>
-        <TabBtn active={tab === 'moderation'} onClick={() => setTab('moderation')}>{t.moderation}</TabBtn>
-        <TabBtn active={tab === 'logistics'}  onClick={() => setTab('logistics')}>Logistics</TabBtn>
-        <TabBtn active={tab === 'studio'}     onClick={() => setTab('studio')}>{t.aiStudio}</TabBtn>
-        <TabBtn active={tab === 'reports'}    onClick={() => setTab('reports')}>
-          {t.adminReports}{pendingCount > 0 ? ` (${pendingCount})` : ''}
-        </TabBtn>
+      {/* Tab bar — horizontal scroll on mobile */}
+      <div className="w-full max-w-2xl overflow-x-auto scrollbar-hide">
+        <div className="flex gap-2 flex-nowrap min-w-max">
+          <TabBtn active={tab === 'shops'}      onClick={() => setTab('shops')}>{t.shopManagement}</TabBtn>
+          <TabBtn active={tab === 'users'}      onClick={() => setTab('users')}>{t.adminUsers}</TabBtn>
+          <TabBtn active={tab === 'heatmap'}    onClick={() => setTab('heatmap')}>{t.heatmap}</TabBtn>
+          <TabBtn active={tab === 'moderation'} onClick={() => setTab('moderation')}>{t.moderation}</TabBtn>
+          <TabBtn active={tab === 'logistics'}  onClick={() => setTab('logistics')}>Logistics</TabBtn>
+          <TabBtn active={tab === 'studio'}     onClick={() => setTab('studio')}>{t.aiStudio}</TabBtn>
+          <TabBtn active={tab === 'reports'}    onClick={() => setTab('reports')}>
+            {t.adminReports}{pendingCount > 0 ? ` (${pendingCount})` : ''}
+          </TabBtn>
+        </div>
       </div>
 
       {/* Shops tab */}
@@ -727,11 +796,41 @@ export function AdminPage() {
               <p className="font-body text-[14px] text-[var(--ink-3)] m-0">—</p>
             )}
             {allShops.map(s => (
-              <Card key={s.id} className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <p className="font-body text-[15px] text-[var(--ink)] m-0">{s.name}</p>
-                  <span className="border-[1.5px] border-[var(--green)] bg-[var(--green-soft)] text-[var(--green-ink)] font-data text-[10px] uppercase tracking-widest px-2 py-0.5">active</span>
+              <Card key={s.id} className="flex flex-col gap-3">
+                <div className="flex items-center justify-between gap-3 flex-wrap">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <p className="font-body text-[15px] text-[var(--ink)] m-0 truncate">{s.name}</p>
+                    <span className="border-[1.5px] border-[var(--green)] bg-[var(--green-soft)] text-[var(--green-ink)] font-data text-[10px] uppercase tracking-widest px-2 py-0.5 shrink-0">active</span>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button variant="ghost" onClick={() => { setEditingShopId(s.id); setEditShopForm({ name: s.name ?? '', area: s.area ?? '' }) }}>{t.editShop}</Button>
+                    <Button variant="ghost" onClick={() => handleBanShop(s.id)}>{t.banShop}</Button>
+                  </div>
                 </div>
+                {editingShopId === s.id && (
+                  <div className="flex flex-col gap-2 pt-2 border-t-[1px] border-[var(--ink-4)]">
+                    <div className="flex flex-col gap-1">
+                      <label className="font-data text-[10px] uppercase tracking-widest text-[var(--ink-3)]">{t.shopName}</label>
+                      <input
+                        value={editShopForm.name}
+                        onChange={e => setEditShopForm(f => ({ ...f, name: e.target.value }))}
+                        className="font-body text-[14px] border-[1.5px] border-[var(--ink)] px-3 py-2 bg-[var(--paper)] text-[var(--ink)] outline-none focus:border-[var(--green)] w-full"
+                      />
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <label className="font-data text-[10px] uppercase tracking-widest text-[var(--ink-3)]">{t.shopArea}</label>
+                      <input
+                        value={editShopForm.area}
+                        onChange={e => setEditShopForm(f => ({ ...f, area: e.target.value }))}
+                        className="font-body text-[14px] border-[1.5px] border-[var(--ink)] px-3 py-2 bg-[var(--paper)] text-[var(--ink)] outline-none focus:border-[var(--green)] w-full"
+                      />
+                    </div>
+                    <div className="flex gap-2 justify-end">
+                      <Button variant="secondary" onClick={() => setEditingShopId(null)}>{t.cancelLabel}</Button>
+                      <Button variant="primary" onClick={() => handleSaveShop(s.id)}>{t.saveChanges}</Button>
+                    </div>
+                  </div>
+                )}
               </Card>
             ))}
           </section>
@@ -863,6 +962,99 @@ export function AdminPage() {
               )
             })()}
           </div>
+        </div>
+      )}
+
+      {/* Users tab */}
+      {tab === 'users' && (
+        <div className="w-full max-w-2xl flex flex-col gap-3">
+          <span className="font-data text-[12px] text-[var(--ink-2)] uppercase tracking-widest">
+            {t.allUsers} ({users.length})
+          </span>
+          {usersLoading && (
+            <div className="h-12 bg-[var(--paper-2)] animate-pulse border-[1.5px] border-[var(--ink-4)]" />
+          )}
+          {!usersLoading && (
+            <div className="flex flex-col border-[1.5px] border-[var(--ink)] px-4">
+              {users.map(u => (
+                <div
+                  key={u.id}
+                  className="flex flex-col gap-2 py-3 border-b-[1px] border-[var(--ink-4)] last:border-0"
+                >
+                  <div className="flex items-center justify-between gap-3 flex-wrap">
+                    <div className="flex flex-col gap-0.5 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-body text-[14px] text-[var(--ink)] truncate">
+                          {u.display_name ?? '—'}
+                        </span>
+                        <span className="font-data text-[10px] uppercase tracking-widest px-2 py-0.5 border-[1.5px] border-[var(--ink-4)] text-[var(--ink-3)]">
+                          {u.role}
+                        </span>
+                        {u.is_banned && (
+                          <span className="font-data text-[10px] uppercase tracking-widest px-2 py-0.5 border-[1.5px] border-[var(--orange)] text-[var(--orange)]">
+                            {t.bannedLabel}
+                          </span>
+                        )}
+                      </div>
+                      <span className="font-data text-[10px] text-[var(--ink-4)]">
+                        {new Date(u.created_at).toLocaleDateString()}
+                      </span>
+                    </div>
+                    <div className="flex gap-2 shrink-0">
+                      <button
+                        onClick={() => { setEditingUserId(u.id); setEditUserForm({ display_name: u.display_name ?? '', role: u.role }) }}
+                        className="font-data text-[10px] uppercase tracking-widest px-3 py-2 border-[1.5px] border-[var(--ink-4)] text-[var(--ink-3)] bg-[var(--paper)] cursor-pointer hover:border-[var(--ink)] hover:text-[var(--ink)]"
+                      >
+                        {t.editUser}
+                      </button>
+                      {u.role !== 'admin' && (
+                        <button
+                          onClick={() => handleToggleUserBan(u)}
+                          className={[
+                            'font-data text-[10px] uppercase tracking-widest px-3 py-2 border-[1.5px] cursor-pointer',
+                            u.is_banned
+                              ? 'border-[var(--green)] text-[var(--green)] bg-[var(--paper)] hover:bg-[var(--green-soft)]'
+                              : 'border-[var(--orange)] text-[var(--orange)] bg-[var(--paper)] hover:bg-[var(--paper-2)]',
+                          ].join(' ')}
+                        >
+                          {u.is_banned ? t.unbanUser : t.banUser}
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                  {editingUserId === u.id && (
+                    <div className="flex flex-col gap-2 pt-2 border-t-[1px] border-[var(--ink-4)]">
+                      <div className="flex flex-col gap-1">
+                        <label className="font-data text-[10px] uppercase tracking-widest text-[var(--ink-3)]">{t.displayName}</label>
+                        <input
+                          value={editUserForm.display_name}
+                          onChange={e => setEditUserForm(f => ({ ...f, display_name: e.target.value }))}
+                          className="font-body text-[14px] border-[1.5px] border-[var(--ink)] px-3 py-2 bg-[var(--paper)] text-[var(--ink)] outline-none focus:border-[var(--green)] w-full"
+                        />
+                      </div>
+                      <div className="flex flex-col gap-1">
+                        <label className="font-data text-[10px] uppercase tracking-widest text-[var(--ink-3)]">{t.userRole}</label>
+                        <select
+                          value={editUserForm.role}
+                          onChange={e => setEditUserForm(f => ({ ...f, role: e.target.value }))}
+                          className="font-body text-[14px] border-[1.5px] border-[var(--ink)] px-3 py-2 bg-[var(--paper)] text-[var(--ink)] outline-none focus:border-[var(--green)] w-full cursor-pointer"
+                        >
+                          <option value="user">user</option>
+                          <option value="buyer">buyer</option>
+                          <option value="rider">rider</option>
+                          <option value="admin">admin</option>
+                        </select>
+                      </div>
+                      <div className="flex gap-2 justify-end">
+                        <Button variant="secondary" onClick={() => setEditingUserId(null)}>{t.cancelLabel}</Button>
+                        <Button variant="primary" onClick={() => handleSaveUser(u.id)}>{t.saveChanges}</Button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 

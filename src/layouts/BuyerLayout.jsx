@@ -244,6 +244,13 @@ export function BuyerLayout() {
           </button>
           <div className="flex items-center gap-1">
             <button
+              onClick={() => setSearchOpen(true)}
+              className="flex items-center justify-center w-11 h-11 bg-transparent border-none cursor-pointer text-[var(--ink-3)] hover:text-[var(--ink)] transition-colors"
+              aria-label="Search"
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            </button>
+            <button
               onClick={() => navigate('/notifications')}
               className="relative flex items-center justify-center w-11 h-11 bg-transparent border-none cursor-pointer text-[var(--ink)] hover:text-[var(--green)] transition-colors"
               aria-label={unread > 0 ? `Notifications — ${unread} unread` : 'Notifications'}
@@ -269,12 +276,6 @@ export function BuyerLayout() {
             >
               {language === 'th' ? 'EN' : 'TH'}
             </button>
-            <button
-              onClick={handleLogout}
-              className="font-body text-[14px] text-[var(--ink-3)] bg-transparent border-none cursor-pointer hover:text-[var(--ink)] transition-colors px-2 min-h-[44px]"
-            >
-              {t.logout}
-            </button>
           </div>
         </header>
 
@@ -290,7 +291,7 @@ export function BuyerLayout() {
             { to: '/schedule',  icon: <IconSchedule />,  label: 'Schedule' },
             { to: '/rider',     icon: <IconRoute />,     label: 'Route', isHero: true },
             { to: '/chat',      icon: <IconChat />,      label: 'Chat', badge: unreadChat },
-            { to: '/pricing',   icon: <IconPricing />,   label: 'Prices' },
+            { to: '/profile',   icon: <IconProfile />,   label: 'Profile' },
           ].map(item => (
             <BuyerTab key={item.to} {...item} />
           ))}

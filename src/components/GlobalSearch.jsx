@@ -4,15 +4,27 @@ import { useSelector } from 'react-redux'
 import { WASTE_ITEMS, localName } from '../data/wasteItems'
 import { useShops } from '../hooks/useShops'
 
-const PAGES = [
+const USER_PAGES = [
   { id: 'home',        label: 'Home',         sub: 'Your scan activity',    icon: '⌂', path: '/home' },
   { id: 'scan',        label: 'Scan',         sub: 'AI waste scanner',      icon: '◉', path: '/scan' },
   { id: 'basket',      label: 'Basket',       sub: 'Your items to sell',    icon: '◻', path: '/basket' },
   { id: 'map',         label: 'Nearby Shops', sub: 'Find a recycling shop', icon: '◎', path: '/map' },
-  { id: 'marketplace', label: 'Marketplace',  sub: 'Current prices',        icon: '◈', path: '/marketplace' },
+  { id: 'marketplace', label: 'Marketplace',  sub: 'Browse listings',       icon: '◈', path: '/marketplace' },
+  { id: 'chat',        label: 'Messages',     sub: 'Chat with shops',       icon: '◫', path: '/chat' },
   { id: 'profile',     label: 'Profile',      sub: 'Your account',          icon: '◯', path: '/profile' },
   { id: 'settings',    label: 'Settings',     sub: 'Preferences',           icon: '⊙', path: '/settings' },
-  { id: 'chat',        label: 'Messages',     sub: 'Chat with shops',       icon: '◫', path: '/chat' },
+]
+
+const BUYER_PAGES = [
+  { id: 'dashboard',   label: 'Dashboard',    sub: 'Today\'s haul & KPIs',  icon: '⌂', path: '/dashboard' },
+  { id: 'schedule',    label: 'Schedule',     sub: 'Pickup schedule',       icon: '◰', path: '/schedule' },
+  { id: 'rider',       label: 'Smart Route',  sub: 'Optimise pickup route', icon: '◎', path: '/rider' },
+  { id: 'marketplace', label: 'Marketplace',  sub: 'Browse listings',       icon: '◈', path: '/marketplace' },
+  { id: 'pricing',     label: 'Pricing',      sub: 'Set material prices',   icon: '◇', path: '/pricing' },
+  { id: 'chat',        label: 'Messages',     sub: 'Chat with sellers',     icon: '◫', path: '/chat' },
+  { id: 'notifications', label: 'Notifications', sub: 'Alerts & updates',   icon: '◉', path: '/notifications' },
+  { id: 'profile',     label: 'Profile',      sub: 'Your account',          icon: '◯', path: '/profile' },
+  { id: 'settings',    label: 'Settings',     sub: 'Preferences',           icon: '⊙', path: '/settings' },
 ]
 
 export function GlobalSearch({ isOpen, onClose }) {
@@ -23,6 +35,7 @@ export function GlobalSearch({ isOpen, onClose }) {
 function SearchPanel({ onClose }) {
   const navigate = useNavigate()
   const language = useSelector(s => s.user.language)
+  const role     = useSelector(s => s.user.profile?.role)
   const { shops } = useShops()
   const [query, setQuery] = useState('')
   const [cursor, setCursor] = useState(0)
@@ -34,8 +47,10 @@ function SearchPanel({ onClose }) {
   }, [])
 
   const q = query.toLowerCase().trim()
+  const pages = role === 'buyer' ? BUYER_PAGES : USER_PAGES
+  const shopPath = role === 'buyer' ? '/marketplace' : '/map'
 
-  const pageResults = PAGES
+  const pageResults = pages
     .filter(p => !q || p.label.toLowerCase().includes(q) || p.sub.toLowerCase().includes(q))
     .slice(0, 5)
     .map(p => ({ ...p, type: 'page' }))
@@ -48,7 +63,7 @@ function SearchPanel({ onClose }) {
   const shopResults = (shops ?? [])
     .filter(s => !q || s.name?.toLowerCase().includes(q) || s.area?.toLowerCase().includes(q))
     .slice(0, 5)
-    .map(s => ({ id: s.id, label: s.name, sub: s.area ?? 'Shop', icon: '◰', type: 'shop', path: '/map' }))
+    .map(s => ({ id: s.id, label: s.name, sub: s.area ?? 'Shop', icon: '◰', type: 'shop', path: shopPath }))
 
   const allResults = [...pageResults, ...materialResults, ...shopResults]
 

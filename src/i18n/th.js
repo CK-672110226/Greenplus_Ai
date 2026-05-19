@@ -344,4 +344,49 @@ export const th = {
 
   // Map page — new key only (others pre-existed)
   locationAcquired:   'ได้รับตำแหน่งแล้ว',
+
+  // Admin — ban / user management
+  adminUsers:    'ผู้ใช้',
+  banUser:       'แบน',
+  unbanUser:     'ยกเลิกแบน',
+  banShop:       'แบนร้าน',
+  unbanShop:     'ยกเลิกแบน',
+  bannedLabel:   'ถูกแบน',
+  allUsers:      'ผู้ใช้ทั้งหมด',
+  userBanned:    'แบนผู้ใช้แล้ว',
+  userUnbanned:  'ยกเลิกแบนผู้ใช้แล้ว',
+  shopBanned:    'แบนร้านแล้ว',
+  shopUnbanned:  'ยกเลิกแบนร้านแล้ว',
+  accountSuspended:     'บัญชีของคุณถูกระงับการใช้งาน',
+  accountSuspendedHint: 'หากคิดว่าเป็นความผิดพลาด กรุณาติดต่อทีมงาน',
+  editShop:    'แก้ไขร้าน',
+  editUser:    'แก้ไขผู้ใช้',
+  shopUpdated: 'อัปเดตร้านแล้ว',
+  userUpdated: 'อัปเดตผู้ใช้แล้ว',
+  shopArea:       'พื้นที่',
+  userRole:       'บทบาท',
+  conditionLabel: 'สภาพ',
+  cleanLabel:     'สะอาด',
+  dirtyLabel:     'ไม่สะอาด',
+  locationLabel:  'ที่ตั้ง (สำหรับแผนที่)',
+  tapToLocate:    "กด 'ใช้ตำแหน่งปัจจุบัน'",
+  chatMessages:      'ข้อความ',
+  noConversations:   'ยังไม่มีการสนทนา',
+  selectConversation:'เลือกการสนทนา',
+  chatBack:          '← กลับ',
+  chatSend:          'ส่ง',
+  chatPlaceholder:   'พิมพ์ข้อความ… (Enter เพื่อส่ง)',
+  sendingVoice:      'กำลังส่งเสียง…',
+  micDenied:         'ไมโครโฟนถูกบล็อก — อนุญาตในการตั้งค่าเบราว์เซอร์และระบบ',
+  micHold:           'กดค้างเพื่อบันทึก',
+  micRecording:      'กำลังบันทึก… ปล่อยเพื่อส่ง',
+
+  // Shop open/close toggle
+  shopOpen:          'เปิดรับ',
+  shopClosed:        'หยุดรับ',
+  shopPauseIntake:   'หยุดรับขยะ',
+  shopResumeIntake:  'เปิดรับขยะ',
+
+  // Buyer profile — shop info edit
+  saveShopInfo:      'บันทึกข้อมูลร้าน',
 }
