@@ -1,4 +1,4 @@
-import { useRef, useState, useCallback, useEffect } from 'react'
+import { useRef, useState, useCallback, useEffect, Component } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { toast } from 'sonner'
 import { useT } from '../hooks/useT'
@@ -11,6 +11,35 @@ import { addToBasket, setLastScan } from '../store/wasteSlice'
 import { twoStageInfer } from '../services/twoStageAI'
 import { useScanInsert } from '../hooks/useScanInsert'
 import { useReportActions } from '../hooks/useReportActions'
+
+/* ── Inline error boundary for the scan camera card ─────────── */
+class ScanErrorBoundary extends Component {
+  constructor(props) {
+    super(props)
+    this.state = { hasError: false }
+  }
+  static getDerivedStateFromError() { return { hasError: true } }
+  componentDidCatch(error) { console.error('[ScanErrorBoundary]', error) }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="flex flex-col items-center justify-center gap-3 py-12 border-[1.5px] border-[var(--orange)] bg-[var(--paper)]">
+          <span className="font-brand text-[32px] text-[var(--orange)]">&#x26A0;</span>
+          <p className="font-body text-[14px] text-[var(--ink-2)] text-center m-0">
+            Scanner failed to load.
+          </p>
+          <button
+            onClick={() => this.setState({ hasError: false })}
+            className="font-data text-[11px] uppercase tracking-widest px-4 py-2 border-[1.5px] border-[var(--ink)] bg-[var(--paper)] cursor-pointer hover:bg-[var(--paper-2)]"
+          >
+            Retry
+          </button>
+        </div>
+      )
+    }
+    return this.props.children
+  }
+}
 
 /* ── Batch queue item row ────────────────────────────────────── */
 function QueueRow({ item, onRemove }) {
@@ -489,6 +518,7 @@ export function ScanPage() {
 
           {/* Viewfinder */}
           <div className="px-6 lg:px-8 py-5 flex flex-col gap-4 flex-1">
+            <ScanErrorBoundary>
             <div
               className="relative w-full aspect-video bg-[var(--ink)] overflow-hidden"
               style={{
@@ -637,6 +667,7 @@ export function ScanPage() {
                 </div>
               )}
             </div>
+            </ScanErrorBoundary>
 
             {phase === 'troll' && (
               <div className="flex flex-col items-center gap-3 py-4 px-4 bg-[var(--orange)] border-[1.5px] border-[var(--ink)]">

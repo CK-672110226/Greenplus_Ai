@@ -3,6 +3,7 @@ import { useSelector } from 'react-redux'
 import { NavBar } from '../components/NavBar'
 import { UserLayout } from './UserLayout'
 import { BuyerLayout } from './BuyerLayout'
+import { useT } from '../hooks/useT'
 
 function AppSkeleton() {
   return (
@@ -32,10 +33,23 @@ function AppSkeleton() {
   )
 }
 
+function SuspendedScreen() {
+  const t = useT()
+  return (
+    <div className="min-h-screen bg-[var(--paper)] flex flex-col items-center justify-center px-6 text-center gap-4">
+      <div className="font-brand text-[48px] text-[var(--orange)]">&#x26D4;</div>
+      <h1 className="font-brand text-[24px] text-[var(--ink)] m-0">{t.accountSuspended}</h1>
+      <p className="font-body text-[14px] text-[var(--ink-3)] max-w-[300px] m-0">{t.accountSuspendedHint}</p>
+    </div>
+  )
+}
+
 export function SmartLayout() {
   const { profile, session, loading } = useSelector(s => s.user)
 
   if (loading || (session && !profile)) return <AppSkeleton />
+
+  if (profile?.is_banned) return <SuspendedScreen />
 
   const role = session ? profile?.role : null
 

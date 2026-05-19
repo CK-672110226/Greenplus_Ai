@@ -344,4 +344,25 @@ export const th = {
 
   // Map page — new key only (others pre-existed)
   locationAcquired:   'ได้รับตำแหน่งแล้ว',
+
+  // Admin — ban / user management
+  adminUsers:    'ผู้ใช้',
+  banUser:       'แบน',
+  unbanUser:     'ยกเลิกแบน',
+  banShop:       'แบนร้าน',
+  unbanShop:     'ยกเลิกแบน',
+  bannedLabel:   'ถูกแบน',
+  allUsers:      'ผู้ใช้ทั้งหมด',
+  userBanned:    'แบนผู้ใช้แล้ว',
+  userUnbanned:  'ยกเลิกแบนผู้ใช้แล้ว',
+  shopBanned:    'แบนร้านแล้ว',
+  shopUnbanned:  'ยกเลิกแบนร้านแล้ว',
+  accountSuspended:     'บัญชีของคุณถูกระงับการใช้งาน',
+  accountSuspendedHint: 'หากคิดว่าเป็นความผิดพลาด กรุณาติดต่อทีมงาน',
+  editShop:    'แก้ไขร้าน',
+  editUser:    'แก้ไขผู้ใช้',
+  shopUpdated: 'อัปเดตร้านแล้ว',
+  userUpdated: 'อัปเดตผู้ใช้แล้ว',
+  shopArea:    'พื้นที่',
+  userRole:    'บทบาท',
 }

@@ -344,4 +344,25 @@ export const en = {
 
   // Map page — new key only (others pre-existed)
   locationAcquired:   'Location acquired',
+
+  // Admin — ban / user management
+  adminUsers:    'Users',
+  banUser:       'Ban',
+  unbanUser:     'Unban',
+  banShop:       'Ban Shop',
+  unbanShop:     'Unban',
+  bannedLabel:   'banned',
+  allUsers:      'All Users',
+  userBanned:    'User banned',
+  userUnbanned:  'User unbanned',
+  shopBanned:    'Shop banned',
+  shopUnbanned:  'Shop unbanned',
+  accountSuspended:     'Your account has been suspended.',
+  accountSuspendedHint: 'Contact support if you believe this is a mistake.',
+  editShop:    'Edit Shop',
+  editUser:    'Edit User',
+  shopUpdated: 'Shop updated',
+  userUpdated: 'User updated',
+  shopArea:    'Area',
+  userRole:    'Role',
 }

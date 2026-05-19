@@ -128,13 +128,13 @@ function BookingRow({ b, language, t, onAccept, onReject, onComplete, onCancel }
         <div className="flex gap-2 pl-12">
           <button
             onClick={() => onComplete(b.id)}
-            className="font-data text-[10px] uppercase tracking-[0.1em] px-3 py-1 border-[1.5px] border-[var(--green)] text-[var(--green)] bg-[var(--paper)] cursor-pointer transition-colors duration-150 hover:bg-[var(--green-soft)] active:scale-[0.97]"
+            className="font-data text-[10px] uppercase tracking-[0.1em] px-3 py-2.5 border-[1.5px] border-[var(--green)] text-[var(--green)] bg-[var(--paper)] cursor-pointer transition-colors duration-150 hover:bg-[var(--green-soft)] active:scale-[0.97]"
           >
             COMPLETE
           </button>
           <button
             onClick={() => onCancel(b.id)}
-            className="font-data text-[10px] uppercase tracking-[0.1em] px-3 py-1 border-[1.5px] border-[var(--ink-2)] text-[var(--ink-2)] bg-[var(--paper)] cursor-pointer transition-colors duration-150 hover:bg-[var(--paper-2)] active:scale-[0.97]"
+            className="font-data text-[10px] uppercase tracking-[0.1em] px-3 py-2.5 border-[1.5px] border-[var(--ink-2)] text-[var(--ink-2)] bg-[var(--paper)] cursor-pointer transition-colors duration-150 hover:bg-[var(--paper-2)] active:scale-[0.97]"
           >
             CANCEL
           </button>
@@ -209,11 +209,9 @@ export function DashboardPage() {
         <span className="font-data text-[10px] text-[var(--ink-3)] uppercase tracking-[0.15em]">
           {t.breadcrumbDash}
         </span>
-        <h1 className="font-brand text-[26px] text-[var(--ink)] m-0 leading-tight">
-          {shopName}
-          <span className="font-body text-[16px] text-[var(--ink-3)] ml-2">
-            — {t.todaysHaul}
-          </span>
+        <h1 className="font-brand text-[26px] text-[var(--ink)] m-0 leading-tight flex items-baseline gap-2 flex-wrap">
+          <span className="truncate max-w-[60vw]">{shopName}</span>
+          <span className="font-body text-[16px] text-[var(--ink-3)] shrink-0">— {t.todaysHaul}</span>
         </h1>
       </div>
 
