@@ -380,4 +380,13 @@ export const en = {
   micDenied:         'Microphone blocked — allow it in browser & system settings',
   micHold:           'Hold to record',
   micRecording:      'Recording… release to send',
+
+  // Shop open/close toggle
+  shopOpen:          'Open',
+  shopClosed:        'Paused',
+  shopPauseIntake:   'Pause Intake',
+  shopResumeIntake:  'Resume Intake',
+
+  // Buyer profile — shop info edit
+  saveShopInfo:      'Save Shop Info',
 }

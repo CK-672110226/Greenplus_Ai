@@ -380,4 +380,13 @@ export const th = {
   micDenied:         'ไมโครโฟนถูกบล็อก — อนุญาตในการตั้งค่าเบราว์เซอร์และระบบ',
   micHold:           'กดค้างเพื่อบันทึก',
   micRecording:      'กำลังบันทึก… ปล่อยเพื่อส่ง',
+
+  // Shop open/close toggle
+  shopOpen:          'เปิดรับ',
+  shopClosed:        'หยุดรับ',
+  shopPauseIntake:   'หยุดรับขยะ',
+  shopResumeIntake:  'เปิดรับขยะ',
+
+  // Buyer profile — shop info edit
+  saveShopInfo:      'บันทึกข้อมูลร้าน',
 }
