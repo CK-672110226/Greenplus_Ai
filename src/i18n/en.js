@@ -363,6 +363,11 @@ export const en = {
   editUser:    'Edit User',
   shopUpdated: 'Shop updated',
   userUpdated: 'User updated',
-  shopArea:    'Area',
-  userRole:    'Role',
+  shopArea:       'Area',
+  userRole:       'Role',
+  conditionLabel: 'Condition',
+  cleanLabel:     'Clean',
+  dirtyLabel:     'Dirty',
+  locationLabel:  'Location (for map)',
+  tapToLocate:    "Tap 'Use location'",
 }

@@ -54,12 +54,12 @@ function ShopCard({ shop, language, t, marketPrice }) {
       )}
 
       <div className="flex gap-2 mt-1">
-        <a
-          href="/map"
-          className="flex-1 py-2 font-data text-[11px] uppercase tracking-widest border-[1.5px] border-[var(--ink)] bg-transparent cursor-pointer hover:bg-[var(--ink)] hover:text-[var(--paper)] transition-colors shadow-[2px_2px_0_var(--ink)] active:shadow-none active:translate-x-[2px] active:translate-y-[2px] text-center block no-underline text-[var(--ink)]"
+        <button
+          onClick={() => navigate('/map')}
+          className="flex-1 py-2 font-data text-[11px] uppercase tracking-widest border-[1.5px] border-[var(--ink)] bg-transparent cursor-pointer hover:bg-[var(--ink)] hover:text-[var(--paper)] transition-colors shadow-[2px_2px_0_var(--ink)] active:shadow-none active:translate-x-[2px] active:translate-y-[2px]"
         >
           {t.directions} →
-        </a>
+        </button>
         <button
           onClick={() => navigate('/chat')}
           className="flex-1 py-2 font-data text-[11px] uppercase tracking-widest border-[1.5px] border-[var(--ink)] bg-transparent cursor-pointer hover:bg-[var(--ink)] hover:text-[var(--paper)] transition-colors shadow-[2px_2px_0_var(--ink)] active:shadow-none active:translate-x-[2px] active:translate-y-[2px]"
@@ -106,9 +106,9 @@ function PostAdForm({ onClose, onAdd, marketPrice }) {
           </select>
         </div>
         <div className="flex flex-col gap-1">
-          <label className="font-data text-[10px] text-[var(--ink-3)] uppercase tracking-widest">สภาพ</label>
+          <label className="font-data text-[10px] text-[var(--ink-3)] uppercase tracking-widest">{t.conditionLabel}</label>
           <div className="flex gap-2">
-            {[{ label: 'สะอาด', val: true }, { label: 'ไม่สะอาด', val: false }].map(({ label, val }) => (
+            {[{ label: t.cleanLabel, val: true }, { label: t.dirtyLabel, val: false }].map(({ label, val }) => (
               <button key={label} type="button" onClick={() => set('clean', val)}
                 className={`flex-1 py-2 font-data text-[12px] uppercase tracking-widest border-[1.5px] border-[var(--ink)] transition-colors cursor-pointer ${form.clean === val ? 'bg-[var(--ink)] text-[var(--paper)]' : 'bg-transparent text-[var(--ink)]'}`}>
                 {label}
@@ -135,13 +135,13 @@ function PostAdForm({ onClose, onAdd, marketPrice }) {
           <input type="text" value={form.contact} onChange={e => set('contact', e.target.value)} placeholder="LINE / Tel" className="w-full px-3 py-2 border-[1.5px] border-[var(--ink)] bg-[var(--paper)] font-body text-[15px] outline-none focus:border-[var(--green)]" />
         </div>
         <div className="flex flex-col gap-1">
-          <label className="font-data text-[10px] text-[var(--ink-3)] uppercase tracking-widest">ที่ตั้ง (สำหรับแผนที่)</label>
+          <label className="font-data text-[10px] text-[var(--ink-3)] uppercase tracking-widest">{t.locationLabel}</label>
           <div className="flex gap-2">
             <input
               type="text"
               value={form.lat != null ? `${form.lat.toFixed(5)}, ${form.lng.toFixed(5)}` : ''}
               readOnly
-              placeholder="กด 'ใช้ตำแหน่งปัจจุบัน'"
+              placeholder={t.tapToLocate}
               className="flex-1 px-3 py-2 border-[1.5px] border-[var(--ink)] bg-[var(--paper-2)] font-data text-[11px] outline-none text-[var(--ink-3)]"
             />
             <button
@@ -155,7 +155,7 @@ function PostAdForm({ onClose, onAdd, marketPrice }) {
               }}
               className="px-3 py-2 font-data text-[11px] uppercase tracking-widest border-[1.5px] border-[var(--ink)] bg-transparent hover:bg-[var(--ink)] hover:text-[var(--paper)] transition-colors whitespace-nowrap cursor-pointer"
             >
-              📍 ตำแหน่ง
+              {t.useMyLocation}
             </button>
           </div>
         </div>
@@ -266,7 +266,8 @@ export function MarketplacePage() {
             </div>
 
             {/* Category filter tabs */}
-            <div className="flex gap-2 flex-wrap mt-4">
+            <div className="overflow-x-auto scrollbar-hide mt-4">
+            <div className="flex gap-2 flex-nowrap min-w-max">
               {CAT_TABS.map(tab => (
                 <button
                   key={tab.key}
@@ -281,6 +282,7 @@ export function MarketplacePage() {
                   {tab.label}
                 </button>
               ))}
+            </div>
             </div>
           </div>
 
@@ -439,8 +441,8 @@ export function MarketplacePage() {
                 )}
               </div>
 
-              {/* Post Ad section — desktop only */}
-              <div className="hidden lg:block px-5 pb-5 border-t-[1.5px] border-[var(--ink)] pt-4">
+              {/* Post Ad section */}
+              <div className="px-5 pb-5 border-t-[1.5px] border-[var(--ink)] pt-4">
                 {isPosting ? (
                   <PostAdForm
                     onClose={() => setIsPosting(false)}

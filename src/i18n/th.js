@@ -363,6 +363,11 @@ export const th = {
   editUser:    'แก้ไขผู้ใช้',
   shopUpdated: 'อัปเดตร้านแล้ว',
   userUpdated: 'อัปเดตผู้ใช้แล้ว',
-  shopArea:    'พื้นที่',
-  userRole:    'บทบาท',
+  shopArea:       'พื้นที่',
+  userRole:       'บทบาท',
+  conditionLabel: 'สภาพ',
+  cleanLabel:     'สะอาด',
+  dirtyLabel:     'ไม่สะอาด',
+  locationLabel:  'ที่ตั้ง (สำหรับแผนที่)',
+  tapToLocate:    "กด 'ใช้ตำแหน่งปัจจุบัน'",
 }
