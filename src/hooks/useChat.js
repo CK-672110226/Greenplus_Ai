@@ -1,7 +1,7 @@
 import { useEffect, useCallback } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 import { supabase } from '../lib/supabase'
-import { setRooms, setActiveRoom, setMessages, appendMessage } from '../store/chatSlice'
+import { setRooms, setActiveRoom, setMessages, appendMessage, updateRoomLastMsg } from '../store/chatSlice'
 
 const BUCKET = 'chat-attachments'
 
@@ -55,6 +55,7 @@ export function useChat() {
         filter: `room_id=eq.${activeRoomId}`,
       }, payload => {
         dispatch(appendMessage(payload.new))
+        dispatch(updateRoomLastMsg({ roomId: activeRoomId, msg: payload.new }))
       })
       .subscribe()
 
