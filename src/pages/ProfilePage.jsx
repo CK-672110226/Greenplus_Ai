@@ -107,6 +107,10 @@ function BuyerProfile({ profile, session, t, language }) {
   const [accepted,   setAccepted]   = useState(profile?.accepted_materials ?? [])
   const [shopName,   setShopName]   = useState('')
   const [shopArea,   setShopArea]   = useState('')
+  const [shopPhone,  setShopPhone]  = useState('')
+  const [shopLat,    setShopLat]    = useState(null)
+  const [shopLng,    setShopLng]    = useState(null)
+  const [shopRadius, setShopRadius] = useState(5)
   const [isOpen,     setIsOpen]     = useState(true)
   const [editingShop, setEditingShop] = useState(false)
 
@@ -116,6 +120,10 @@ function BuyerProfile({ profile, session, t, language }) {
     async function sync() {
       setShopName(shop.name ?? '')
       setShopArea(shop.area ?? '')
+      setShopPhone(shop.phone ?? '')
+      setShopLat(shop.lat ?? null)
+      setShopLng(shop.lng ?? null)
+      setShopRadius(shop.pickup_radius_km ?? 5)
       setIsOpen(shop.is_open ?? true)
     }
     sync()
@@ -135,11 +143,26 @@ function BuyerProfile({ profile, session, t, language }) {
     if (!shop?.id) return
     const { error } = await supabase
       .from('shops')
-      .update({ name: shopName.trim(), area: shopArea.trim() })
+      .update({
+        name:              shopName.trim(),
+        area:              shopArea.trim(),
+        phone:             shopPhone.trim() || null,
+        lat:               shopLat,
+        lng:               shopLng,
+        pickup_radius_km:  shopRadius,
+      })
       .eq('id', shop.id)
     if (error) { toast.error(error.message); return }
     toast.success(t.saveShopInfo)
     setEditingShop(false)
+  }
+
+  function handleUseMyLocation() {
+    if (!navigator.geolocation) return
+    navigator.geolocation.getCurrentPosition(pos => {
+      setShopLat(pos.coords.latitude)
+      setShopLng(pos.coords.longitude)
+    })
   }
 
   async function handleToggleOpen() {
@@ -221,12 +244,61 @@ function BuyerProfile({ profile, session, t, language }) {
                 className="w-full px-3 py-2 border-[1.5px] border-[var(--ink)] bg-[var(--paper)] font-body text-[15px] outline-none focus:border-[var(--green)]"
               />
             </div>
+            <div className="flex flex-col gap-1">
+              <label className="font-data text-[10px] text-[var(--ink-3)] uppercase tracking-widest">{t.shopPhone}</label>
+              <input
+                type="text"
+                value={shopPhone}
+                onChange={e => setShopPhone(e.target.value)}
+                placeholder="08X-XXX-XXXX"
+                className="w-full px-3 py-2 border-[1.5px] border-[var(--ink)] bg-[var(--paper)] font-body text-[15px] outline-none focus:border-[var(--green)]"
+              />
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className="font-data text-[10px] text-[var(--ink-3)] uppercase tracking-widest">{t.shopLocation}</label>
+              <div className="flex items-center gap-2">
+                <span className="font-data text-[12px] text-[var(--ink-3)]">
+                  {shopLat != null && shopLng != null
+                    ? `${shopLat.toFixed(5)}, ${shopLng.toFixed(5)}`
+                    : '—'}
+                </span>
+                <button
+                  type="button"
+                  onClick={handleUseMyLocation}
+                  className="font-data text-[10px] uppercase tracking-widest px-3 py-1 border-[1.5px] border-[var(--ink)] bg-[var(--paper)] hover:bg-[var(--paper-2)] cursor-pointer"
+                >
+                  {t.useMyLocation}
+                </button>
+              </div>
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className="font-data text-[10px] text-[var(--ink-3)] uppercase tracking-widest">{t.pickupRadius}</label>
+              <input
+                type="number"
+                min="1"
+                step="0.5"
+                value={shopRadius}
+                onChange={e => setShopRadius(parseFloat(e.target.value) || 5)}
+                className="w-32 px-3 py-2 border-[1.5px] border-[var(--ink)] bg-[var(--paper)] font-data text-[15px] outline-none focus:border-[var(--green)]"
+              />
+            </div>
             <Button variant="primary" onClick={handleSaveShop}>{t.saveShopInfo}</Button>
           </div>
         ) : (
           <div className="flex flex-col gap-1">
             <span className="font-body text-[15px] text-[var(--ink)]">{shopName || '—'}</span>
             {shopArea && <span className="font-data text-[11px] text-[var(--ink-3)]">{shopArea}</span>}
+            {shopPhone && <span className="font-data text-[11px] text-[var(--ink-3)]">{shopPhone}</span>}
+            {shopLat != null && shopLng != null && (
+              <span className="font-data text-[11px] text-[var(--ink-3)]">
+                {shopLat.toFixed(5)}, {shopLng.toFixed(5)}
+              </span>
+            )}
+            {shopRadius != null && (
+              <span className="font-data text-[11px] text-[var(--ink-4)]">
+                {t.pickupRadius}: {shopRadius} km
+              </span>
+            )}
           </div>
         )}
       </Card>
