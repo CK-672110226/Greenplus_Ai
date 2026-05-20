@@ -45,7 +45,7 @@ EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 DO $$ BEGIN
   CREATE POLICY "avatars_update" ON storage.objects
     FOR UPDATE TO authenticated
-    USING (bucket_id = 'avatars' AND owner_id = auth.uid());
+    USING (bucket_id = 'avatars' AND owner_id = auth.uid()::text);
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 DO $$ BEGIN
