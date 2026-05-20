@@ -66,7 +66,6 @@ export const en = {
   cancelLabel:      'Cancel',
   postSuccess:      'Ad posted!',
   materialTypeLabel:'Material',
-  gradeLabel:       'Grade',
   weightKg:         'Weight (kg)',
   pricePerKgLabel:  'Price (฿/kg)',
   contactInfo:      'Contact (Phone/LINE)',
@@ -134,8 +133,6 @@ export const en = {
 
   // Dashboard pricing CRUD (B-02)
   myPricing:         'My Pricing',
-  gradeClean:        'Clean (฿/kg)',
-  gradeDirty:        'Dirty (฿/kg)',
   savePricing:       'Save Pricing',
 
   // Settings
@@ -272,7 +269,7 @@ export const en = {
   // Pricing page
   pricing:           'Pricing',
   pricingTitle:      'My Pricing',
-  pricingHint:       'Set your buy price per kg for each material and grade.',
+  pricingHint:       'Set your buy price and daily capacity per material. Toggle to enable or disable each item.',
   marketRate:        'Market',
   resetToMarket:     'Reset to Market Rate',
   saveChanges:       'Save Changes',
@@ -391,8 +388,6 @@ export const en = {
   shopArea:       'Area',
   userRole:       'Role',
   conditionLabel: 'Condition',
-  cleanLabel:     'Clean',
-  dirtyLabel:     'Dirty',
   locationLabel:  'Location (for map)',
   tapToLocate:    "Tap 'Use location'",
   chatMessages:      'Messages',
@@ -405,6 +400,9 @@ export const en = {
   micDenied:         'Microphone blocked — allow it in browser & system settings',
   micHold:           'Hold to record',
   micRecording:      'Recording… release to send',
+  micRequestAccess:  'Allow microphone access',
+  micAccessGranted:  'Microphone access granted',
+  micBlocked:        'Microphone blocked',
 
   // Shop open/close toggle
   shopOpen:          'Open',

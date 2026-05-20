@@ -10,22 +10,6 @@ import { useSupabaseMarketplace } from '../hooks/useSupabaseMarketplace'
 import { useMarketPricing } from '../hooks/useMarketPricing'
 
 const MATERIAL_KEYS = Object.keys(WASTE_ITEMS)
-const GRADES = ['A', 'B', 'C']
-
-/* ── Grade badge ─────────────────────────────────────────────────── */
-function GradeBadge({ grade }) {
-  const cls = {
-    A: 'border-[var(--green)] bg-[var(--green-soft)] text-[var(--green-ink)]',
-    B: 'border-[var(--ink)] text-[var(--ink)]',
-    C: 'border-[var(--orange)] text-[var(--orange)]',
-  }[grade] ?? 'border-[var(--ink-4)] text-[var(--ink-3)]'
-
-  return (
-    <span className={`font-data text-[11px] uppercase tracking-widest px-2 py-0.5 border-[1.5px] shrink-0 ${cls}`}>
-      {grade ?? '—'}
-    </span>
-  )
-}
 
 /* ── Individual listing card ─────────────────────────────────────── */
 function ListingCard({ post, language, t }) {
@@ -38,7 +22,6 @@ function ListingCard({ post, language, t }) {
     <div className="flex flex-col gap-2 p-4 border-[1.5px] border-[var(--ink)] bg-[var(--paper)] shadow-[2px_2px_0_var(--ink)]">
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2 min-w-0">
-          <GradeBadge grade={post.grade} />
           <span className="font-body text-[16px] text-[var(--ink)] truncate">{name}</span>
         </div>
         <span className="font-data text-[18px] text-[var(--green-ink)] shrink-0 leading-none">
@@ -74,7 +57,6 @@ function PostAdForm({ onClose, onAdd, marketPrice }) {
 
   const [form, setForm] = useState({
     materialType: MATERIAL_KEYS[0],
-    grade:        'A',
     qty:          '',
     pricePerKg:   '',
     contact:      '',
@@ -103,7 +85,7 @@ function PostAdForm({ onClose, onAdd, marketPrice }) {
     onClose()
   }
 
-  const suggested = marketPrice(form.materialType, true) ?? pricePerKg(form.materialType, true)
+  const suggested = marketPrice(form.materialType) ?? pricePerKg(form.materialType)
 
   return (
     <div className="fixed inset-0 bg-[#1A1A1Ae6] flex items-end justify-center z-50 sm:items-center sm:p-4">
@@ -129,23 +111,6 @@ function PostAdForm({ onClose, onAdd, marketPrice }) {
             >
               {MATERIAL_KEYS.map(k => <option key={k} value={k}>{localName(k, language)}</option>)}
             </select>
-          </div>
-
-          {/* Grade */}
-          <div className="flex flex-col gap-1">
-            <label className="font-data text-[10px] text-[var(--ink-3)] uppercase tracking-widest">{t.gradeLabel}</label>
-            <div className="flex gap-2">
-              {GRADES.map(g => (
-                <button
-                  key={g}
-                  type="button"
-                  onClick={() => set('grade', g)}
-                  className={`flex-1 py-2 font-data text-[13px] uppercase tracking-widest border-[1.5px] border-[var(--ink)] transition-colors cursor-pointer ${form.grade === g ? 'bg-[var(--ink)] text-[var(--paper)]' : 'bg-transparent text-[var(--ink)] hover:bg-[var(--paper-2)]'}`}
-                >
-                  {g}
-                </button>
-              ))}
-            </div>
           </div>
 
           {/* Weight + Price */}
@@ -243,19 +208,7 @@ export function MarketplacePage() {
     if (posts.length > 0) dispatch(setPosts(posts))
   }, [posts, dispatch])
 
-  const [gradeFilter, setGradeFilter] = useState('all')
-  const [isPosting,   setIsPosting]   = useState(false)
-
-  const filtered = gradeFilter === 'all'
-    ? posts
-    : posts.filter(p => p.grade === gradeFilter)
-
-  const GRADE_TABS = [
-    { key: 'all', label: t.filterAll },
-    { key: 'A',   label: t.filterA   },
-    { key: 'B',   label: t.filterB   },
-    { key: 'C',   label: t.filterC   },
-  ]
+  const [isPosting, setIsPosting] = useState(false)
 
   // Bottom inset: user role has a 68px bottom tab bar, buyer does not
   const bottomInset = role === 'user' ? 'bottom-[76px]' : 'bottom-4'
@@ -272,25 +225,6 @@ export function MarketplacePage() {
           {t.marketplaceTitle}
         </h1>
 
-        {/* Grade filter tabs */}
-        <div className="overflow-x-auto scrollbar-hide mt-4">
-          <div className="flex gap-2 flex-nowrap min-w-max pb-1">
-            {GRADE_TABS.map(tab => (
-              <button
-                key={tab.key}
-                onClick={() => setGradeFilter(tab.key)}
-                className={[
-                  'px-3 py-1.5 font-data text-[11px] uppercase tracking-widest border-[1.5px] transition-colors cursor-pointer whitespace-nowrap',
-                  gradeFilter === tab.key
-                    ? 'bg-[var(--ink)] text-[var(--paper)] border-[var(--ink)]'
-                    : 'bg-transparent text-[var(--ink-3)] border-[var(--ink-4)] hover:border-[var(--ink)] hover:text-[var(--ink)]',
-                ].join(' ')}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </div>
-        </div>
       </div>
 
       {/* Listing cards */}
@@ -302,14 +236,14 @@ export function MarketplacePage() {
             <div className="h-24 bg-[var(--paper-2)] animate-pulse border-[1.5px] border-[var(--ink-4)]" />
           </>
         )}
-        {!loading && filtered.length === 0 && (
+        {!loading && posts.length === 0 && (
           <div className="flex items-center justify-center py-20">
             <span className="font-data text-[11px] text-[var(--ink-4)] uppercase tracking-widest">
               {t.noListings}
             </span>
           </div>
         )}
-        {!loading && filtered.map((post, idx) => (
+        {!loading && posts.map((post, idx) => (
           <ListingCard
             key={post.id ?? idx}
             post={post}

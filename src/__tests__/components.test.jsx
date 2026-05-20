@@ -4,7 +4,6 @@ import { Button } from '../components/Button'
 import { Card } from '../components/Card'
 import { EmptyState } from '../components/EmptyState'
 import { KpiCard } from '../components/KpiCard'
-import { GradeTag } from '../components/GradeTag'
 import { Tabs } from '../components/Tabs'
 import { ProgressBar } from '../components/ProgressBar'
 import { Chip } from '../components/Chip'
@@ -89,24 +88,6 @@ describe('KpiCard', () => {
   it('renders trend up', () => {
     render(<KpiCard label="มูลค่า" value={500} trend={{ dir: 'up', value: '+10%' }} />)
     expect(screen.getByText(/\+10%/)).toBeInTheDocument()
-  })
-})
-
-// ── GradeTag ──────────────────────────────────────────────────
-describe('GradeTag', () => {
-  it('shows สะอาด when clean=true', () => {
-    render(<GradeTag clean={true} />)
-    expect(screen.getByText('สะอาด')).toBeInTheDocument()
-  })
-
-  it('shows ไม่สะอาด when clean=false', () => {
-    render(<GradeTag clean={false} />)
-    expect(screen.getByText('ไม่สะอาด')).toBeInTheDocument()
-  })
-
-  it('defaults to สะอาด when clean not provided', () => {
-    render(<GradeTag />)
-    expect(screen.getByText('สะอาด')).toBeInTheDocument()
   })
 })
 

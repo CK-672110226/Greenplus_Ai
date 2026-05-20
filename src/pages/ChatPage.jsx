@@ -78,6 +78,7 @@ export function ChatPage() {
   const [uploading, setUploading]   = useState(false)
   const [recording, setRecording]   = useState(false)
   const [mobileView, setMobileView] = useState(() => routeRoomId ? 'thread' : 'rooms')
+  const [micPerm, setMicPerm]       = useState(null)  // null | 'granted' | 'denied' | 'prompt'
 
   const bottomRef        = useRef(null)
   const fileInputRef     = useRef(null)
@@ -85,6 +86,10 @@ export function ChatPage() {
   const mediaRecorderRef = useRef(null)
   const chunksRef        = useRef([])
   const recordStartRef   = useRef(null)
+
+  useEffect(() => {
+    queryMicPermission().then(setMicPerm)
+  }, [])
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -209,6 +214,22 @@ export function ChatPage() {
       setUploading(false)
     }
   }, [recording, sendVoice])
+
+  const requestMicAccess = useCallback(async () => {
+    if (!navigator.mediaDevices?.getUserMedia) {
+      toast.error(t.micDenied)
+      return
+    }
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+      stream.getTracks().forEach(track => track.stop())
+      setMicPerm('granted')
+      toast.success(t.micAccessGranted)
+    } catch {
+      setMicPerm('denied')
+      toast.error(t.micDenied)
+    }
+  }, [t])
 
   const activeRoom = rooms.find(r => r.id === activeRoomId)
 
@@ -371,19 +392,38 @@ export function ChatPage() {
                     >
                       <IconPaperclip />
                     </button>
-                    <button
-                      onPointerDown={() => { setDialOpen(false); startRecording() }}
-                      onPointerUp={stopRecording}
-                      onPointerLeave={stopRecording}
-                      disabled={uploading}
-                      className={[
-                        'w-11 h-11 border-[1.5px] border-[var(--ink)] shadow-[2px_2px_0_var(--ink)] cursor-pointer flex items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed select-none',
-                        recording ? 'bg-[#e00] text-[var(--paper)] animate-pulse' : 'bg-[var(--paper)] text-[var(--ink)]',
-                      ].join(' ')}
-                      title={recording ? t.micRecording : t.micHold}
-                    >
-                      <IconMic />
-                    </button>
+                    {micPerm === 'denied' ? (
+                      <button
+                        disabled
+                        className="w-11 h-11 border-[1.5px] border-[var(--orange)] bg-[var(--paper)] text-[var(--orange)] shadow-[2px_2px_0_var(--orange)] flex items-center justify-center opacity-60 cursor-not-allowed select-none"
+                        title={t.micBlocked}
+                      >
+                        <IconMic />
+                      </button>
+                    ) : micPerm !== 'granted' ? (
+                      <button
+                        onClick={() => { setDialOpen(false); requestMicAccess() }}
+                        disabled={uploading}
+                        className="w-11 h-11 border-[1.5px] border-[var(--ink)] bg-[var(--paper)] text-[var(--ink)] shadow-[2px_2px_0_var(--ink)] cursor-pointer flex items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed select-none"
+                        title={t.micRequestAccess}
+                      >
+                        <IconMic />
+                      </button>
+                    ) : (
+                      <button
+                        onPointerDown={() => { setDialOpen(false); startRecording() }}
+                        onPointerUp={stopRecording}
+                        onPointerLeave={stopRecording}
+                        disabled={uploading}
+                        className={[
+                          'w-11 h-11 border-[1.5px] border-[var(--ink)] shadow-[2px_2px_0_var(--ink)] cursor-pointer flex items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed select-none',
+                          recording ? 'bg-[#e00] text-[var(--paper)] animate-pulse' : 'bg-[var(--paper)] text-[var(--ink)]',
+                        ].join(' ')}
+                        title={recording ? t.micRecording : t.micHold}
+                      >
+                        <IconMic />
+                      </button>
+                    )}
                   </div>
                 )}
                 <button

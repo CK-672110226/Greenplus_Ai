@@ -19,16 +19,13 @@ export function useScanInsert() {
 
   const insertScan = useCallback(async (scan) => {
     if (!session?.user?.id) return
-    const clean     = scan.clean ?? scan.stage2Pass ?? true
-    const grade     = clean ? 'A' : 'C'
-    const unitPrice = pricePerKg(scan.materialType, clean)
+    const unitPrice = pricePerKg(scan.materialType)
     const calcValue = unitPrice * (scan.weight ?? 0)
     const gps       = await getGPS()
     try {
       const { error } = await supabase.from('scan_history').insert({
         user_id:          session.user.id,
         material_type:    scan.materialType,
-        grade,
         weight_kg:        scan.weight ?? null,
         price_per_kg:     unitPrice,
         calculated_value: calcValue,

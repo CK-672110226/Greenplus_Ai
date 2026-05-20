@@ -1,10 +1,11 @@
 import { memo } from 'react'
 import PropTypes from 'prop-types'
+import styles from './MiniLabel.module.css'
 
 export const MiniLabel = memo(function MiniLabel({ children, style, className = '' }) {
   return (
     <span
-      className={`font-data text-[9px] uppercase tracking-[0.15em] text-[var(--ink-3)] ${className}`}
+      className={[styles.label, className].filter(Boolean).join(' ')}
       style={style}
     >
       {children}

@@ -25,7 +25,6 @@ export function useSupabaseMarketplace() {
           setPosts(data.map(p => ({
             id:           p.id,
             materialType: p.material_type,
-            grade:        p.grade,
             qty:          p.quantity_kg,
             pricePerKg:   p.price_per_kg,
             shop:         p.user?.display_name ?? '',
@@ -50,7 +49,6 @@ export function useSupabaseMarketplace() {
         .insert({
           user_id:       session.user.id,
           material_type: payload.materialType,
-          grade:         payload.grade,
           quantity_kg:   payload.qty,
           price_per_kg:  payload.pricePerKg,
           status:        'active',
@@ -62,7 +60,6 @@ export function useSupabaseMarketplace() {
       setPosts(prev => [{
         id:           data.id,
         materialType: data.material_type,
-        grade:        data.grade,
         qty:          data.quantity_kg,
         pricePerKg:   data.price_per_kg,
         shop:         data.user?.display_name ?? payload.shop ?? '',

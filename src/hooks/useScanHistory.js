@@ -24,7 +24,7 @@ export function useScanHistory() {
             .eq('user_id', userId),
           supabase
             .from('scan_history')
-            .select('id, material_type, grade, weight_kg, calculated_value, scanned_at')
+            .select('id, material_type, weight_kg, calculated_value, scanned_at')
             .eq('user_id', userId)
             .order('scanned_at', { ascending: false })
             .limit(10),

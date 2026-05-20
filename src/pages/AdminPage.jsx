@@ -5,7 +5,6 @@ import { MapContainer, TileLayer, CircleMarker, Tooltip } from 'react-leaflet'
 import { useT } from '../hooks/useT'
 import { Card } from '../components/Card'
 import { Button } from '../components/Button'
-import { GradeTag } from '../components/GradeTag'
 import { useResolvedName } from '../hooks/useResolvedName'
 import { useUserReports } from '../hooks/useUserReports'
 import { useShops } from '../hooks/useShops'
@@ -626,7 +625,6 @@ export function AdminPage() {
         if (data) setModPosts(data.map(p => ({
           id:           p.id,
           materialType: p.material_type,
-          grade:        p.grade,
           qty:          p.quantity_kg,
           pricePerKg:   p.price_per_kg,
           shop:         p.seller?.display_name ?? p.user_id?.slice(0, 8) ?? '—',
@@ -1226,7 +1224,6 @@ export function AdminPage() {
               >
                 <div className="flex items-center justify-between flex-wrap gap-2">
                   <div className="flex items-center gap-2">
-                    <GradeTag clean={post.grade !== 'C'} />
                     <span className="font-body text-[15px] text-[var(--ink)]">
                       {resolve(post.materialType)}
                     </span>
@@ -1295,7 +1292,6 @@ export function AdminPage() {
                     <div className="flex items-center gap-2">
                       <span className="font-data text-[11px] text-[var(--ink-3)] uppercase">AI said</span>
                       <span className="font-body text-[13px] text-[var(--ink-2)]">{resolve(report.ai_material)}</span>
-                      {report.ai_grade != null && <GradeTag clean={report.ai_grade !== 'C'} />}
                     </div>
                   )}
                   <div className="flex items-center gap-2">
