@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types'
 import { Button } from './Button'
 
 export function EmptyState({ icon = '◯', title, body, primaryCta, onPrimary, secondaryCta, onSecondary }) {
@@ -17,4 +18,14 @@ export function EmptyState({ icon = '◯', title, body, primaryCta, onPrimary, s
       </div>
     </div>
   )
+}
+
+EmptyState.propTypes = {
+  icon:         PropTypes.node,
+  title:        PropTypes.string.isRequired,
+  body:         PropTypes.string,
+  primaryCta:   PropTypes.string,
+  onPrimary:    PropTypes.func,
+  secondaryCta: PropTypes.string,
+  onSecondary:  PropTypes.func,
 }

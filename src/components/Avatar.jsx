@@ -1,4 +1,7 @@
-export function Avatar({ name = '', size = 32, style }) {
+import { memo } from 'react'
+import PropTypes from 'prop-types'
+
+export const Avatar = memo(function Avatar({ name = '', size = 32, style }) {
   const initial = (name || '?')[0].toUpperCase()
   return (
     <span
@@ -9,4 +12,10 @@ export function Avatar({ name = '', size = 32, style }) {
       {initial}
     </span>
   )
+})
+
+Avatar.propTypes = {
+  name:  PropTypes.string,
+  size:  PropTypes.number,
+  style: PropTypes.object,
 }

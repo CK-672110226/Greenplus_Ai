@@ -66,20 +66,21 @@ test-results/
 # Ruflo / claude-flow runtime (auto-generated, not source)
 .swarm/
 ruvector.db
-.claude-flow/agents/
-.claude-flow/swarm/
-.claude-flow/tasks/
+.claude-flow/
+agents/
+claude-flow/
 
 # Local development overrides
 .docs/
 
 # Design
 GreenplusDesign/
+Nowdesign/
 
-# Now Project
+# AI/local working folders (not source)
 NowProject/
+HistorySystem/
+HistoryVersions/
 
 # Notebooks
 notebooks/
-
-Nowdesign/

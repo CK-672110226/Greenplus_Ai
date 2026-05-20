@@ -25,7 +25,7 @@ export function useScanInsert() {
     const calcValue = unitPrice * (scan.weight ?? 0)
     const gps       = await getGPS()
     try {
-      await supabase.from('scan_history').insert({
+      const { error } = await supabase.from('scan_history').insert({
         user_id:          session.user.id,
         material_type:    scan.materialType,
         grade,
@@ -37,8 +37,10 @@ export function useScanInsert() {
         lat:              gps?.lat ?? null,
         lng:              gps?.lng ?? null,
       })
-    } catch {
-      // Supabase may not be configured yet — fail silently
+      if (error) throw error
+      return { ok: true }
+    } catch (err) {
+      return { ok: false, error: err?.message ?? 'บันทึก scan ไม่สำเร็จ' }
     }
   }, [session])
 

@@ -93,8 +93,12 @@ function PostAdForm({ onClose, onAdd, marketPrice }) {
       pricePerKg:  Number(form.pricePerKg),
       distanceKm:  0,
     }
-    if (onAdd) await onAdd(payload)
-    else dispatch(addPost(payload))
+    if (onAdd) {
+      const res = await onAdd(payload)
+      if (res && !res.ok) { toast.error(res.error ?? t.errorGeneric); return }
+    } else {
+      dispatch(addPost(payload))
+    }
     toast.success(t.postSuccess)
     onClose()
   }

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useSelector } from 'react-redux'
 import { supabase } from '../lib/supabase'
 
-const EMPTY = { scans: [], loading: false, totalKg: 0, totalValue: 0 }
+const EMPTY = { scans: [], loading: false, totalKg: 0, totalValue: 0, error: null }
 
 export function useScanHistory() {
   const session = useSelector(s => s.user.session)
@@ -38,8 +38,8 @@ export function useScanHistory() {
           return sum + v
         }, 0)
         setState({ scans: rows ?? [], loading: false, totalKg, totalValue })
-      } catch {
-        if (!cancelled) setState({ ...EMPTY })
+      } catch (err) {
+        if (!cancelled) setState({ ...EMPTY, error: err?.message ?? 'โหลดประวัติไม่สำเร็จ' })
       }
     }
 

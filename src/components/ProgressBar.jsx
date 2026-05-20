@@ -1,3 +1,5 @@
+import PropTypes from 'prop-types'
+
 export function ProgressBar({ value = 0, max = 100, ticks = 0, className = '', style }) {
   const pct = Math.max(0, Math.min(100, (value / max) * 100))
   return (
@@ -22,4 +24,12 @@ export function ProgressBar({ value = 0, max = 100, ticks = 0, className = '', s
       ))}
     </div>
   )
+}
+
+ProgressBar.propTypes = {
+  value:     PropTypes.number,
+  max:       PropTypes.number,
+  ticks:     PropTypes.number,
+  className: PropTypes.string,
+  style:     PropTypes.object,
 }

@@ -496,6 +496,9 @@ export const en = {
   acceptAssignment:     'Accept',
   declineAssignment:    'Decline',
 
+  // Generic error
+  errorGeneric:         'Something went wrong. Please try again.',
+
   // Driver QR invite
   driverQrTitle:        'Share with Driver',
   driverQrDesc:         '{name} has been invited. Show them this QR code to open their assignments.',

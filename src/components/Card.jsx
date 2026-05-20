@@ -1,4 +1,7 @@
-export function Card({ children, className = '', onClick, style }) {
+import { memo } from 'react'
+import PropTypes from 'prop-types'
+
+export const Card = memo(function Card({ children, className = '', onClick, style }) {
   return (
     <div
       onClick={onClick}
@@ -8,4 +11,11 @@ export function Card({ children, className = '', onClick, style }) {
       {children}
     </div>
   )
+})
+
+Card.propTypes = {
+  children:  PropTypes.node,
+  className: PropTypes.string,
+  onClick:   PropTypes.func,
+  style:     PropTypes.object,
 }

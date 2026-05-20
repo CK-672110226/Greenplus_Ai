@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { toast } from 'sonner'
 import { useDispatch, useSelector } from 'react-redux'
 import { useNavigate } from 'react-router-dom'
@@ -188,10 +188,16 @@ export function BasketPage() {
   const insertBooking = useInsertBooking()
   const { createGroup, groupBookings, secondsLeft, phase, cancelGroup, reset: resetGroup } = useBookingGroup()
 
-  const shopsWithDist = shops.map(s => ({ ...s, dist: distOf(s, gps.lat, gps.lng) }))
-  const { single, multi, unmatched } = computeRoutes(basket, shopsWithDist, gps.lat, gps.lng)
+  const shopsWithDist = useMemo(
+    () => shops.map(s => ({ ...s, dist: distOf(s, gps.lat, gps.lng) })),
+    [shops, gps.lat, gps.lng]
+  )
+  const { single, multi, unmatched } = useMemo(
+    () => computeRoutes(basket, shopsWithDist, gps.lat, gps.lng),
+    [basket, shopsWithDist, gps.lat, gps.lng]
+  )
 
-  const activeItems  = basket.filter(i => !i.skipped)
+  const activeItems  = useMemo(() => basket.filter(i => !i.skipped), [basket])
   const basketMats   = [...new Set(basket.map(i => i.materialType))]
   const visibleItems = filterMat === 'all' ? basket : basket.filter(i => i.materialType === filterMat)
   const total        = activeItems.reduce((sum, i) => sum + marketPrice(i.materialType, i.clean ?? true) * (i.weight ?? 0), 0)
@@ -218,12 +224,14 @@ export function BasketPage() {
       setShopSchedules(schedules)
     }
     init()
-  }, [pickupMode, multi.length, single.length]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [pickupMode, multi, single, activeItems])
 
   function handleBookClick(shop) { setBookingShop(shop) }
 
   async function handleConfirmBooking() {
     const shop = bookingShop
+    const { ok, error } = await insertBooking(shop, activeItems, { mode: 'dropOff', lat: gps.lat, lng: gps.lng })
+    if (!ok) { toast.error(error ?? t.errorGeneric); return }
     dispatch(addBooking({
       shopId:    shop.id,
       shopName:  shop.name,
@@ -232,7 +240,6 @@ export function BasketPage() {
       totalKg:   activeItems.reduce((s, i) => s + (i.weight ?? 0), 0),
       estValue:  Math.round(total),
     }))
-    await insertBooking(shop, activeItems, { mode: 'dropOff', lat: gps.lat, lng: gps.lng })
     toast.success(t.bookingConfirmed)
     setBookingShop(null)
   }

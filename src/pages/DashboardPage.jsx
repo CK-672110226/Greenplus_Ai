@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { toast } from 'sonner'
 import { QRCodeSVG } from 'qrcode.react'
 import { useT } from '../hooks/useT'
@@ -184,7 +184,10 @@ function AssignDriverModal({ booking, onClose, onAssigned, t, language, fetchAva
   const [saving,   setSaving]   = useState(false)
   const [assigned, setAssigned] = useState(null)  // driver object after success
 
-  const scheduledDate = booking.scheduledAt ? new Date(booking.scheduledAt) : new Date()
+  const scheduledDate = useMemo(
+    () => booking.scheduledAt ? new Date(booking.scheduledAt) : new Date(),
+    [booking.scheduledAt]
+  )
   const driverUrl = `${window.location.origin}/driver`
 
   useEffect(() => {
@@ -195,8 +198,7 @@ function AssignDriverModal({ booking, onClose, onAssigned, t, language, fetchAva
       setLoading(false)
     }
     load()
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [fetchAvailableDrivers, scheduledDate])
 
   async function handleAssign(driver) {
     setSaving(true)

@@ -496,6 +496,9 @@ export const th = {
   acceptAssignment:     'รับงาน',
   declineAssignment:    'ปฏิเสธ',
 
+  // ข้อผิดพลาดทั่วไป
+  errorGeneric:         'เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง',
+
   // QR คนขับ
   driverQrTitle:        'แชร์ให้คนขับ',
   driverQrDesc:         'ส่งคำเชิญถึง {name} แล้ว ให้เขาสแกน QR นี้เพื่อเปิดดูงานที่ได้รับ',

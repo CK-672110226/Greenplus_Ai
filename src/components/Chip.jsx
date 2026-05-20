@@ -1,4 +1,7 @@
-export function Chip({ children, variant = 'default', style, onClick }) {
+import { memo } from 'react'
+import PropTypes from 'prop-types'
+
+export const Chip = memo(function Chip({ children, variant = 'default', style, onClick }) {
   const base = 'inline-flex items-center gap-1.5 px-2.5 py-0.5 font-data text-[11px] uppercase tracking-widest border-[1.5px] transition-colors'
   const variants = {
     default: 'border-[var(--ink)] bg-[var(--paper)] text-[var(--ink)]',
@@ -15,4 +18,11 @@ export function Chip({ children, variant = 'default', style, onClick }) {
       {children}
     </span>
   )
+})
+
+Chip.propTypes = {
+  children: PropTypes.node,
+  variant:  PropTypes.oneOf(['default', 'soft', 'green', 'orange']),
+  style:    PropTypes.object,
+  onClick:  PropTypes.func,
 }

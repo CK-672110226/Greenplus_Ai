@@ -1,4 +1,7 @@
-export function GradeTag({ clean }) {
+import { memo } from 'react'
+import PropTypes from 'prop-types'
+
+export const GradeTag = memo(function GradeTag({ clean }) {
   const ok = clean !== false
   return (
     <span
@@ -8,4 +11,8 @@ export function GradeTag({ clean }) {
       {ok ? 'สะอาด' : 'ไม่สะอาด'}
     </span>
   )
+})
+
+GradeTag.propTypes = {
+  clean: PropTypes.bool,
 }
