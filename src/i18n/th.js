@@ -66,7 +66,6 @@ export const th = {
   cancelLabel:      'ยกเลิก',
   postSuccess:      'ลงประกาศสำเร็จ',
   materialTypeLabel:'ประเภทวัสดุ',
-  gradeLabel:       'เกรด',
   weightKg:         'น้ำหนัก (กก.)',
   pricePerKgLabel:  'ราคา (฿/กก.)',
   contactInfo:      'ติดต่อ (โทร/LINE)',
@@ -134,8 +133,6 @@ export const th = {
 
   // Dashboard pricing CRUD (B-02)
   myPricing:         'ราคารับซื้อ',
-  gradeClean:        'สะอาด (฿/กก.)',
-  gradeDirty:        'ไม่สะอาด (฿/กก.)',
   savePricing:       'บันทึกราคา',
 
   // Settings
@@ -272,7 +269,7 @@ export const th = {
   // Pricing page
   pricing:           'ราคารับซื้อ',
   pricingTitle:      'ราคารับซื้อของฉัน',
-  pricingHint:       'ตั้งราคารับซื้อต่อกิโลกรัมสำหรับวัสดุและเกรดแต่ละประเภท',
+  pricingHint:       'ตั้งราคารับซื้อและปริมาณจำกัดต่อวันสำหรับแต่ละวัสดุ สามารถเปิด/ปิดรับแต่ละรายการได้',
   marketRate:        'ราคาตลาด',
   resetToMarket:     'รีเซ็ตตามราคาตลาด',
   saveChanges:       'บันทึก',
@@ -391,8 +388,6 @@ export const th = {
   shopArea:       'พื้นที่',
   userRole:       'บทบาท',
   conditionLabel: 'สภาพ',
-  cleanLabel:     'สะอาด',
-  dirtyLabel:     'ไม่สะอาด',
   locationLabel:  'ที่ตั้ง (สำหรับแผนที่)',
   tapToLocate:    "กด 'ใช้ตำแหน่งปัจจุบัน'",
   chatMessages:      'ข้อความ',
@@ -405,6 +400,9 @@ export const th = {
   micDenied:         'ไมโครโฟนถูกบล็อก — อนุญาตในการตั้งค่าเบราว์เซอร์และระบบ',
   micHold:           'กดค้างเพื่อบันทึก',
   micRecording:      'กำลังบันทึก… ปล่อยเพื่อส่ง',
+  micRequestAccess:  'อนุญาตการเข้าถึงไมโครโฟน',
+  micAccessGranted:  'อนุญาตไมโครโฟนแล้ว',
+  micBlocked:        'ไมโครโฟนถูกบล็อก',
 
   // Shop open/close toggle
   shopOpen:          'เปิดรับ',
@@ -495,6 +493,9 @@ export const th = {
   noMyAssignments:      'ไม่มีงานที่ได้รับมอบหมายวันนี้',
   acceptAssignment:     'รับงาน',
   declineAssignment:    'ปฏิเสธ',
+
+  // ข้อผิดพลาดทั่วไป
+  errorGeneric:         'เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง',
 
   // QR คนขับ
   driverQrTitle:        'แชร์ให้คนขับ',

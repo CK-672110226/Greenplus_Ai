@@ -1,11 +1,10 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { toast } from 'sonner'
 import { useDispatch, useSelector } from 'react-redux'
 import { useNavigate } from 'react-router-dom'
 import { useT } from '../hooks/useT'
 import { Card } from '../components/Card'
 import { Button } from '../components/Button'
-import { GradeTag } from '../components/GradeTag'
 import { EmptyState } from '../components/EmptyState'
 import { SectionDivider } from '../components/SectionDivider'
 import { localName, WASTE_ITEMS } from '../data/wasteItems'
@@ -29,7 +28,7 @@ function distOf(shop, userLat, userLng) {
 
 function shopTotalFor(shop, activeItems, shopPrice, marketPrice) {
   return activeItems.reduce((sum, i) => {
-    const p = shopPrice(shop.id, i.materialType, i.clean ?? true) ?? marketPrice(i.materialType, i.clean ?? true)
+    const p = shopPrice(shop.id, i.materialType) ?? marketPrice(i.materialType)
     return sum + p * (i.weight ?? 0)
   }, 0)
 }
@@ -113,12 +112,11 @@ function BookingModal({ shop, estValue, onConfirm, onCancel }) {
 
 function ManualAddPanel({ t, language, onAdd }) {
   const [mat,    setMat]    = useState('')
-  const [clean,  setClean]  = useState(true)
   const [weight, setWeight] = useState('')
 
   function submit() {
     if (!mat || !weight || parseFloat(weight) <= 0) return
-    onAdd(mat, clean, parseFloat(weight))
+    onAdd(mat, parseFloat(weight))
     setWeight('')
   }
 
@@ -142,17 +140,6 @@ function ManualAddPanel({ t, language, onAdd }) {
         ))}
       </div>
       <div className="flex gap-2 items-center">
-        <div className="flex gap-1">
-          {[
-            { label: t.cleanLabel, val: true },
-            { label: t.dirtyLabel, val: false },
-          ].map(({ label, val }) => (
-            <button key={label} onClick={() => setClean(val)}
-              className={['px-3 h-8 font-data text-[11px] border-[1.5px] border-[var(--ink)]', clean === val ? 'bg-[var(--ink)] text-[var(--paper)]' : 'bg-[var(--paper)] text-[var(--ink)]'].join(' ')}>
-              {label}
-            </button>
-          ))}
-        </div>
         <input
           type="number"
           min="0.01"
@@ -188,13 +175,19 @@ export function BasketPage() {
   const insertBooking = useInsertBooking()
   const { createGroup, groupBookings, secondsLeft, phase, cancelGroup, reset: resetGroup } = useBookingGroup()
 
-  const shopsWithDist = shops.map(s => ({ ...s, dist: distOf(s, gps.lat, gps.lng) }))
-  const { single, multi, unmatched } = computeRoutes(basket, shopsWithDist, gps.lat, gps.lng)
+  const shopsWithDist = useMemo(
+    () => shops.map(s => ({ ...s, dist: distOf(s, gps.lat, gps.lng) })),
+    [shops, gps.lat, gps.lng]
+  )
+  const { single, multi, unmatched } = useMemo(
+    () => computeRoutes(basket, shopsWithDist, gps.lat, gps.lng),
+    [basket, shopsWithDist, gps.lat, gps.lng]
+  )
 
-  const activeItems  = basket.filter(i => !i.skipped)
+  const activeItems  = useMemo(() => basket.filter(i => !i.skipped), [basket])
   const basketMats   = [...new Set(basket.map(i => i.materialType))]
   const visibleItems = filterMat === 'all' ? basket : basket.filter(i => i.materialType === filterMat)
-  const total        = activeItems.reduce((sum, i) => sum + marketPrice(i.materialType, i.clean ?? true) * (i.weight ?? 0), 0)
+  const total        = activeItems.reduce((sum, i) => sum + marketPrice(i.materialType) * (i.weight ?? 0), 0)
 
   // Sync phase from hook to onDemandStep
   useEffect(() => {
@@ -218,12 +211,14 @@ export function BasketPage() {
       setShopSchedules(schedules)
     }
     init()
-  }, [pickupMode, multi.length, single.length]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [pickupMode, multi, single, activeItems])
 
   function handleBookClick(shop) { setBookingShop(shop) }
 
   async function handleConfirmBooking() {
     const shop = bookingShop
+    const { ok, error } = await insertBooking(shop, activeItems, { mode: 'dropOff', lat: gps.lat, lng: gps.lng })
+    if (!ok) { toast.error(error ?? t.errorGeneric); return }
     dispatch(addBooking({
       shopId:    shop.id,
       shopName:  shop.name,
@@ -232,16 +227,14 @@ export function BasketPage() {
       totalKg:   activeItems.reduce((s, i) => s + (i.weight ?? 0), 0),
       estValue:  Math.round(total),
     }))
-    await insertBooking(shop, activeItems, { mode: 'dropOff', lat: gps.lat, lng: gps.lng })
     toast.success(t.bookingConfirmed)
     setBookingShop(null)
   }
 
-  function handleManualAdd(mat, clean, weight) {
+  function handleManualAdd(mat, weight) {
     dispatch(addToBasket({
       id:           `manual-${Date.now()}`,
       materialType: mat,
-      clean,
       weight,
       confidence:   1,
       source:       'manual',
@@ -338,13 +331,12 @@ export function BasketPage() {
           {/* Basket items list */}
           <div className="flex flex-col gap-3">
             {visibleItems.map(item => {
-              const unitPrice = marketPrice(item.materialType, item.clean ?? true)
+              const unitPrice = marketPrice(item.materialType)
               const lineTotal = unitPrice * (item.weight ?? 0)
               return (
                 <Card key={item.id} className={`flex flex-col gap-3 ${item.skipped ? 'opacity-40' : ''}`}>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <GradeTag clean={item.clean} />
                       <span className={`font-body text-[15px] text-[var(--ink)]${item.skipped ? ' line-through' : ''}`}>
                         {localName(item.materialType, language)}
                       </span>

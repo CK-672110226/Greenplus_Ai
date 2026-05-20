@@ -1,6 +1,7 @@
 import { configureStore, combineReducers } from '@reduxjs/toolkit'
 import { persistStore, persistReducer, FLUSH, REHYDRATE, PAUSE, PERSIST, PURGE, REGISTER } from 'redux-persist'
 import storage from 'redux-persist/es/storage'
+import { catalogApi } from '../features/catalog/catalogApi'
 
 import userReducer from './userSlice'
 import wasteReducer from './wasteSlice'
@@ -31,6 +32,7 @@ const rootReducer = combineReducers({
   customLabels:  customLabelsReducer,
   logistics:     logisticsReducer,
   chat:          chatReducer,
+  [catalogApi.reducerPath]: catalogApi.reducer,
 })
 
 export const store = configureStore({
@@ -40,7 +42,7 @@ export const store = configureStore({
       serializableCheck: {
         ignoredActions: [FLUSH, REHYDRATE, PAUSE, PERSIST, PURGE, REGISTER],
       },
-    }),
+    }).concat(catalogApi.middleware),
 })
 
 export const persistor = persistStore(store)

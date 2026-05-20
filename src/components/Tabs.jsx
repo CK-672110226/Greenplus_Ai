@@ -1,3 +1,5 @@
+import PropTypes from 'prop-types'
+
 export function Tabs({ items = [], active, onChange, trailing, className = '' }) {
   return (
     <div
@@ -27,4 +29,12 @@ export function Tabs({ items = [], active, onChange, trailing, className = '' })
       )}
     </div>
   )
+}
+
+Tabs.propTypes = {
+  items:     PropTypes.arrayOf(PropTypes.string).isRequired,
+  active:    PropTypes.string,
+  onChange:  PropTypes.func,
+  trailing:  PropTypes.node,
+  className: PropTypes.string,
 }

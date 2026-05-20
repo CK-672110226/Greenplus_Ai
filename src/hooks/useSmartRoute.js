@@ -11,6 +11,7 @@ export function useSmartRoute() {
   const [shopLocation, setShopLocation] = useState(null)
   const [stats, setStats]               = useState({ totalKg: 0, totalValue: 0, totalDistanceKm: 0, stopCount: 0 })
   const [loading, setLoading]           = useState(hasSession)
+  const [error, setError]               = useState(null)
 
   useEffect(() => {
     if (!session?.user?.id) return
@@ -49,8 +50,8 @@ export function useSmartRoute() {
 
         setStops(ordered)
         setStats({ totalKg, totalValue, totalDistanceKm, stopCount: ordered.length })
-      } catch {
-        // fail silently — Supabase not configured
+      } catch (err) {
+        setError(err?.message ?? 'โหลดเส้นทางไม่สำเร็จ')
       } finally {
         setLoading(false)
       }
@@ -58,7 +59,7 @@ export function useSmartRoute() {
     load()
   }, [session])
 
-  return { stops, shopLocation, stats, loading }
+  return { stops, shopLocation, stats, loading, error }
 }
 
 function nearestNeighborTSP(startLat, startLng, points) {

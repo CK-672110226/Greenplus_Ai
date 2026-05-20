@@ -1,5 +1,5 @@
 // Fetch bookings for buyer's shop from Supabase
-// Returns { bookings, loading, acceptBooking, rejectBooking }
+// Returns { bookings, loading, error, acceptBooking, rejectBooking, completeBooking, cancelBooking }
 
 import { useState, useEffect, useCallback } from 'react'
 import { useSelector } from 'react-redux'
@@ -12,10 +12,16 @@ function estValueForBooking(materialType, weightKg) {
   return Math.round(item.basePrice * (weightKg ?? 0))
 }
 
+async function patchBooking(id, update) {
+  const { error } = await supabase.from('bookings').update(update).eq('id', id)
+  if (error) throw error
+}
+
 export function useSupabaseBookings() {
   const session = useSelector(s => s.user.session)
   const [bookings, setBookings] = useState([])
   const [loading, setLoading]   = useState(true)
+  const [error, setError]       = useState(null)
 
   useEffect(() => {
     if (!session?.user?.id) {
@@ -26,13 +32,14 @@ export function useSupabaseBookings() {
 
     async function fetch() {
       try {
-        const { data, error } = await supabase
+        const { data, error: fetchErr } = await supabase
           .from('bookings')
           .select('*, shops!inner(owner_id, name), seller:seller_id(display_name)')
           .eq('shops.owner_id', session.user.id)
           .order('created_at', { ascending: false })
 
-        if (!error && data) {
+        if (fetchErr) throw fetchErr
+        if (data) {
           setBookings(data.map(b => ({
             id:         b.id,
             shopName:   b.shops?.name ?? '',
@@ -45,8 +52,8 @@ export function useSupabaseBookings() {
             scheduledAt: b.scheduled_at,
           })))
         }
-      } catch {
-        // Supabase not configured — fail silently
+      } catch (err) {
+        setError(err?.message ?? 'โหลดการจองไม่สำเร็จ')
       } finally {
         setLoading(false)
       }
@@ -54,63 +61,59 @@ export function useSupabaseBookings() {
     fetch()
   }, [session])
 
+  function applyStatus(id, status) {
+    setBookings(prev => prev.map(b => b.id === id ? { ...b, status } : b))
+  }
+
   const acceptBooking = useCallback(async (id) => {
+    const prev = bookings.find(b => b.id === id)
+    applyStatus(id, 'accepted')
     try {
-      const { error } = await supabase
-        .from('bookings')
-        .update({ status: 'accepted' })
-        .eq('id', id)
-      if (!error) {
-        setBookings(prev => prev.map(b => b.id === id ? { ...b, status: 'accepted' } : b))
-      }
-    } catch {
-      // fail silently
+      await patchBooking(id, { status: 'accepted' })
+      return { ok: true }
+    } catch (err) {
+      if (prev) applyStatus(id, prev.status)
+      return { ok: false, error: err?.message ?? 'ยืนยันไม่สำเร็จ' }
     }
-  }, [])
+  }, [bookings])
 
   const rejectBooking = useCallback(async (id, reason) => {
+    const prev = bookings.find(b => b.id === id)
+    applyStatus(id, 'rejected')
     try {
       const update = { status: 'rejected' }
       if (reason) update.rejection_reason = reason
-      const { error } = await supabase
-        .from('bookings')
-        .update(update)
-        .eq('id', id)
-      if (!error) {
-        setBookings(prev => prev.map(b => b.id === id ? { ...b, status: 'rejected' } : b))
-      }
-    } catch {
-      // fail silently
+      await patchBooking(id, update)
+      return { ok: true }
+    } catch (err) {
+      if (prev) applyStatus(id, prev.status)
+      return { ok: false, error: err?.message ?? 'ปฏิเสธไม่สำเร็จ' }
     }
-  }, [])
+  }, [bookings])
 
   const completeBooking = useCallback(async (id) => {
+    const prev = bookings.find(b => b.id === id)
+    applyStatus(id, 'completed')
     try {
-      const { error } = await supabase
-        .from('bookings')
-        .update({ status: 'completed' })
-        .eq('id', id)
-      if (!error) {
-        setBookings(prev => prev.map(b => b.id === id ? { ...b, status: 'completed' } : b))
-      }
-    } catch {
-      // fail silently
+      await patchBooking(id, { status: 'completed' })
+      return { ok: true }
+    } catch (err) {
+      if (prev) applyStatus(id, prev.status)
+      return { ok: false, error: err?.message ?? 'บันทึกไม่สำเร็จ' }
     }
-  }, [])
+  }, [bookings])
 
   const cancelBooking = useCallback(async (id) => {
+    const prev = bookings.find(b => b.id === id)
+    applyStatus(id, 'cancelled')
     try {
-      const { error } = await supabase
-        .from('bookings')
-        .update({ status: 'cancelled' })
-        .eq('id', id)
-      if (!error) {
-        setBookings(prev => prev.map(b => b.id === id ? { ...b, status: 'cancelled' } : b))
-      }
-    } catch {
-      // fail silently
+      await patchBooking(id, { status: 'cancelled' })
+      return { ok: true }
+    } catch (err) {
+      if (prev) applyStatus(id, prev.status)
+      return { ok: false, error: err?.message ?? 'ยกเลิกไม่สำเร็จ' }
     }
-  }, [])
+  }, [bookings])
 
-  return { bookings, loading, acceptBooking, rejectBooking, completeBooking, cancelBooking }
+  return { bookings, loading, error, acceptBooking, rejectBooking, completeBooking, cancelBooking }
 }

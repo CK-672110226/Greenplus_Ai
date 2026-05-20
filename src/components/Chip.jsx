@@ -1,18 +1,26 @@
-export function Chip({ children, variant = 'default', style, onClick }) {
-  const base = 'inline-flex items-center gap-1.5 px-2.5 py-0.5 font-data text-[11px] uppercase tracking-widest border-[1.5px] transition-colors'
-  const variants = {
-    default: 'border-[var(--ink)] bg-[var(--paper)] text-[var(--ink)]',
-    soft:    'border-[var(--ink-4)] bg-[var(--paper-2)] text-[var(--ink-2)]',
-    green:   'border-[var(--green-ink)] bg-[var(--green-soft)] text-[var(--green-ink)]',
-    orange:  'border-[var(--orange)] bg-transparent text-[var(--orange)]',
-  }
+import { memo } from 'react'
+import PropTypes from 'prop-types'
+import styles from './Chip.module.css'
+
+export const Chip = memo(function Chip({ children, variant = 'default', style, onClick }) {
   return (
     <span
-      className={`${base} ${variants[variant] ?? variants.default} ${onClick ? 'cursor-pointer hover:opacity-80' : ''}`}
+      className={[
+        styles.chip,
+        styles[variant] ?? styles.default,
+        onClick ? styles.clickable : '',
+      ].filter(Boolean).join(' ')}
       style={style}
       onClick={onClick}
     >
       {children}
     </span>
   )
+})
+
+Chip.propTypes = {
+  children: PropTypes.node,
+  variant:  PropTypes.oneOf(['default', 'soft', 'green', 'orange']),
+  style:    PropTypes.object,
+  onClick:  PropTypes.func,
 }

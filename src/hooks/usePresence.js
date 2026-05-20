@@ -13,10 +13,13 @@ export function usePresence() {
     if (!session?.user?.id) return
 
     async function ping() {
-      await supabase
+      const { error } = await supabase
         .from('user_profiles')
         .update({ last_seen: new Date().toISOString() })
         .eq('id', session.user.id)
+      if (error && import.meta.env.DEV) {
+        console.warn('[usePresence] last_seen update failed — check migration 022_user_last_seen is applied:', error.message)
+      }
     }
 
     ping()

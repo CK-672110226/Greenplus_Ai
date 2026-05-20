@@ -6,22 +6,20 @@ export function useInsertBooking() {
   const session = useSelector(s => s.user.session)
 
   const insertBooking = useCallback(async (shop, activeItems, pickupOptions = {}) => {
-    if (!session?.user?.id) return false
+    if (!session?.user?.id) return { ok: false, error: 'ยังไม่ได้เข้าสู่ระบบ' }
 
-    // Group by material_type; keep clean flag from first item of that type
     const groups = {}
     activeItems.forEach(item => {
       if (!groups[item.materialType]) {
-        groups[item.materialType] = { weight_kg: 0, clean: item.clean ?? true }
+        groups[item.materialType] = { weight_kg: 0 }
       }
       groups[item.materialType].weight_kg += item.weight ?? 0
     })
 
-    const rows = Object.entries(groups).map(([material_type, { weight_kg, clean }]) => ({
+    const rows = Object.entries(groups).map(([material_type, { weight_kg }]) => ({
       shop_id:       shop?.id ?? null,
       seller_id:     session.user.id,
       material_type,
-      grade:         clean ? 'A' : 'C',
       weight_kg,
       status:        'pending',
       pickup_mode:   pickupOptions.mode ?? 'dropOff',
@@ -31,9 +29,10 @@ export function useInsertBooking() {
 
     try {
       const { error } = await supabase.from('bookings').insert(rows)
-      return !error
-    } catch {
-      return false
+      if (error) throw error
+      return { ok: true }
+    } catch (err) {
+      return { ok: false, error: err?.message ?? 'สร้างการจองไม่สำเร็จ' }
     }
   }, [session])
 

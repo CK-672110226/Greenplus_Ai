@@ -117,17 +117,20 @@ export function SchedulePage() {
   }, [bookings, dispatch])
 
   async function handleConfirm(id) {
-    await bookingActions.updateStatus(id, 'accepted')
+    const { ok, error } = await bookingActions.updateStatus(id, 'accepted')
+    if (!ok) { toast.error(error ?? t.errorGeneric); return }
     dispatch(setSlots(slots.map(s => s.id === id ? { ...s, status: 'accepted' } : s)))
     toast.success(t.confirmPickup)
   }
   async function handleCancel(id) {
-    await bookingActions.updateStatus(id, 'rejected')
+    const { ok, error } = await bookingActions.updateStatus(id, 'rejected')
+    if (!ok) { toast.error(error ?? t.errorGeneric); return }
     dispatch(setSlots(slots.map(s => s.id === id ? { ...s, status: 'rejected' } : s)))
     toast.error(t.cancelPickup)
   }
   async function handleComplete(id) {
-    await bookingActions.updateStatus(id, 'completed')
+    const { ok, error } = await bookingActions.updateStatus(id, 'completed')
+    if (!ok) { toast.error(error ?? t.errorGeneric); return }
     dispatch(setSlots(slots.map(s => s.id === id ? { ...s, status: 'completed' } : s)))
     toast.success(t.completePickup)
   }

@@ -16,6 +16,9 @@ import { LandingPage } from './pages/LandingPage'
 import { LoginPage } from './pages/LoginPage'
 import { AdminLoginPage } from './pages/AdminLoginPage'
 import { Page404 } from './pages/Page404'
+import { CatalogListPage } from './features/catalog/CatalogListPage'
+import { CatalogDetailPage } from './features/catalog/CatalogDetailPage'
+import { CatalogFormPage } from './features/catalog/CatalogFormPage'
 
 // Lazy-loaded — split into separate chunks; ONNX WASM only loads when ScanPage mounts
 const HomePage       = lazy(() => import('./pages/HomePage').then(m => ({ default: m.HomePage })))
@@ -84,6 +87,12 @@ function App() {
             <Route path="/"        element={<LandingPage />} />
             <Route path="/login"   element={<LoginPage />} />
             <Route path="/x/admin" element={<AdminLoginPage />} />
+
+            {/* Catalog — public demo routes (RTK Query + CSS Modules) */}
+            <Route path="/catalog"            element={<CatalogListPage />} />
+            <Route path="/catalog/new"        element={<CatalogFormPage />} />
+            <Route path="/catalog/:id"        element={<CatalogDetailPage />} />
+            <Route path="/catalog/:id/edit"   element={<CatalogFormPage />} />
 
             <Route element={<SmartLayout />}>
 
