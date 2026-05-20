@@ -379,8 +379,13 @@ export function MapPage() {
                             {shop.distanceKm} {t.kmAway}
                           </div>
                         )}
+                        {shop.description && (
+                          <div style={{ fontSize: 12, marginTop: 4, color: 'var(--ink-2)', lineHeight: '1.4' }}>
+                            {shop.description}
+                          </div>
+                        )}
                         {matches && basketMaterials.size > 0 && (
-                          <div style={{ fontSize: 11, marginTop: 4, color: '#0F7A3A', fontWeight: 600 }}>
+                          <div style={{ fontSize: 11, marginTop: 4, color: 'var(--green-ink)', fontWeight: 600 }}>
                             {language === 'th' ? 'รับวัสดุในตะกร้าของคุณ' : 'Accepts your basket items'}
                           </div>
                         )}

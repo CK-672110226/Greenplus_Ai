@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import { useT } from '../hooks/useT'
@@ -19,7 +19,15 @@ function ListingCard({ post, language, t }) {
     : (WASTE_ITEMS[post.materialType]?.nameEn ?? post.materialType)
 
   return (
-    <div className="flex flex-col gap-2 p-4 border-[1.5px] border-[var(--ink)] bg-[var(--paper)] shadow-[2px_2px_0_var(--ink)]">
+    <div className="flex flex-col gap-2 border-[1.5px] border-[var(--ink)] bg-[var(--paper)] shadow-[2px_2px_0_var(--ink)] overflow-hidden">
+      {post.image_url && (
+        <img
+          src={post.image_url}
+          alt={name}
+          className="w-full h-36 object-cover border-b-[1.5px] border-[var(--ink)]"
+        />
+      )}
+      <div className="flex flex-col gap-2 p-4 pt-3">
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2 min-w-0">
           <span className="font-body text-[16px] text-[var(--ink)] truncate">{name}</span>
@@ -45,6 +53,7 @@ function ListingCard({ post, language, t }) {
           {t.contactSeller} →
         </button>
       </div>
+      </div>
     </div>
   )
 }
@@ -54,6 +63,8 @@ function PostAdForm({ onClose, onAdd, marketPrice }) {
   const t        = useT()
   const dispatch = useDispatch()
   const language = useSelector(s => s.user.language)
+  const session  = useSelector(s => s.user.session)
+  const imgRef   = useRef(null)
 
   const [form, setForm] = useState({
     materialType: MATERIAL_KEYS[0],
@@ -64,16 +75,49 @@ function PostAdForm({ onClose, onAdd, marketPrice }) {
     lat:          null,
     lng:          null,
   })
+  const [imageFile,    setImageFile]    = useState(null)
+  const [imagePreview, setImagePreview] = useState(null)
+  const [uploading,    setUploading]    = useState(false)
+
   function set(k, v) { setForm(prev => ({ ...prev, [k]: v })) }
+
+  function handleImageSelect(e) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    e.target.value = ''
+    setImageFile(file)
+    setImagePreview(URL.createObjectURL(file))
+  }
+
+  async function uploadImage() {
+    if (!imageFile || !session?.user?.id) return null
+    const { supabase: sb } = await import('../lib/supabase')
+    const ext  = imageFile.name.split('.').pop().toLowerCase()
+    const path = `${session.user.id}/${Date.now()}.${ext}`
+    const { error } = await sb.storage
+      .from('marketplace-images')
+      .upload(path, imageFile, { contentType: imageFile.type, upsert: false })
+    if (error) return null
+    const { data: { publicUrl } } = sb.storage.from('marketplace-images').getPublicUrl(path)
+    return publicUrl
+  }
 
   async function handleSubmit(e) {
     e.preventDefault()
     if (!form.qty || !form.pricePerKg) { toast.error(t.requiredFields); return }
+    setUploading(true)
+    let image_url = null
+    try {
+      if (imageFile) image_url = await uploadImage()
+    } finally {
+      setUploading(false)
+    }
     const payload = {
       ...form,
-      qty:         Number(form.qty),
-      pricePerKg:  Number(form.pricePerKg),
-      distanceKm:  0,
+      qty:        Number(form.qty),
+      pricePerKg: Number(form.pricePerKg),
+      distanceKm: 0,
+      image_url,
     }
     if (onAdd) {
       const res = await onAdd(payload)
@@ -187,7 +231,25 @@ function PostAdForm({ onClose, onAdd, marketPrice }) {
             </div>
           </div>
 
-          <Button type="submit" variant="primary" fullWidth>{t.postAd}</Button>
+          {/* Image upload */}
+          <div className="flex flex-col gap-1">
+            <label className="font-data text-[10px] text-[var(--ink-3)] uppercase tracking-widest">{t.mpImageLabel}</label>
+            {imagePreview && (
+              <img src={imagePreview} alt="preview" className="w-full h-32 object-cover border-[1.5px] border-[var(--ink)] mb-1" />
+            )}
+            <button
+              type="button"
+              onClick={() => imgRef.current?.click()}
+              className="px-3 py-2 font-data text-[11px] uppercase tracking-widest border-[1.5px] border-[var(--ink-4)] bg-transparent hover:border-[var(--ink)] transition-colors cursor-pointer text-left text-[var(--ink-3)] hover:text-[var(--ink)]"
+            >
+              {imageFile ? imageFile.name : t.mpImageHelp}
+            </button>
+            <input ref={imgRef} type="file" accept="image/*" className="hidden" onChange={handleImageSelect} />
+          </div>
+
+          <Button type="submit" variant="primary" fullWidth disabled={uploading}>
+            {uploading ? t.uploadingPhoto : t.postAd}
+          </Button>
         </form>
       </div>
     </div>

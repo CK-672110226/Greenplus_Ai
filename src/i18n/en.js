@@ -410,6 +410,29 @@ export const en = {
   shopPauseIntake:   'Pause Intake',
   shopResumeIntake:  'Resume Intake',
 
+  // Profile edit — all roles
+  profileEdit:           'Edit Profile',
+  profileSave:           'Save',
+  profileCancel:         'Cancel',
+  profileBioLabel:       'About',
+  profileBioHelp:        'Tell shops and drivers a bit about yourself',
+  profilePickupNotes:    'Pickup Instructions',
+  profilePickupNotesHelp:'e.g. "Green bags by the gate, ring bell for 3F"',
+  profileDisplayName:    'Display Name',
+  profileAvatarUpload:   'Change photo',
+  uploadingPhoto:        'Uploading…',
+
+  // Shop profile — buyer role
+  shopDescription:       'Shop Description',
+  shopDescriptionHelp:   'Help users understand what your shop specialises in',
+  shopOpensAt:           'Opens at',
+  shopClosesAt:          'Closes at',
+  shopVerifiedHint:      'Upload a shop photo to build trust with users',
+
+  // Marketplace image upload
+  mpImageLabel:          'Item photo (optional)',
+  mpImageHelp:           'A photo helps buyers see quality and condition',
+
   // Buyer profile — shop info edit
   saveShopInfo:      'Save Shop Info',
 
