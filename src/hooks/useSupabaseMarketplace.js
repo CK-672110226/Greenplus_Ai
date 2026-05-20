@@ -28,6 +28,8 @@ export function useSupabaseMarketplace() {
             qty:          p.quantity_kg,
             pricePerKg:   p.price_per_kg,
             shop:         p.user?.display_name ?? '',
+            contact:      p.contact ?? '',
+            image_url:    p.image_url ?? null,
             flagged:      p.flagged ?? false,
             distanceKm:   null,
           })))
@@ -51,6 +53,8 @@ export function useSupabaseMarketplace() {
           material_type: payload.materialType,
           quantity_kg:   payload.qty,
           price_per_kg:  payload.pricePerKg,
+          contact:       payload.contact || null,
+          image_url:     payload.image_url || null,
           status:        'active',
         })
         .select('*, user:user_id(display_name)')
@@ -63,6 +67,8 @@ export function useSupabaseMarketplace() {
         qty:          data.quantity_kg,
         pricePerKg:   data.price_per_kg,
         shop:         data.user?.display_name ?? payload.shop ?? '',
+        contact:      data.contact ?? '',
+        image_url:    data.image_url ?? null,
         flagged:      false,
         distanceKm:   null,
       }, ...prev])

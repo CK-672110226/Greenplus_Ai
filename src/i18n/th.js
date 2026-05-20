@@ -410,6 +410,29 @@ export const th = {
   shopPauseIntake:   'หยุดรับขยะ',
   shopResumeIntake:  'เปิดรับขยะ',
 
+  // Profile edit — all roles
+  profileEdit:           'แก้ไขโปรไฟล์',
+  profileSave:           'บันทึก',
+  profileCancel:         'ยกเลิก',
+  profileBioLabel:       'เกี่ยวกับฉัน',
+  profileBioHelp:        'บอกให้ร้านและไดร์เวอร์รู้จักคุณมากขึ้น',
+  profilePickupNotes:    'คำแนะนำสำหรับการรับขยะ',
+  profilePickupNotesHelp:'เช่น "ถุงเขียวหน้าประตู กดกริ่งชั้น 3"',
+  profileDisplayName:    'ชื่อที่แสดง',
+  profileAvatarUpload:   'เปลี่ยนรูป',
+  uploadingPhoto:        'กำลังอัปโหลด…',
+
+  // Shop profile — buyer role
+  shopDescription:       'คำอธิบายร้าน',
+  shopDescriptionHelp:   'ช่วยให้ผู้ใช้เข้าใจว่าร้านของคุณรับอะไร',
+  shopOpensAt:           'เปิด',
+  shopClosesAt:          'ปิด',
+  shopVerifiedHint:      'อัปโหลดรูปร้านเพื่อเพิ่มความน่าเชื่อถือ',
+
+  // Marketplace image upload
+  mpImageLabel:          'รูปสินค้า (ไม่บังคับ)',
+  mpImageHelp:           'รูปช่วยให้ผู้ซื้อเห็นคุณภาพและสภาพสินค้า',
+
   // Buyer profile — shop info edit
   saveShopInfo:      'บันทึกข้อมูลร้าน',
 
