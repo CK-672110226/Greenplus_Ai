@@ -8,6 +8,7 @@ import { localName } from '../data/wasteItems'
 import { setSlots } from '../store/scheduleSlice'
 import { useSupabaseBookings } from '../hooks/useSupabaseBookings'
 import { useBookingActions } from '../hooks/useBookingActions'
+import { useDriverAssignment } from '../hooks/useDriverAssignment'
 import { todayBangkok } from '../utils/time'
 
 function IconClock() {
@@ -54,7 +55,29 @@ function statusBadge(status, t) {
   )
 }
 
-function SlotCard({ slot, language, t, onConfirm, onCancel, onComplete }) {
+function SlotCard({ slot, language, t, onConfirm, onCancel, onComplete, fetchAvailableDrivers, assignDriver }) {
+  const [showDriverPicker, setShowDriverPicker] = useState(false)
+  const [drivers,          setDrivers]          = useState([])
+  const [loadingDrivers,   setLoadingDrivers]   = useState(false)
+  const [assignedName,     setAssignedName]      = useState(slot.assignedDriverName ?? null)
+
+  async function openDriverPicker() {
+    setShowDriverPicker(true)
+    setLoadingDrivers(true)
+    const list = await fetchAvailableDrivers(slot.scheduledAt ?? new Date())
+    setDrivers(list)
+    setLoadingDrivers(false)
+  }
+
+  async function handleAssign(driver) {
+    const { conflict, error } = await assignDriver(slot.id, driver.id, slot.scheduledAt)
+    if (conflict) { toast.error(t.conflictWarning); return }
+    if (error)    { toast.error(t.errorGeneric); return }
+    setAssignedName(driver.display_name)
+    setShowDriverPicker(false)
+    toast.success(t.driverAssigned)
+  }
+
   return (
     <Card className="flex flex-col gap-3">
       <div className="flex items-start justify-between gap-3 flex-wrap">
@@ -70,6 +93,48 @@ function SlotCard({ slot, language, t, onConfirm, onCancel, onComplete }) {
           <span className="font-body text-[13px] text-[var(--ink)]">฿{(slot.estValue ?? 0).toLocaleString()}</span>
         </div>
       </div>
+
+      {/* Driver assignment row — visible for accepted bookings */}
+      {slot.status === 'accepted' && (
+        <div className="flex items-center gap-2 pt-1 border-t-[1px] border-[var(--ink-4)]">
+          {assignedName
+            ? <span className="font-data text-[11px] text-[var(--green-ink)] flex-1 truncate">
+                {assignedName}
+              </span>
+            : <span className="font-data text-[11px] text-[var(--ink-4)] flex-1">{t.assignDriver}</span>
+          }
+          <button
+            onClick={openDriverPicker}
+            className="font-data text-[10px] uppercase tracking-widest px-3 py-1.5 border-[1.5px] border-[var(--ink-4)] text-[var(--ink-3)] bg-[var(--paper)] cursor-pointer hover:border-[var(--ink)] hover:text-[var(--ink)] whitespace-nowrap"
+          >
+            {assignedName ? t.assignDriver : `+ ${t.assignDriver}`}
+          </button>
+        </div>
+      )}
+
+      {/* Inline driver picker */}
+      {showDriverPicker && (
+        <div className="flex flex-col gap-2 border-[1.5px] border-[var(--ink)] p-3 bg-[var(--paper-2)]">
+          <div className="flex items-center justify-between">
+            <span className="font-data text-[10px] uppercase tracking-widest text-[var(--ink-3)]">{t.assignDriverTitle}</span>
+            <button onClick={() => setShowDriverPicker(false)} className="font-data text-[10px] bg-transparent border-none cursor-pointer text-[var(--ink-3)]">✕</button>
+          </div>
+          {loadingDrivers && <span className="font-data text-[11px] text-[var(--ink-3)]">…</span>}
+          {!loadingDrivers && drivers.length === 0 && (
+            <span className="font-data text-[11px] text-[var(--ink-3)]">{t.noDriversAvailable}</span>
+          )}
+          {!loadingDrivers && drivers.map(d => (
+            <button
+              key={d.id}
+              onClick={() => handleAssign(d)}
+              className="flex items-center justify-between px-3 py-2 border-[1.5px] border-[var(--ink-4)] bg-[var(--paper)] cursor-pointer hover:border-[var(--ink)] text-left"
+            >
+              <span className="font-body text-[13px] text-[var(--ink)]">{d.display_name}</span>
+              <span className="font-data text-[10px] text-[var(--ink-3)]">{d.todayLoad} {t.driverPickupsToday}</span>
+            </button>
+          ))}
+        </div>
+      )}
 
       {slot.status === 'pending' && (
         <div className="flex gap-2 pt-1">
@@ -100,18 +165,21 @@ export function SchedulePage() {
 
   const { bookings, loading } = useSupabaseBookings()
   const bookingActions = useBookingActions()
+  const { fetchAvailableDrivers, assignDriver } = useDriverAssignment()
 
   useEffect(() => {
     const todaySlots = bookings
       .filter(b => b.scheduledAt && b.scheduledAt.startsWith(TODAY))
       .map(b => ({
-        id:        b.id,
-        time:      slotTime(b.scheduledAt),
-        seller:    b.seller,
-        materials: b.materials,
-        totalKg:   b.totalKg,
-        estValue:  b.estValue,
-        status:    b.status,
+        id:                b.id,
+        time:              slotTime(b.scheduledAt),
+        scheduledAt:       b.scheduledAt,
+        seller:            b.seller,
+        materials:         b.materials,
+        totalKg:           b.totalKg,
+        estValue:          b.estValue,
+        status:            b.status,
+        assignedDriverName: b.assignedDriverName ?? null,
       }))
     dispatch(setSlots(todaySlots))
   }, [bookings, dispatch])
@@ -285,6 +353,8 @@ export function SchedulePage() {
                   onConfirm={handleConfirm}
                   onCancel={handleCancel}
                   onComplete={handleComplete}
+                  fetchAvailableDrivers={fetchAvailableDrivers}
+                  assignDriver={assignDriver}
                 />
               ))}
             </div>

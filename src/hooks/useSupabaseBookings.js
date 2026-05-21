@@ -41,15 +41,17 @@ export function useSupabaseBookings() {
         if (fetchErr) throw fetchErr
         if (data) {
           setBookings(data.map(b => ({
-            id:         b.id,
-            shopName:   b.shops?.name ?? '',
-            seller:     b.seller?.display_name ?? b.seller_id,
-            materials:  [b.material_type],
-            totalKg:    b.weight_kg,
-            estValue:   estValueForBooking(b.material_type, b.weight_kg),
-            status:     b.status,
-            createdAt:  b.created_at,
-            scheduledAt: b.scheduled_at,
+            id:                 b.id,
+            shopName:           b.shops?.name ?? '',
+            seller:             b.seller?.display_name ?? b.seller_id,
+            materials:          [b.material_type],
+            totalKg:            b.weight_kg,
+            estValue:           estValueForBooking(b.material_type, b.weight_kg),
+            status:             b.status,
+            createdAt:          b.created_at,
+            scheduledAt:        b.scheduled_at ?? b.scheduled_for,
+            assignedDriverId:   b.assigned_driver_id ?? null,
+            assignedDriverName: null,
           })))
         }
       } catch (err) {
