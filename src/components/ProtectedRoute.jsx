@@ -9,8 +9,11 @@ export function ProtectedRoute({ children, requiredRole, allowIfDriver }) {
 
   if (!session) return <Navigate to="/login" state={{ from: location }} replace />
 
-  const roleOk   = !requiredRole || profile?.role === requiredRole
-  const driverOk = allowIfDriver && profile?.is_driver
+  // Wait for profile to finish loading before evaluating role
+  if (!profile) return null
+
+  const roleOk   = !requiredRole || profile.role === requiredRole
+  const driverOk = allowIfDriver && profile.is_driver
   if (!roleOk && !driverOk) return <Navigate to="/" replace />
 
   return children

@@ -304,46 +304,43 @@ function ModelRegistrySection() {
 // ── Rider Assignment Panel ────────────────────────────────────────
 function RiderAssignmentPanel() {
   const [unassigned,   setUnassigned]   = useState([])
-  const [riders,       setRiders]       = useState([])
-  const [assignments,  setAssignments]  = useState({}) // { [bookingId]: riderId }
+  const [drivers,      setDrivers]      = useState([])
+  const [assignments,  setAssignments]  = useState({}) // { [bookingId]: driverId }
   const [loadingData,  setLoadingData]  = useState(true)
 
   useEffect(() => {
     async function load() {
       setLoadingData(true)
-      const [bookingsRes, ridersRes] = await Promise.all([
+      const [bookingsRes, driversRes] = await Promise.all([
         supabase
           .from('bookings')
-          .select('id, seller_id, shop_id, materials, total_kg, created_at')
+          .select('id, material_type, weight_kg, created_at, scheduled_for, shops(name)')
           .eq('status', 'accepted')
-          .is('rider_id', null)
+          .eq('driver_assignment_status', 'unassigned')
           .order('created_at', { ascending: true }),
         supabase
           .from('user_profiles')
-          .select('id, display_name')
-          .eq('role', 'rider'),
+          .select('id, display_name, driver_vehicle')
+          .eq('is_driver', true),
       ])
       if (bookingsRes.data) setUnassigned(bookingsRes.data)
-      if (ridersRes.data)   setRiders(ridersRes.data)
+      if (driversRes.data)  setDrivers(driversRes.data)
       setLoadingData(false)
     }
     load()
   }, [])
 
   async function handleAssign(bookingId) {
-    const riderId = assignments[bookingId]
-    if (!riderId) return
+    const driverId = assignments[bookingId]
+    if (!driverId) return
     const { error } = await supabase
       .from('bookings')
-      .update({ rider_id: riderId, status: 'in_transit' })
+      .update({ assigned_driver_id: driverId, driver_assignment_status: 'invited' })
       .eq('id', bookingId)
-    if (error) {
-      toast.error('Failed to assign rider')
-      return
-    }
+    if (error) { toast.error('Failed to assign driver'); return }
     setUnassigned(prev => prev.filter(b => b.id !== bookingId))
     setAssignments(prev => { const next = { ...prev }; delete next[bookingId]; return next })
-    toast.success('Rider assigned')
+    toast.success('Driver invited')
   }
 
   if (loadingData) {
@@ -353,18 +350,18 @@ function RiderAssignmentPanel() {
   return (
     <section className="flex flex-col gap-3">
       <span className="font-data text-[12px] text-[var(--ink-2)] uppercase tracking-widest">
-        Unassigned Bookings ({unassigned.length})
+        Accepted Bookings — Awaiting Driver ({unassigned.length})
       </span>
 
-      {riders.length === 0 && (
+      {drivers.length === 0 && (
         <p className="font-data text-[11px] text-[var(--ink-4)] m-0">
-          No riders registered yet — add users with role&nbsp;<code>rider</code> first.
+          No drivers registered yet — set <code>is_driver = true</code> on a user profile first.
         </p>
       )}
 
-      {unassigned.length === 0 && riders.length > 0 && (
+      {unassigned.length === 0 && drivers.length > 0 && (
         <div className="flex items-center justify-center py-6 border-[1.5px] border-dashed border-[var(--ink-4)]">
-          <span className="font-body text-[14px] text-[var(--ink-3)]">All accepted bookings have riders assigned</span>
+          <span className="font-body text-[14px] text-[var(--ink-3)]">All accepted bookings have a driver assigned</span>
         </div>
       )}
 
@@ -377,10 +374,10 @@ function RiderAssignmentPanel() {
             >
               <div className="flex flex-col gap-0.5 min-w-0">
                 <span className="font-body text-[14px] text-[var(--ink)]">
-                  {(b.materials ?? []).join(', ')} · {b.total_kg ?? '?'} kg
+                  {b.material_type?.replace(/_/g, ' ')} · {(b.weight_kg ?? 0).toFixed(1)} kg
                 </span>
                 <span className="font-data text-[10px] text-[var(--ink-3)] uppercase tracking-widest">
-                  {new Date(b.created_at).toLocaleDateString()}
+                  {b.shops?.name ?? '—'} · {new Date(b.created_at).toLocaleDateString()}
                 </span>
               </div>
               <div className="flex items-center gap-2">
@@ -389,9 +386,9 @@ function RiderAssignmentPanel() {
                   onChange={e => setAssignments(prev => ({ ...prev, [b.id]: e.target.value }))}
                   className="flex-1 sm:flex-none px-2 py-2.5 border-[1.5px] border-[var(--ink-4)] focus:border-[var(--ink)] bg-[var(--paper)] font-data text-[11px] outline-none"
                 >
-                  <option value="">Select rider…</option>
-                  {riders.map(r => (
-                    <option key={r.id} value={r.id}>{r.display_name}</option>
+                  <option value="">Select driver…</option>
+                  {drivers.map(d => (
+                    <option key={d.id} value={d.id}>{d.display_name}{d.driver_vehicle ? ` (${d.driver_vehicle})` : ''}</option>
                   ))}
                 </select>
                 <button
@@ -399,8 +396,164 @@ function RiderAssignmentPanel() {
                   disabled={!assignments[b.id]}
                   className="font-data text-[11px] uppercase tracking-widest px-3 py-2.5 bg-[var(--green)] border-[1.5px] border-[var(--ink)] text-[var(--paper)] cursor-pointer disabled:opacity-40 shrink-0"
                 >
-                  Assign
+                  Invite
                 </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </section>
+  )
+}
+
+/* ── Transfer Jobs panel (admin creates inter-shop transfer jobs) ── */
+function TransferJobsPanel() {
+  const [jobs,        setJobs]        = useState([])
+  const [shops,       setShops]       = useState([])
+  const [loadingData, setLoadingData] = useState(true)
+  const [form,        setForm]        = useState({ from_shop_id: '', to_shop_id: '', material_type: '', weight_kg: '', offered_price: '' })
+  const [creating,    setCreating]    = useState(false)
+
+  useEffect(() => {
+    async function load() {
+      setLoadingData(true)
+      const [jobsRes, shopsRes] = await Promise.all([
+        supabase
+          .from('transfer_jobs')
+          .select(`*, from_shop:from_shop_id(name), to_shop:to_shop_id(name)`)
+          .in('status', ['available', 'accepted'])
+          .order('created_at', { ascending: false })
+          .limit(50),
+        supabase.from('shops').select('id, name').order('name'),
+      ])
+      if (jobsRes.data)   setJobs(jobsRes.data)
+      if (shopsRes.data)  setShops(shopsRes.data)
+      setLoadingData(false)
+    }
+    load()
+  }, [])
+
+  async function handleCreate() {
+    if (!form.from_shop_id || !form.to_shop_id || !form.material_type || !form.weight_kg) {
+      toast.error('Fill in all required fields')
+      return
+    }
+    if (form.from_shop_id === form.to_shop_id) {
+      toast.error('From and To shops must be different')
+      return
+    }
+    setCreating(true)
+    const { data, error } = await supabase.from('transfer_jobs').insert({
+      from_shop_id:  form.from_shop_id,
+      to_shop_id:    form.to_shop_id,
+      material_type: form.material_type,
+      weight_kg:     parseFloat(form.weight_kg),
+      offered_price: form.offered_price ? parseFloat(form.offered_price) : null,
+      status:        'available',
+    }).select(`*, from_shop:from_shop_id(name), to_shop:to_shop_id(name)`).single()
+    setCreating(false)
+    if (error) { toast.error('Failed to create transfer job'); return }
+    setJobs(prev => [data, ...prev])
+    setForm({ from_shop_id: '', to_shop_id: '', material_type: '', weight_kg: '', offered_price: '' })
+    toast.success('Transfer job created — drivers will see it in Driver Mode')
+  }
+
+  async function handleCancel(jobId) {
+    const { error } = await supabase.from('transfer_jobs').update({ status: 'cancelled' }).eq('id', jobId)
+    if (error) { toast.error('Failed to cancel'); return }
+    setJobs(prev => prev.filter(j => j.id !== jobId))
+    toast('Job cancelled')
+  }
+
+  const MATERIALS = ['aluminum_can', 'pet_bottle_clear', 'cardboard', 'newspaper', 'mixed_plastic', 'glass_bottle', 'copper', 'iron_steel']
+
+  if (loadingData) return <div className="h-12 bg-[var(--paper-2)] animate-pulse border-[1.5px] border-[var(--ink-4)]" />
+
+  return (
+    <section className="flex flex-col gap-4">
+      <span className="font-data text-[12px] text-[var(--ink-2)] uppercase tracking-widest">Inter-Shop Transfer Jobs</span>
+
+      {/* Create form */}
+      <div className="flex flex-col gap-3 p-4 border-[1.5px] border-[var(--ink)] bg-[var(--paper-2)]">
+        <span className="font-data text-[10px] text-[var(--ink-3)] uppercase tracking-widest">New Transfer Job</span>
+        <div className="grid grid-cols-2 gap-3">
+          <div className="flex flex-col gap-1">
+            <label className="font-data text-[9px] text-[var(--ink-3)] uppercase tracking-widest">From Shop *</label>
+            <select value={form.from_shop_id} onChange={e => setForm(f => ({ ...f, from_shop_id: e.target.value }))}
+              className="px-2 py-2 border-[1.5px] border-[var(--ink-4)] focus:border-[var(--ink)] bg-[var(--paper)] font-data text-[11px] outline-none">
+              <option value="">Select…</option>
+              {shops.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+            </select>
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className="font-data text-[9px] text-[var(--ink-3)] uppercase tracking-widest">To Shop *</label>
+            <select value={form.to_shop_id} onChange={e => setForm(f => ({ ...f, to_shop_id: e.target.value }))}
+              className="px-2 py-2 border-[1.5px] border-[var(--ink-4)] focus:border-[var(--ink)] bg-[var(--paper)] font-data text-[11px] outline-none">
+              <option value="">Select…</option>
+              {shops.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+            </select>
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className="font-data text-[9px] text-[var(--ink-3)] uppercase tracking-widest">Material *</label>
+            <select value={form.material_type} onChange={e => setForm(f => ({ ...f, material_type: e.target.value }))}
+              className="px-2 py-2 border-[1.5px] border-[var(--ink-4)] focus:border-[var(--ink)] bg-[var(--paper)] font-data text-[11px] outline-none">
+              <option value="">Select…</option>
+              {MATERIALS.map(m => <option key={m} value={m}>{m.replace(/_/g, ' ')}</option>)}
+            </select>
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className="font-data text-[9px] text-[var(--ink-3)] uppercase tracking-widest">Weight (kg) *</label>
+            <input type="number" min="0" step="0.1" value={form.weight_kg}
+              onChange={e => setForm(f => ({ ...f, weight_kg: e.target.value }))}
+              className="px-2 py-2 border-[1.5px] border-[var(--ink-4)] focus:border-[var(--ink)] bg-[var(--paper)] font-data text-[11px] outline-none"
+              placeholder="0.0" />
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className="font-data text-[9px] text-[var(--ink-3)] uppercase tracking-widest">Offered Price (฿)</label>
+            <input type="number" min="0" step="1" value={form.offered_price}
+              onChange={e => setForm(f => ({ ...f, offered_price: e.target.value }))}
+              className="px-2 py-2 border-[1.5px] border-[var(--ink-4)] focus:border-[var(--ink)] bg-[var(--paper)] font-data text-[11px] outline-none"
+              placeholder="optional" />
+          </div>
+          <div className="flex items-end">
+            <button onClick={handleCreate} disabled={creating}
+              className="w-full font-data text-[11px] uppercase tracking-widest px-4 py-2.5 bg-[var(--ink)] text-[var(--paper)] border-[1.5px] border-[var(--ink)] cursor-pointer disabled:opacity-40 shadow-[2px_2px_0_var(--ink-3)] active:shadow-none active:translate-x-px active:translate-y-px">
+              {creating ? 'Creating…' : '+ Create Job'}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Job list */}
+      {jobs.length === 0 && (
+        <div className="flex items-center justify-center py-6 border-[1.5px] border-dashed border-[var(--ink-4)]">
+          <span className="font-body text-[14px] text-[var(--ink-3)]">No active transfer jobs</span>
+        </div>
+      )}
+      {jobs.length > 0 && (
+        <div className="flex flex-col border-[1.5px] border-[var(--ink)] px-4">
+          {jobs.map(j => (
+            <div key={j.id} className="flex flex-col gap-1 py-3 border-b-[1px] border-[var(--ink-4)] last:border-0 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex flex-col gap-0.5 min-w-0">
+                <span className="font-body text-[14px] text-[var(--ink)]">
+                  {j.from_shop?.name ?? '—'} → {j.to_shop?.name ?? '—'}
+                </span>
+                <span className="font-data text-[10px] text-[var(--ink-3)] uppercase tracking-widest">
+                  {j.material_type?.replace(/_/g, ' ')} · {(j.weight_kg ?? 0).toFixed(1)} kg
+                  {j.offered_price ? ` · ฿${j.offered_price}` : ''}
+                </span>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                <span className={`font-data text-[9px] uppercase tracking-widest px-2 py-0.5 border-[1.5px] ${j.status === 'accepted' ? 'border-[var(--green)] text-[var(--green-ink)]' : 'border-[var(--orange)] text-[var(--orange)]'}`}>
+                  {j.status}
+                </span>
+                {j.status === 'available' && (
+                  <button onClick={() => handleCancel(j.id)}
+                    className="font-data text-[9px] uppercase tracking-widest px-2 py-1.5 border-[1.5px] border-[var(--ink-3)] text-[var(--ink-3)] bg-[var(--paper)] cursor-pointer hover:bg-[var(--paper-2)]">
+                    Cancel
+                  </button>
+                )}
               </div>
             </div>
           ))}
@@ -643,7 +796,7 @@ export function AdminPage() {
       setUsersLoading(true)
       const { data } = await supabase
         .from('user_profiles')
-        .select('id, display_name, role, is_banned, created_at')
+        .select('id, display_name, role, is_banned, created_at, avatar_url')
         .order('created_at', { ascending: false })
       if (!cancelled) {
         if (data) setUsers(data)
@@ -1110,6 +1263,13 @@ export function AdminPage() {
                   className="flex flex-col gap-2 py-3 border-b-[1px] border-[var(--ink-4)] last:border-0"
                 >
                   <div className="flex items-center justify-between gap-3 flex-wrap">
+                    <div className="flex items-center gap-3 min-w-0">
+                      {u.avatar_url
+                        ? <img src={u.avatar_url} alt="" className="w-8 h-8 rounded-full border-[1.5px] border-[var(--ink-4)] object-cover shrink-0" />
+                        : <div className="w-8 h-8 rounded-full border-[1.5px] border-[var(--ink-4)] bg-[var(--paper-2)] flex items-center justify-center shrink-0">
+                            <span className="font-data text-[12px] text-[var(--ink-3)]">{(u.display_name ?? '?')[0].toUpperCase()}</span>
+                          </div>
+                      }
                     <div className="flex flex-col gap-0.5 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className="font-body text-[14px] text-[var(--ink)] truncate">
@@ -1127,6 +1287,7 @@ export function AdminPage() {
                       <span className="font-data text-[10px] text-[var(--ink-4)]">
                         {new Date(u.created_at).toLocaleDateString()}
                       </span>
+                    </div>
                     </div>
                     <div className="flex gap-2 shrink-0">
                       <button
@@ -1188,8 +1349,11 @@ export function AdminPage() {
 
       {/* Logistics tab */}
       {tab === 'logistics' && (
-        <div className="w-full max-w-2xl flex flex-col gap-6">
+        <div className="w-full max-w-2xl flex flex-col gap-8">
           <RiderAssignmentPanel />
+          <div className="border-t-[1.5px] border-[var(--ink-4)] pt-6">
+            <TransferJobsPanel />
+          </div>
         </div>
       )}
 

@@ -58,6 +58,8 @@ export function BuyerOnboardingPage() {
     lineId:            '',
     selectedMaterials: [],
     openDays:          [],
+    opensAt:           '08:00',
+    closesAt:          '18:00',
     pickupRadius:      5,
     lat:               18.7883,
     lng:               98.9853,
@@ -96,6 +98,8 @@ export function BuyerOnboardingPage() {
           phone:            formData.phone,
           line_id:          formData.lineId,
           pickup_radius_km: formData.pickupRadius,
+          opens_at:         formData.opensAt,
+          closes_at:        formData.closesAt,
           lat:              formData.lat,
           lng:              formData.lng,
         },
@@ -261,6 +265,27 @@ export function BuyerOnboardingPage() {
                   </button>
                 )
               })}
+            </div>
+          </div>
+
+          <div className="flex gap-4">
+            <div className="flex flex-col gap-1 flex-1">
+              <label className="font-data text-[11px] uppercase tracking-widest text-[var(--ink-3)]">Opens at</label>
+              <input
+                className={INPUT_CLS}
+                type="time"
+                value={formData.opensAt}
+                onChange={e => set('opensAt', e.target.value)}
+              />
+            </div>
+            <div className="flex flex-col gap-1 flex-1">
+              <label className="font-data text-[11px] uppercase tracking-widest text-[var(--ink-3)]">Closes at</label>
+              <input
+                className={INPUT_CLS}
+                type="time"
+                value={formData.closesAt}
+                onChange={e => set('closesAt', e.target.value)}
+              />
             </div>
           </div>
 

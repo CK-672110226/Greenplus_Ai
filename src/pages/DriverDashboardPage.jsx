@@ -200,7 +200,11 @@ export function DriverDashboardPage() {
     if (!session?.user?.id) return
     const { error } = await supabase
       .from('bookings')
-      .update({ status: 'accepted', buyer_id: session.user.id })
+      .update({
+        status: 'accepted',
+        assigned_driver_id: session.user.id,
+        driver_assignment_status: 'accepted',
+      })
       .eq('id', order.id)
     if (error) { toast.error('Failed to accept'); return }
     setActiveOrder({ ...order, _arrived: false })
@@ -330,8 +334,9 @@ export function DriverDashboardPage() {
                       <div className="flex gap-2">
                         <button
                           onClick={async () => {
-                            const ok = await respondToAssignment(a.id, true)
+                            const { ok, error } = await respondToAssignment(a.id, true)
                             if (ok) toast.success(t.assignmentAccepted)
+                            else toast.error(error ?? t.errorGeneric)
                           }}
                           className="flex-1 font-data text-[10px] uppercase tracking-widest py-2.5 border-[1.5px] border-[var(--green)] bg-[var(--green-soft)] text-[var(--green-ink)] cursor-pointer hover:opacity-90 transition-opacity"
                         >
@@ -339,8 +344,9 @@ export function DriverDashboardPage() {
                         </button>
                         <button
                           onClick={async () => {
-                            await respondToAssignment(a.id, false)
-                            toast(t.declineAssignment)
+                            const { ok, error } = await respondToAssignment(a.id, false)
+                            if (ok) toast(t.declineAssignment)
+                            else toast.error(error ?? t.errorGeneric)
                           }}
                           className="px-4 font-data text-[10px] uppercase tracking-widest py-2.5 border-[1.5px] border-[var(--ink-3)] text-[var(--ink-3)] bg-[var(--paper)] cursor-pointer hover:bg-[var(--paper-2)] transition-colors"
                         >

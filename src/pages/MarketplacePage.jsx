@@ -11,12 +11,22 @@ import { useMarketPricing } from '../hooks/useMarketPricing'
 
 const MATERIAL_KEYS = Object.keys(WASTE_ITEMS)
 
+function isOpenNow(opensAt, closesAt) {
+  if (!opensAt || !closesAt) return null
+  const now = new Date()
+  const pad = n => String(n).padStart(2, '0')
+  const nowStr = `${pad(now.getHours())}:${pad(now.getMinutes())}`
+  return nowStr >= opensAt && nowStr < closesAt
+}
+
 /* ── Individual listing card ─────────────────────────────────────── */
 function ListingCard({ post, language, t }) {
   const navigate = useNavigate()
   const name = language === 'th'
     ? (WASTE_ITEMS[post.materialType]?.nameTh ?? post.materialType)
     : (WASTE_ITEMS[post.materialType]?.nameEn ?? post.materialType)
+
+  const openStatus = isOpenNow(post.opensAt, post.closesAt)
 
   return (
     <div className="flex flex-col gap-2 border-[1.5px] border-[var(--ink)] bg-[var(--paper)] shadow-[2px_2px_0_var(--ink)] overflow-hidden">
@@ -31,6 +41,16 @@ function ListingCard({ post, language, t }) {
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2 min-w-0">
           <span className="font-body text-[16px] text-[var(--ink)] truncate">{name}</span>
+          {openStatus !== null && (
+            <span className={[
+              'font-data text-[9px] uppercase tracking-widest px-1.5 py-0.5 border-[1px] shrink-0',
+              openStatus
+                ? 'border-[var(--green-ink)] text-[var(--green-ink)] bg-[var(--green-soft)]'
+                : 'border-[var(--ink-3)] text-[var(--ink-3)] bg-[var(--paper-2)]',
+            ].join(' ')}>
+              {openStatus ? (t.openNow ?? 'Open') : (t.closed ?? 'Closed')}
+            </span>
+          )}
         </div>
         <span className="font-data text-[18px] text-[var(--green-ink)] shrink-0 leading-none">
           ฿{(post.pricePerKg ?? 0).toFixed(0)}/kg

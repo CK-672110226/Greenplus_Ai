@@ -16,6 +16,17 @@ export const handlers = [
   http.get('*/rest/v1/user_profiles*', () =>
     HttpResponse.json([{ id: 'u1', role: 'user', display_name: 'Test User' }])
   ),
+  http.get('*/rest/v1/shop_pricing*', () =>
+    HttpResponse.json([
+      { shop_id: 'u1', material_type: 'aluminum_can',    price_per_kg: 40, cap_kg: 100 },
+      { shop_id: 'u1', material_type: 'pet_bottle_clear',price_per_kg:  8, cap_kg: 200 },
+      { shop_id: 'u1', material_type: 'cardboard',       price_per_kg:  3, cap_kg: 300 },
+      { shop_id: 'u1', material_type: 'copper',          price_per_kg:200, cap_kg:  50 },
+    ])
+  ),
+  http.get('*/rest/v1/marketplace_posts*', () => HttpResponse.json([])),
+  http.get('*/rest/v1/schedules*', () => HttpResponse.json([])),
+  http.get('*/rest/v1/notifications*', () => HttpResponse.json([])),
 ]
 
 export const server = setupServer(...handlers)

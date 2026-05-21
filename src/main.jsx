@@ -17,6 +17,11 @@ Sentry.init({
   integrations: [Sentry.browserTracingIntegration()],
 })
 
+// Expose store in dev/test so Playwright tests can inject auth state synchronously
+if (import.meta.env.DEV) {
+  window.__reduxStore__ = store
+}
+
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <Provider store={store}>

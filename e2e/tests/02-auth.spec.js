@@ -68,8 +68,8 @@ test.describe('Login Page', () => {
 
   test('login page renders logo', async ({ page }) => {
     await page.goto('/login')
-    // Logo component renders an <img> or SVG; verify page header is visible
-    await expect(page.locator('header, nav, [class*="logo"], img[alt*="Green"]').first()).toBeVisible()
+    // Logo component renders <span aria-label="GreenPlus.Ai"> with an <img> inside
+    await expect(page.locator('[aria-label="GreenPlus.Ai"]')).toBeVisible()
   })
 
   test('password visibility toggle works', async ({ page }) => {

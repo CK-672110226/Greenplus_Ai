@@ -113,7 +113,7 @@ export function LandingPage() {
               <span className="text-[var(--green-ink)]">Recycle smarter.</span>
             </h1>
             <p className="font-body text-[18px] text-[var(--ink-2)] m-0 max-w-sm">
-              Point your camera at any recyclable. Our AI grades it, quotes today's market price, and finds the nearest buyer in seconds.
+              Point your camera at any recyclable. Our AI identifies it, quotes today's market price, and finds the nearest buyer in seconds.
             </p>
           </div>
 

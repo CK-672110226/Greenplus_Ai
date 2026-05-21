@@ -22,6 +22,7 @@ export const en = {
   map:           'Map',
   marketplace:   'Marketplace',
   dashboard:     'Dashboard',
+  shopSetup:     'Shop Setup',
   admin:         'Admin',
   role:          'Role',
   home:          'Home',
@@ -58,9 +59,6 @@ export const en = {
   // Marketplace
   marketplaceTitle: 'Marketplace',
   filterAll:     'All',
-  filterA:       'Grade A',
-  filterB:       'Grade B',
-  filterC:       'Grade C',
   noListings:    'No listings match the filter.',
   postAd:           'Post Ad',
   cancelLabel:      'Cancel',
@@ -72,6 +70,8 @@ export const en = {
   shopName:         'Shop Name',
   requiredFields:   'Please fill in all required fields.',
   contactSeller:    'Contact',
+  openNow:          'Open',
+  closed:           'Closed',
 
   // Map
   mapTitle:      'Smart Map',
@@ -86,7 +86,6 @@ export const en = {
   pendingOrders:     'Pending',
   completedOrders:   'Completed Today',
   totalRevenue:      "Today's Revenue",
-  avgGrade:          'Avg Grade',
   recentBookings:    'Recent Bookings',
   acceptOrder:       'Accept',
   rejectOrder:       'Reject',
@@ -298,7 +297,6 @@ export const en = {
   filterBasket:      'Filter',
   allItems:          'All',
   selectMaterial:    'Select material',
-  selectGrade:       'Grade',
   addItem:           'Add',
 
   // Pricing page — new single-price columns (migration 013b)

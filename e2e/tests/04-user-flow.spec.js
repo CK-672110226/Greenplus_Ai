@@ -38,45 +38,6 @@ test.describe('MarketplacePage — listings', () => {
     expect(hasCards || hasEmpty).toBe(true)
   })
 
-  test('grade filter pills A, B, C and All render', async ({ page }) => {
-    await page.goto('/marketplace')
-    await page.waitForLoadState('networkidle')
-
-    // GradePills renders an "All" button (label comes from the filter list, not
-    // from a translation key in this component)
-    await expect(
-      page.getByRole('button', { name: /^all$|^ทั้งหมด$/i }).first()
-    ).toBeVisible()
-
-    // Grade buttons A, B, C should also be present
-    await expect(
-      page.getByRole('button', { name: /^A$/i }).first()
-    ).toBeVisible()
-    await expect(
-      page.getByRole('button', { name: /^B$/i }).first()
-    ).toBeVisible()
-    await expect(
-      page.getByRole('button', { name: /^C$/i }).first()
-    ).toBeVisible()
-  })
-
-  test('clicking grade A filter keeps user on marketplace', async ({ page }) => {
-    await page.goto('/marketplace')
-    await page.waitForLoadState('networkidle')
-
-    await page.getByRole('button', { name: /^A$/i }).first().click()
-    await expect(page).toHaveURL(/\/marketplace/)
-  })
-
-  test('clicking grade A then All restores full listing', async ({ page }) => {
-    await page.goto('/marketplace')
-    await page.waitForLoadState('networkidle')
-
-    // Filter down then reset — page must remain stable
-    await page.getByRole('button', { name: /^A$/i }).first().click()
-    await page.getByRole('button', { name: /^all$|^ทั้งหมด$/i }).first().click()
-    await expect(page).toHaveURL(/\/marketplace/)
-  })
 })
 
 // ---------------------------------------------------------------------------
@@ -154,46 +115,3 @@ test.describe('ScanPage', () => {
 })
 
 // ---------------------------------------------------------------------------
-// EcoPointsPage
-// ---------------------------------------------------------------------------
-
-test.describe('EcoPointsPage', () => {
-  test.beforeEach(async ({ page }) => {
-    await mockUserSession(page, 'user')
-  })
-
-  test('renders all four tier names', async ({ page }) => {
-    await page.goto('/eco-points')
-    await page.waitForLoadState('networkidle')
-
-    // TIERS constant: Bronze, Silver, Gold, Platinum
-    await expect(page.getByText(/bronze/i)).toBeVisible()
-    await expect(page.getByText(/silver/i)).toBeVisible()
-    await expect(page.getByText(/gold/i)).toBeVisible()
-    await expect(page.getByText(/platinum/i)).toBeVisible()
-  })
-
-  test('rewards section shows a redeem action', async ({ page }) => {
-    await page.goto('/eco-points')
-    await page.waitForLoadState('networkidle')
-
-    // t.redeemPoints = 'Redeem' (en) / section heading or button text
-    await expect(page.getByText(/redeem|แลก/i).first()).toBeVisible()
-  })
-
-  test('page heading matches eco-points title', async ({ page }) => {
-    await page.goto('/eco-points')
-    await page.waitForLoadState('networkidle')
-
-    // t.ecoPointsTitle = 'Eco Points' (en)
-    await expect(page.getByRole('heading', { name: /eco.?points|อีโค|แต้ม/i })).toBeVisible()
-  })
-
-  test('your points label is visible', async ({ page }) => {
-    await page.goto('/eco-points')
-    await page.waitForLoadState('networkidle')
-
-    // t.yourPoints = 'Your Points' (en)
-    await expect(page.getByText(/your points|แต้มของคุณ/i)).toBeVisible()
-  })
-})

@@ -36,7 +36,7 @@ export const WASTE_RULES = {
     { severity: 'warning', titleEn: 'Strip plastic insulation from wire first',     titleTh: 'ปอกฉนวนพลาสติกออกจากสายไฟก่อน' },
     { severity: 'warning', titleEn: 'Heavily rusted copper earns less',             titleTh: 'ทองแดงสนิมมากได้ราคาต่ำกว่า' },
     { severity: 'info',    titleEn: 'Pure bare copper earns the highest price',     titleTh: 'ทองแดงเปลือยบริสุทธิ์ได้ราคาสูงสุด' },
-    { severity: 'info',    titleEn: 'Sort by grade: bare > tinned > enamelled',     titleTh: 'แยกเกรด: เปลือย > ดีบุก > เคลือบน้ำยา' },
+    { severity: 'info',    titleEn: 'Sort by type: bare > tinned > enamelled',      titleTh: 'แยกประเภท: เปลือย > ดีบุก > เคลือบน้ำยา' },
     { severity: 'dispose', titleEn: 'Never bin — bring to a scrap metal shop only', titleTh: 'ห้ามทิ้งถังขยะ — นำไปร้านรับซื้อโลหะเท่านั้น' },
     { severity: 'dispose', titleEn: 'Landfilled copper is wasted — always recycle', titleTh: 'ทองแดงที่ฝังกลบคือทรัพยากรที่สูญเปล่า' },
   ],

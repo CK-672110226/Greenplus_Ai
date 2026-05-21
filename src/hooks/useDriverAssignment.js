@@ -65,7 +65,7 @@ export function useDriverAssignment() {
       .from('bookings')
       .update({ driver_assignment_status: accept ? 'accepted' : 'rejected' })
       .eq('id', bookingId)
-    return !error
+    return { ok: !error, error: error?.message ?? null }
   }, [])
 
   // Driver: load + subscribe to own assignments
