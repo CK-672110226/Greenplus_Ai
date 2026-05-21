@@ -22,6 +22,7 @@ export const th = {
   map:           'แผนที่',
   marketplace:   'ตลาด',
   dashboard:     'แดชบอร์ด',
+  shopSetup:     'ตั้งค่าร้าน',
   admin:         'ผู้ดูแล',
   role:          'บทบาท',
   home:          'หน้าหลัก',
@@ -58,9 +59,6 @@ export const th = {
   // Marketplace
   marketplaceTitle: 'ตลาดซื้อขาย',
   filterAll:     'ทั้งหมด',
-  filterA:       'เกรด A',
-  filterB:       'เกรด B',
-  filterC:       'เกรด C',
   noListings:    'ไม่มีรายการที่ตรงกับตัวกรอง',
   postAd:           'ลงประกาศ',
   cancelLabel:      'ยกเลิก',
@@ -72,6 +70,8 @@ export const th = {
   shopName:         'ชื่อร้าน',
   requiredFields:   'กรุณากรอกข้อมูลที่จำเป็น',
   contactSeller:    'ติดต่อ',
+  openNow:          'เปิด',
+  closed:           'ปิด',
 
   // Map
   mapTitle:      'แผนที่อัจฉริยะ',
@@ -86,7 +86,6 @@ export const th = {
   pendingOrders:     'รอดำเนินการ',
   completedOrders:   'เสร็จวันนี้',
   totalRevenue:      'รายได้วันนี้',
-  avgGrade:          'เกรดเฉลี่ย',
   recentBookings:    'การจองล่าสุด',
   acceptOrder:       'รับ',
   rejectOrder:       'ปฏิเสธ',
@@ -298,7 +297,6 @@ export const th = {
   filterBasket:      'กรอง',
   allItems:          'ทั้งหมด',
   selectMaterial:    'เลือกวัสดุ',
-  selectGrade:       'เกรด',
   addItem:           'เพิ่ม',
 
   // Pricing page — new single-price columns (migration 013b)

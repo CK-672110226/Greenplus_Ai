@@ -22,6 +22,15 @@ export function useSupabaseMarketplace() {
 
         if (fetchErr) throw fetchErr
         if (data) {
+          const userIds = [...new Set(data.map(p => p.user_id).filter(Boolean))]
+          let shopHours = {}
+          if (userIds.length > 0) {
+            const { data: shops } = await supabase
+              .from('shops')
+              .select('owner_id, opens_at, closes_at')
+              .in('owner_id', userIds)
+            if (shops) shops.forEach(s => { shopHours[s.owner_id] = { opensAt: s.opens_at, closesAt: s.closes_at } })
+          }
           setPosts(data.map(p => ({
             id:           p.id,
             materialType: p.material_type,
@@ -32,6 +41,8 @@ export function useSupabaseMarketplace() {
             image_url:    p.image_url ?? null,
             flagged:      p.flagged ?? false,
             distanceKm:   null,
+            opensAt:      shopHours[p.user_id]?.opensAt ?? null,
+            closesAt:     shopHours[p.user_id]?.closesAt ?? null,
           })))
         }
       } catch (err) {

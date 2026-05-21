@@ -71,56 +71,55 @@ on conflict (id) do nothing;
 
 -- ── shop_pricing ──────────────────────────────────────────────────
 -- Base prices (per kg) from waste_items reference:
---   pet_bottle_clear : A=8.00,  C=5.60
---   aluminum_can     : A=40.00, C=28.00
---   cardboard        : A=3.00,  C=2.10
---   newspaper        : A=2.00,  C=1.40
---   mixed_plastic    : A=5.00,  C=3.50
---   copper           : A=200.00,C=140.00
---   glass            : A=1.00,  C=0.70
---   cooking_oil      : A=12.00, C=8.40
--- Grade B ≈ 85% of A; Grade C ≈ 70% of A.
+--   pet_bottle_clear : 8.00
+--   aluminum_can     : 40.00
+--   cardboard        : 3.00
+--   newspaper        : 2.00
+--   mixed_plastic    : 5.00
+--   copper           : 200.00
+--   glass            : 1.00
+--   cooking_oil      : 12.00
 
 -- Shop 1: ร้านรับซื้อของเก่าเฮียหมู
-insert into public.shop_pricing (shop_id, material_type, price_grade_a, price_grade_b, price_grade_c) values
-  ('a1000000-0000-0000-0000-000000000001', 'aluminum_can',      40.00, 34.00, 28.00),
-  ('a1000000-0000-0000-0000-000000000001', 'pet_bottle_clear',   8.00,  6.80,  5.60),
-  ('a1000000-0000-0000-0000-000000000001', 'mixed_plastic',      5.00,  4.25,  3.50)
+insert into public.shop_pricing (shop_id, material_type, price_per_kg) values
+  ('a1000000-0000-0000-0000-000000000001', 'aluminum_can',      40.00),
+  ('a1000000-0000-0000-0000-000000000001', 'pet_bottle_clear',   8.00),
+  ('a1000000-0000-0000-0000-000000000001', 'mixed_plastic',      5.00)
 on conflict (shop_id, material_type) do nothing;
 
 -- Shop 2: ไฮเทครีไซเคิล
-insert into public.shop_pricing (shop_id, material_type, price_grade_a, price_grade_b, price_grade_c) values
-  ('a1000000-0000-0000-0000-000000000002', 'cardboard',          3.00,  2.55,  2.10),
-  ('a1000000-0000-0000-0000-000000000002', 'newspaper',          2.00,  1.70,  1.40),
-  ('a1000000-0000-0000-0000-000000000002', 'pet_bottle_clear',   8.00,  6.80,  5.60)
+insert into public.shop_pricing (shop_id, material_type, price_per_kg) values
+  ('a1000000-0000-0000-0000-000000000002', 'cardboard',          3.00),
+  ('a1000000-0000-0000-0000-000000000002', 'newspaper',          2.00),
+  ('a1000000-0000-0000-0000-000000000002', 'pet_bottle_clear',   8.00)
 on conflict (shop_id, material_type) do nothing;
 
 -- Shop 3: ร้านรับซื้อทองเหลือง สมชาย
-insert into public.shop_pricing (shop_id, material_type, price_grade_a, price_grade_b, price_grade_c) values
-  ('a1000000-0000-0000-0000-000000000003', 'copper',           200.00, 170.00, 140.00),
-  ('a1000000-0000-0000-0000-000000000003', 'aluminum_can',      40.00,  34.00,  28.00)
+insert into public.shop_pricing (shop_id, material_type, price_per_kg) values
+  ('a1000000-0000-0000-0000-000000000003', 'copper',           200.00),
+  ('a1000000-0000-0000-0000-000000000003', 'aluminum_can',      40.00)
 on conflict (shop_id, material_type) do nothing;
 
 -- Shop 4: ร้านเก็บกาก แม่หมาน
-insert into public.shop_pricing (shop_id, material_type, price_grade_a, price_grade_b, price_grade_c) values
-  ('a1000000-0000-0000-0000-000000000004', 'glass',              1.00,  0.85,  0.70),
-  ('a1000000-0000-0000-0000-000000000004', 'cooking_oil',       12.00, 10.20,  8.40),
-  ('a1000000-0000-0000-0000-000000000004', 'mixed_plastic',      5.00,  4.25,  3.50)
+insert into public.shop_pricing (shop_id, material_type, price_per_kg) values
+  ('a1000000-0000-0000-0000-000000000004', 'glass',              1.00),
+  ('a1000000-0000-0000-0000-000000000004', 'cooking_oil',       12.00),
+  ('a1000000-0000-0000-0000-000000000004', 'mixed_plastic',      5.00)
 on conflict (shop_id, material_type) do nothing;
 
 -- Shop 5: กรีนพลัส รีไซเคิล
-insert into public.shop_pricing (shop_id, material_type, price_grade_a, price_grade_b, price_grade_c) values
-  ('a1000000-0000-0000-0000-000000000005', 'aluminum_can',      40.00,  34.00,  28.00),
-  ('a1000000-0000-0000-0000-000000000005', 'pet_bottle_clear',   8.00,   6.80,   5.60),
-  ('a1000000-0000-0000-0000-000000000005', 'cardboard',          3.00,   2.55,   2.10),
-  ('a1000000-0000-0000-0000-000000000005', 'newspaper',          2.00,   1.70,   1.40),
-  ('a1000000-0000-0000-0000-000000000005', 'mixed_plastic',      5.00,   4.25,   3.50),
-  ('a1000000-0000-0000-0000-000000000005', 'copper',           200.00, 170.00, 140.00)
+insert into public.shop_pricing (shop_id, material_type, price_per_kg) values
+  ('a1000000-0000-0000-0000-000000000005', 'aluminum_can',      40.00),
+  ('a1000000-0000-0000-0000-000000000005', 'pet_bottle_clear',   8.00),
+  ('a1000000-0000-0000-0000-000000000005', 'cardboard',          3.00),
+  ('a1000000-0000-0000-0000-000000000005', 'newspaper',          2.00),
+  ('a1000000-0000-0000-0000-000000000005', 'mixed_plastic',      5.00),
+  ('a1000000-0000-0000-0000-000000000005', 'copper',           200.00)
 on conflict (shop_id, material_type) do nothing;
 
 -- Shop 6: ร้านซื้อขายเศษเหล็ก ชัยมงคล
-insert into public.shop_pricing (shop_id, material_type, price_grade_a, price_grade_b, price_grade_c) values
-  ('a1000000-0000-0000-0000-000000000006', 'copper',           200.00, 170.00, 140.00),
-  ('a1000000-0000-0000-0000-000000000006', 'aluminum_can',      40.00,  34.00,  28.00),
-  ('a1000000-0000-0000-0000-000000000006', 'mixed_plastic',      5.00,   4.25,   3.50)
+insert into public.shop_pricing (shop_id, material_type, price_per_kg) values
+  ('a1000000-0000-0000-0000-000000000006', 'copper',           200.00),
+  ('a1000000-0000-0000-0000-000000000006', 'aluminum_can',      40.00),
+  ('a1000000-0000-0000-0000-000000000006', 'mixed_plastic',      5.00)
 on conflict (shop_id, material_type) do nothing;
