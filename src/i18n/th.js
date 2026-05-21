@@ -512,7 +512,10 @@ export const th = {
   assignmentAccepted:   'รับงานแล้ว',
   assignmentRejected:   'ปฏิเสธ',
   tabMyAssignments:     'งานที่ได้รับมอบหมาย',
-  noMyAssignments:      'ไม่มีงานที่ได้รับมอบหมายวันนี้',
+  noMyAssignments:      'ยังไม่มีงาน',
+  newAssignmentToast:   'มีงานรับซื้อใหม่สำหรับคุณ',
+  todayAssignments:     'งานวันนี้',
+  driverAssigned:       'มอบหมายคนขับแล้ว',
   acceptAssignment:     'รับงาน',
   declineAssignment:    'ปฏิเสธ',
 

@@ -512,7 +512,10 @@ export const en = {
   assignmentAccepted:   'Assigned',
   assignmentRejected:   'Declined',
   tabMyAssignments:     'My Assignments',
-  noMyAssignments:      'No assignments for today',
+  noMyAssignments:      'No assignments yet',
+  newAssignmentToast:   'New pickup assigned',
+  todayAssignments:     "Today's Jobs",
+  driverAssigned:       'Driver assigned',
   acceptAssignment:     'Accept',
   declineAssignment:    'Decline',
 

@@ -305,6 +305,36 @@ export function DriverDashboardPage() {
           {/* My Assignments tab */}
           {tab === 'assignments' && (
             <div className="flex flex-col gap-3">
+              {/* Today's jobs — pinned at top */}
+              {(() => {
+                const todayStr = new Date().toDateString()
+                const todayJobs = myAssignments.filter(a =>
+                  a.scheduled_for && new Date(a.scheduled_for).toDateString() === todayStr
+                )
+                if (todayJobs.length === 0) return null
+                return (
+                  <div className="flex flex-col gap-2 p-3 bg-[var(--green-soft)] border-[1.5px] border-[var(--green-ink)]">
+                    <span className="font-data text-[10px] uppercase tracking-widest text-[var(--green-ink)]">{t.todayAssignments}</span>
+                    {todayJobs.map(a => (
+                      <div key={a.id} className="flex items-center justify-between gap-2">
+                        <span className="font-body text-[13px] text-[var(--ink)] truncate">{a.shops?.name ?? '—'}</span>
+                        <span className="font-data text-[13px] text-[var(--ink)] shrink-0">
+                          {new Date(a.scheduled_for).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Asia/Bangkok' })}
+                        </span>
+                        <span className={[
+                          'font-data text-[9px] uppercase tracking-widest px-1.5 py-0.5 border-[1px] shrink-0',
+                          a.driver_assignment_status === 'invited'
+                            ? 'border-[var(--orange)] text-[var(--orange)]'
+                            : 'border-[var(--green-ink)] text-[var(--green-ink)]',
+                        ].join(' ')}>
+                          {a.driver_assignment_status === 'invited' ? t.assignmentInvited : t.assignmentAccepted}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )
+              })()}
+
               {myAssignments.length === 0 && (
                 <div className="border-[1.5px] border-dashed border-[var(--ink-4)] p-6 text-center">
                   <span className="font-data text-[11px] text-[var(--ink-3)] uppercase tracking-widest">{t.noMyAssignments}</span>
