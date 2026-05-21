@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Link, useParams, useNavigate } from 'react-router-dom'
 import {
   useGetPostByIdQuery,
@@ -25,6 +25,7 @@ export function CatalogFormPage() {
   const [updatePost, { isLoading: isUpdating }] = useUpdatePostMutation()
 
   const isSaving = isCreating || isUpdating
+  const navTimerRef = useRef(null)
 
   useEffect(() => {
     function prefill() {
@@ -35,6 +36,12 @@ export function CatalogFormPage() {
     }
     prefill()
   }, [existing])
+
+  useEffect(() => {
+    if (!success) return
+    navTimerRef.current = setTimeout(() => navigate('/catalog'), 1200)
+    return () => clearTimeout(navTimerRef.current)
+  }, [success, navigate])
 
   function validate() {
     const errs = {}
@@ -64,9 +71,6 @@ export function CatalogFormPage() {
     }
 
     setSuccess(true)
-    setTimeout(() => {
-      navigate('/catalog')
-    }, 1200)
   }
 
   if (isEdit && loadingExisting) {

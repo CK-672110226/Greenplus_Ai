@@ -60,8 +60,8 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 2rem;
-  height: 2rem;
+  min-width: 2.75rem;
+  min-height: 2.75rem;
   border: 1.5px solid var(--ink);
   background: var(--paper);
   cursor: pointer;
@@ -82,4 +82,13 @@
 
 .deleteBtn:hover {
   background: color-mix(in srgb, var(--orange) 10%, var(--paper));
+}
+
+.confirmBtn {
+  border-color: var(--green-ink);
+  color: var(--green-ink);
+}
+
+.confirmBtn:hover {
+  background: var(--green-soft);
 }

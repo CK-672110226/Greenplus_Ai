@@ -16,10 +16,6 @@ import { LandingPage } from './pages/LandingPage'
 import { LoginPage } from './pages/LoginPage'
 import { AdminLoginPage } from './pages/AdminLoginPage'
 import { Page404 } from './pages/Page404'
-import { CatalogListPage } from './features/catalog/CatalogListPage'
-import { CatalogDetailPage } from './features/catalog/CatalogDetailPage'
-import { CatalogFormPage } from './features/catalog/CatalogFormPage'
-
 // Lazy-loaded — split into separate chunks; ONNX WASM only loads when ScanPage mounts
 const HomePage       = lazy(() => import('./pages/HomePage').then(m => ({ default: m.HomePage })))
 const ScanPage       = lazy(() => import('./pages/ScanPage').then(m => ({ default: m.ScanPage })))
@@ -37,6 +33,9 @@ const RiderDashboardPage    = lazy(() => import('./pages/RiderDashboardPage').th
 const DriverDashboardPage   = lazy(() => import('./pages/DriverDashboardPage').then(m => ({ default: m.DriverDashboardPage })))
 const ChatPage              = lazy(() => import('./pages/ChatPage').then(m => ({ default: m.ChatPage })))
 const BuyerOnboardingPage   = lazy(() => import('./pages/BuyerOnboardingPage').then(m => ({ default: m.BuyerOnboardingPage })))
+const CatalogListPage   = lazy(() => import('./features/catalog/CatalogListPage').then(m => ({ default: m.CatalogListPage })))
+const CatalogDetailPage = lazy(() => import('./features/catalog/CatalogDetailPage').then(m => ({ default: m.CatalogDetailPage })))
+const CatalogFormPage   = lazy(() => import('./features/catalog/CatalogFormPage').then(m => ({ default: m.CatalogFormPage })))
 
 function PageFallback() {
   return (
