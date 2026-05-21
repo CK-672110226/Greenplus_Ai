@@ -297,7 +297,7 @@ export function BuyerLayout() {
         <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 flex items-stretch bg-[var(--paper)] border-t-[1.5px] border-[var(--ink)]">
           {[
             { to: '/dashboard',   icon: <IconDashboard />,   label: t.dashboard },
-            { to: '/onboarding',  icon: <IconShopSetup />,   label: t.shopSetup ?? 'Setup', badge: needsOnboarding ? 1 : 0 },
+            { to: '/marketplace', icon: <IconMarketBuyer />, label: t.marketplace },
             { to: '/driver',      icon: <IconDriver />,      label: t.driverModeTitle, isHero: true },
             { to: '/chat',        icon: <IconChat />,        label: t.chat, badge: unreadChat },
             { to: '/profile',     icon: <IconProfile />,     label: t.profile },
