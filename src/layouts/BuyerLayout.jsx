@@ -291,11 +291,11 @@ export function BuyerLayout() {
         {/* Mobile bottom tab bar */}
         <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 flex items-stretch bg-[var(--paper)] border-t-[1.5px] border-[var(--ink)]">
           {[
-            { to: '/dashboard', icon: <IconDashboard />, label: 'Home' },
-            { to: '/schedule',  icon: <IconSchedule />,  label: 'Schedule' },
-            { to: '/driver',    icon: <IconDriver />,    label: 'Driver', isHero: true },
-            { to: '/chat',      icon: <IconChat />,      label: 'Chat', badge: unreadChat },
-            { to: '/profile',   icon: <IconProfile />,   label: 'Profile' },
+            { to: '/dashboard',   icon: <IconDashboard />,   label: t.dashboard },
+            { to: '/marketplace', icon: <IconMarketBuyer />, label: t.marketplace },
+            { to: '/driver',      icon: <IconDriver />,      label: t.driverModeTitle, isHero: true },
+            { to: '/chat',        icon: <IconChat />,        label: t.chat, badge: unreadChat },
+            { to: '/profile',     icon: <IconProfile />,     label: t.profile },
           ].map(item => (
             <BuyerTab key={item.to} {...item} />
           ))}
