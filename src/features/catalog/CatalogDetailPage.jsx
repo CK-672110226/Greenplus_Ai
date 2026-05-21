@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { Link, useParams, useNavigate } from 'react-router-dom'
 import { useGetPostByIdQuery, useDeletePostMutation } from './catalogApi'
 import styles from './CatalogDetailPage.module.css'
@@ -7,9 +8,10 @@ export function CatalogDetailPage() {
   const navigate = useNavigate()
   const { data: post, isLoading, isError, error } = useGetPostByIdQuery(Number(id))
   const [deletePost, { isLoading: isDeleting }] = useDeletePostMutation()
+  const [confirmDelete, setConfirmDelete] = useState(false)
 
   async function handleDelete() {
-    if (!window.confirm('ลบรายการนี้?')) return
+    if (!confirmDelete) { setConfirmDelete(true); return }
     await deletePost(Number(id))
     navigate('/catalog')
   }
@@ -65,13 +67,31 @@ export function CatalogDetailPage() {
           <div className={styles.actions}>
             <Link to="/catalog" className={`${styles.btn} ${styles.btnBack}`}>← กลับ</Link>
             <Link to={`/catalog/${post.id}/edit`} className={`${styles.btn} ${styles.btnEdit}`}>แก้ไข</Link>
-            <button
-              className={`${styles.btn} ${styles.btnDelete}`}
-              onClick={handleDelete}
-              disabled={isDeleting}
-            >
-              {isDeleting ? 'กำลังลบ…' : 'ลบ'}
-            </button>
+            {confirmDelete ? (
+              <>
+                <button
+                  className={`${styles.btn} ${styles.btnDelete}`}
+                  onClick={handleDelete}
+                  disabled={isDeleting}
+                >
+                  {isDeleting ? 'กำลังลบ…' : 'ยืนยันลบ?'}
+                </button>
+                <button
+                  className={`${styles.btn} ${styles.btnBack}`}
+                  onClick={() => setConfirmDelete(false)}
+                  disabled={isDeleting}
+                >
+                  ยกเลิก
+                </button>
+              </>
+            ) : (
+              <button
+                className={`${styles.btn} ${styles.btnDelete}`}
+                onClick={handleDelete}
+              >
+                ลบ
+              </button>
+            )}
           </div>
         </div>
       </div>

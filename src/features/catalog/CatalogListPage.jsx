@@ -14,7 +14,6 @@ export function CatalogListPage() {
   const [deletePost, { isLoading: isDeleting }] = useDeletePostMutation()
 
   async function handleDelete(id) {
-    if (!window.confirm('ลบรายการนี้?')) return
     await deletePost(id)
   }
 
