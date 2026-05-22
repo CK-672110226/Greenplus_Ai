@@ -13,6 +13,11 @@ async function fetchOrCreateProfile(user, dispatch) {
       .single()
 
     if (data) {
+      if (data.deleted_at) {
+        await supabase.auth.signOut()
+        dispatch(clearUser())
+        return
+      }
       dispatch(setProfile(data))
       if (data.language_pref) dispatch(setLanguage(data.language_pref))
       // open_days / accepted_materials exist after migration 008 — guard for older deployments

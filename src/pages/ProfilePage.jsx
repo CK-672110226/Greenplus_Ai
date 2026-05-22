@@ -10,7 +10,8 @@ import { Card } from '../components/Card'
 import { Button } from '../components/Button'
 import { WASTE_ITEMS, localName } from '../data/wasteItems'
 import { supabase } from '../lib/supabase'
-import { clearUser } from '../store/userSlice'
+import { clearUser, setProfile } from '../store/userSlice'
+import { setAcceptedMaterials } from '../store/buyerSlice'
 
 function AvatarDisplay({ url, name, size = 16 }) {
   const initials = (name ?? 'U').slice(0, 2).toUpperCase()
@@ -239,6 +240,7 @@ function UserProfile({ profile, session, t, language }) {
 }
 
 function BuyerProfile({ profile, session, t, language }) {
+  const dispatch = useDispatch()
   const { shop } = useMyShop()
   const { saving, uploadAvatar } = useProfileActions()
   const avatarInputRef = useRef(null)
@@ -255,6 +257,7 @@ function BuyerProfile({ profile, session, t, language }) {
   const [shopClosesAt,setShopClosesAt]= useState('')
   const [isOpen,      setIsOpen]      = useState(true)
   const [editingShop, setEditingShop] = useState(false)
+  const [shopSaving,  setShopSaving]  = useState(false)
 
   // Sync shop data once loaded
   useEffect(() => {
@@ -289,29 +292,45 @@ function BuyerProfile({ profile, session, t, language }) {
 
   async function handleSaveMaterials() {
     if (!session?.user?.id) return
-    await supabase.from('user_profiles').update({ accepted_materials: accepted }).eq('id', session.user.id)
+    const { error } = await supabase
+      .from('user_profiles')
+      .update({ accepted_materials: accepted })
+      .eq('id', session.user.id)
+    if (error) { toast.error(error.message ?? t.errorGeneric); return }
+    dispatch(setProfile({ ...profile, accepted_materials: accepted }))
+    dispatch(setAcceptedMaterials(accepted))
     toast.success(t.shopUpdated)
   }
 
   async function handleSaveShop() {
-    if (!shop?.id) return
-    const { error } = await supabase
-      .from('shops')
-      .update({
-        name:             shopName.trim(),
-        area:             shopArea.trim(),
-        phone:            shopPhone.trim() || null,
-        description:      shopDesc.trim() || null,
-        lat:              shopLat,
-        lng:              shopLng,
-        pickup_radius_km: shopRadius,
-        opens_at:         shopOpensAt || null,
-        closes_at:        shopClosesAt || null,
-      })
-      .eq('id', shop.id)
-    if (error) { toast.error(error.message); return }
-    toast.success(t.saveShopInfo)
-    setEditingShop(false)
+    if (!shop?.id) {
+      toast.error(language === 'th' ? 'ไม่พบข้อมูลร้านค้า' : 'Shop data not loaded — please refresh')
+      return
+    }
+    setShopSaving(true)
+    try {
+      const { error } = await supabase
+        .from('shops')
+        .update({
+          name:             shopName.trim(),
+          area:             shopArea.trim(),
+          phone:            shopPhone.trim() || null,
+          description:      shopDesc.trim() || null,
+          lat:              shopLat,
+          lng:              shopLng,
+          pickup_radius_km: shopRadius,
+          opens_at:         shopOpensAt || null,
+          closes_at:        shopClosesAt || null,
+        })
+        .eq('id', shop.id)
+      if (error) throw error
+      toast.success(t.saveShopInfo)
+      setEditingShop(false)
+    } catch (err) {
+      toast.error(err?.message ?? t.errorGeneric)
+    } finally {
+      setShopSaving(false)
+    }
   }
 
   function handleUseMyLocation() {
@@ -326,12 +345,13 @@ function BuyerProfile({ profile, session, t, language }) {
     if (!shop?.id) return
     const next = !isOpen
     setIsOpen(next)
-    try {
-      await supabase.from('shops').update({ is_open: next }).eq('id', shop.id)
-      toast.success(next ? t.shopResumeIntake : t.shopPauseIntake)
-    } catch {
+    const { error } = await supabase.from('shops').update({ is_open: next }).eq('id', shop.id)
+    if (error) {
       setIsOpen(!next)
+      toast.error(error.message ?? t.errorGeneric)
+      return
     }
+    toast.success(next ? t.shopResumeIntake : t.shopPauseIntake)
   }
 
   return (
@@ -483,7 +503,9 @@ function BuyerProfile({ profile, session, t, language }) {
                 className="w-32 px-3 py-2 border-[1.5px] border-[var(--ink)] bg-[var(--paper)] font-data text-[15px] outline-none focus:border-[var(--green)]"
               />
             </div>
-            <Button variant="primary" onClick={handleSaveShop}>{t.saveShopInfo}</Button>
+            <Button variant="primary" onClick={handleSaveShop} disabled={shopSaving}>
+              {shopSaving ? (language === 'th' ? 'กำลังบันทึก…' : 'Saving…') : t.saveShopInfo}
+            </Button>
           </div>
         ) : (
           <div className="flex flex-col gap-1">

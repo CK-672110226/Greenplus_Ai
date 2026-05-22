@@ -6,6 +6,7 @@ import { useT } from '../hooks/useT'
 import { SectionDivider } from '../components/SectionDivider'
 import { Button } from '../components/Button'
 import { useSettingsActions } from '../hooks/useSettingsActions'
+import { persistor } from '../store'
 import { toast } from 'sonner'
 
 function LangBtn({ active, onClick, children }) {
@@ -76,6 +77,7 @@ export function SettingsPage() {
     const { ok, error } = await settingsActions.deleteAccount(session.user.id)
     if (ok) {
       dispatch(clearUser())
+      persistor.purge()
       navigate('/')
     } else {
       toast.error(error ?? 'Could not delete account. Please contact support.')
