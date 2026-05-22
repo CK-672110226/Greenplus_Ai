@@ -63,4 +63,47 @@ export function useRealtimeNotifications() {
 
     return () => { supabase.removeChannel(channel) }
   }, [session, profile, shop, dispatch])
+
+  // Notify seller when buyer accepts or rejects their booking
+  useEffect(() => {
+    if (!session?.user?.id || profile?.role !== 'user') return
+    const uid = session.user.id
+
+    const channel = supabase
+      .channel(`seller-booking-updates-${uid}`)
+      .on('postgres_changes', {
+        event:  'UPDATE',
+        schema: 'public',
+        table:  'bookings',
+        filter: `seller_id=eq.${uid}`,
+      }, async (payload) => {
+        const next = payload.new
+        const prev = payload.old
+        if (next.status === prev.status) return
+
+        let type, title, body
+        if (next.status === 'accepted') {
+          type  = 'order_accepted'
+          title = 'ร้านยืนยันการรับแล้ว'
+          body  = `${next.material_type} · ${next.weight_kg} kg`
+        } else if (next.status === 'rejected') {
+          type  = 'order_rejected'
+          title = 'ร้านไม่สามารถรับได้ในครั้งนี้'
+          body  = `${next.material_type} · ${next.weight_kg} kg`
+        } else {
+          return
+        }
+
+        const notif = { user_id: uid, type, title, body }
+        const { data } = await supabase
+          .from('notifications')
+          .insert(notif)
+          .select('id')
+          .single()
+        dispatch(addNotification({ ...notif, id: data?.id ?? String(Date.now()) }))
+      })
+      .subscribe()
+
+    return () => { supabase.removeChannel(channel) }
+  }, [session, profile, dispatch])
 }

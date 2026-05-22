@@ -9,6 +9,7 @@ import { ErrorBoundary } from './components/ErrorBoundary'
 import { useAuth } from './hooks/useAuth'
 import { useActiveModels } from './hooks/useActiveModels'
 import { usePresence } from './hooks/usePresence'
+import { useRealtimeNotifications } from './hooks/useRealtimeNotifications'
 import { setDarkMode } from './store/userSlice'
 
 // Eagerly loaded — always needed on first paint
@@ -51,6 +52,7 @@ function AuthInitializer({ children }) {
   useAuth()
   useActiveModels()
   usePresence()
+  useRealtimeNotifications()
   const dispatch = useDispatch()
   const darkMode = useSelector(s => s.user.darkMode)
 

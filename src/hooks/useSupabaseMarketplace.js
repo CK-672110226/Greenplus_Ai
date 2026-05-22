@@ -1,9 +1,29 @@
-// Fetch active marketplace posts from Supabase
-// Returns { posts, loading, error, addPost, removePost }
-
 import { useState, useEffect, useCallback } from 'react'
 import { useSelector } from 'react-redux'
 import { supabase } from '../lib/supabase'
+
+function mapPost(p, shopHours = {}) {
+  return {
+    id:            p.id,
+    postType:      p.post_type ?? 'sell',
+    title:         p.title ?? null,
+    description:   p.description ?? null,
+    materialType:  p.material_type,
+    materialTypes: Array.isArray(p.material_types) && p.material_types.length > 0
+      ? p.material_types
+      : (p.material_type ? [p.material_type] : []),
+    qty:           p.quantity_kg,
+    pricePerKg:    p.price_per_kg,
+    shop:          p.user?.display_name ?? '',
+    contact:       p.contact ?? '',
+    image_url:     p.image_url ?? null,
+    flagged:       p.flagged ?? false,
+    distanceKm:    null,
+    opensAt:       shopHours[p.user_id]?.opensAt ?? null,
+    closesAt:      shopHours[p.user_id]?.closesAt ?? null,
+    createdAt:     p.created_at,
+  }
+}
 
 export function useSupabaseMarketplace() {
   const session = useSelector(s => s.user.session)
@@ -29,21 +49,11 @@ export function useSupabaseMarketplace() {
               .from('shops')
               .select('owner_id, opens_at, closes_at')
               .in('owner_id', userIds)
-            if (shops) shops.forEach(s => { shopHours[s.owner_id] = { opensAt: s.opens_at, closesAt: s.closes_at } })
+            if (shops) shops.forEach(s => {
+              shopHours[s.owner_id] = { opensAt: s.opens_at, closesAt: s.closes_at }
+            })
           }
-          setPosts(data.map(p => ({
-            id:           p.id,
-            materialType: p.material_type,
-            qty:          p.quantity_kg,
-            pricePerKg:   p.price_per_kg,
-            shop:         p.user?.display_name ?? '',
-            contact:      p.contact ?? '',
-            image_url:    p.image_url ?? null,
-            flagged:      p.flagged ?? false,
-            distanceKm:   null,
-            opensAt:      shopHours[p.user_id]?.opensAt ?? null,
-            closesAt:     shopHours[p.user_id]?.closesAt ?? null,
-          })))
+          setPosts(data.map(p => mapPost(p, shopHours)))
         }
       } catch (err) {
         setError(err?.message ?? 'โหลด marketplace ไม่สำเร็จ')
@@ -60,29 +70,23 @@ export function useSupabaseMarketplace() {
       const { data, error: insertErr } = await supabase
         .from('marketplace_posts')
         .insert({
-          user_id:       session.user.id,
-          material_type: payload.materialType,
-          quantity_kg:   payload.qty,
-          price_per_kg:  payload.pricePerKg,
-          contact:       payload.contact || null,
-          image_url:     payload.image_url || null,
-          status:        'active',
+          user_id:        session.user.id,
+          post_type:      payload.postType ?? 'sell',
+          title:          payload.title || null,
+          description:    payload.description || null,
+          material_type:  payload.materialTypes?.[0] ?? payload.materialType ?? null,
+          material_types: payload.materialTypes ?? [],
+          quantity_kg:    payload.qty || null,
+          price_per_kg:   payload.pricePerKg || null,
+          contact:        payload.contact || null,
+          image_url:      payload.image_url || null,
+          status:         'active',
         })
         .select('*, user:user_id(display_name)')
         .single()
 
       if (insertErr) throw insertErr
-      setPosts(prev => [{
-        id:           data.id,
-        materialType: data.material_type,
-        qty:          data.quantity_kg,
-        pricePerKg:   data.price_per_kg,
-        shop:         data.user?.display_name ?? payload.shop ?? '',
-        contact:      data.contact ?? '',
-        image_url:    data.image_url ?? null,
-        flagged:      false,
-        distanceKm:   null,
-      }, ...prev])
+      setPosts(prev => [mapPost(data), ...prev])
       return { ok: true }
     } catch (err) {
       return { ok: false, error: err?.message ?? 'โพสต์ไม่สำเร็จ' }

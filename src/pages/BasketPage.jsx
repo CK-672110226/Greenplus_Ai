@@ -16,6 +16,7 @@ import { useShops } from '../hooks/useShops'
 import { useMarketPricing } from '../hooks/useMarketPricing'
 import { useInsertBooking } from '../hooks/useInsertBooking'
 import { useBookingGroup } from '../hooks/useBookingGroup'
+import { useMyBookings } from '../hooks/useMyBookings'
 
 const MATERIAL_KEYS = Object.keys(WASTE_ITEMS)
 
@@ -175,6 +176,7 @@ export function BasketPage() {
   const { marketPrice, shopPrice } = useMarketPricing()
   const insertBooking = useInsertBooking()
   const { createGroup, groupBookings, secondsLeft, phase, cancelGroup, reset: resetGroup } = useBookingGroup()
+  const { bookings: myBookings } = useMyBookings({ limit: 8 })
 
   const shopsWithDist = useMemo(
     () => shops.map(s => ({ ...s, dist: distOf(s, gps.lat, gps.lng) })),
@@ -645,6 +647,45 @@ export function BasketPage() {
             </>
           )}
         </div>
+      )}
+
+      {/* My Requests — live status of submitted bookings */}
+      {myBookings.length > 0 && (
+        <section className="w-full max-w-lg mt-2 px-0">
+          <SectionDivider label={t.myRequestsTitle} />
+          <div className="flex flex-col gap-0">
+            {myBookings.map(b => {
+              const statusClass =
+                b.status === 'accepted'  ? 'border-[var(--green-ink)] text-[var(--green-ink)] bg-[var(--green-soft)]' :
+                b.status === 'rejected'  ? 'border-[var(--orange)] text-[var(--orange)]' :
+                b.status === 'completed' ? 'border-[var(--green-ink)] text-[var(--green-ink)]' :
+                b.status === 'cancelled' ? 'border-[var(--ink-4)] text-[var(--ink-4)]' :
+                'border-[var(--ink-3)] text-[var(--ink-3)]'
+              const statusLabel =
+                b.status === 'accepted'  ? t.statusAccepted :
+                b.status === 'rejected'  ? t.statusRejected :
+                b.status === 'completed' ? t.statusAccepted :
+                b.status === 'cancelled' ? t.statusRejected :
+                t.statusPending
+              return (
+                <div
+                  key={b.id}
+                  className="flex items-center justify-between py-3 border-b-[1px] border-[var(--ink-4)] last:border-0 gap-3"
+                >
+                  <div className="flex flex-col gap-0.5 min-w-0">
+                    <span className="font-body text-[14px] text-[var(--ink)] truncate">{b.shopName}</span>
+                    <span className="font-data text-[11px] text-[var(--ink-3)]">
+                      {b.material} · {b.kg} kg
+                    </span>
+                  </div>
+                  <span className={`font-data text-[9px] uppercase tracking-widest px-2 py-0.5 border-[1.5px] shrink-0 ${statusClass}`}>
+                    {statusLabel}
+                  </span>
+                </div>
+              )
+            })}
+          </div>
+        </section>
       )}
 
       {bookingShop && (
