@@ -90,7 +90,7 @@ export function BuyerOnboardingPage() {
     }
     setSaving(true)
     try {
-      await onboardingActions.saveOnboarding(
+      const result = await onboardingActions.saveOnboarding(
         session.user.id,
         {
           name:             formData.shopName,
@@ -110,6 +110,7 @@ export function BuyerOnboardingPage() {
         }
       )
 
+      if (!result.ok) throw new Error(result.error)
       toast.success('Shop submitted for review')
       navigate('/dashboard')
     } catch (err) {

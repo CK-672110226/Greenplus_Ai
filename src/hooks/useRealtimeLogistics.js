@@ -16,12 +16,15 @@ const APPROACHING_KM   = 0.5
 export function useRealtimeLogistics() {
   const dispatch       = useDispatch()
   const t              = useT()
+  const tRef           = useRef(t)
   const session        = useSelector(s => s.user.session)
   const profile        = useSelector(s => s.user.profile)
   const activeBooking  = useSelector(s => s.logistics.activeBooking)
   const nearbyOrders   = useSelector(s => s.logistics.nearbyOrders)
   const riderLocation  = useSelector(s => s.logistics.riderLocation)
   const isOnline       = useSelector(s => s.logistics.isOnline)
+
+  useEffect(() => { tRef.current = t }, [t])
 
   // Stable refs so callbacks always see current values
   const riderLocRef    = useRef(riderLocation)
@@ -64,10 +67,10 @@ export function useRealtimeLogistics() {
         prevStatusRef.current = newStatus
 
         if (prevStatus === 'searching' && newStatus === 'accepted') {
-          toast.success(t.riderFound)
+          toast.success(tRef.current.riderFound)
         }
         if (prevStatus === 'accepted' && newStatus === 'arrived') {
-          toast.success(t.riderArrived)
+          toast.success(tRef.current.riderArrived)
           nearAlertedRef.current = false
         }
 
@@ -76,7 +79,7 @@ export function useRealtimeLogistics() {
       .subscribe()
 
     return () => { supabase.removeChannel(channel) }
-  }, [session, profile, activeBooking?.id, activeBooking?.status, dispatch, t])
+  }, [session, profile, activeBooking?.id, activeBooking?.status, dispatch])
 
   // ── SELLER: when accepted, subscribe to driver's position ─────────────────
   useEffect(() => {
@@ -102,7 +105,7 @@ export function useRealtimeLogistics() {
           if (pickup.lat != null && pickup.lng != null) {
             const dist = haversineKm(current_lat, current_lng, pickup.lat, pickup.lng)
             if (dist <= APPROACHING_KM) {
-              toast(t.riderApproaching)
+              toast(tRef.current.riderApproaching)
               nearAlertedRef.current = true
             }
           }
@@ -125,7 +128,7 @@ export function useRealtimeLogistics() {
       })
 
     return () => { supabase.removeChannel(channel) }
-  }, [session, profile, activeBooking?.status, activeBooking?.assigned_driver_id, dispatch, t])
+  }, [session, profile, activeBooking?.status, activeBooking?.assigned_driver_id, dispatch])
 
   // ── RIDER: load initial nearby orders ────────────────────────────────────
   useEffect(() => {
