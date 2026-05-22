@@ -12,6 +12,7 @@ const LINE_ID_RE = /^@?[a-zA-Z0-9._-]{6,20}$/
 function isValidLineId(id) { return !id || LINE_ID_RE.test(id) }
 
 const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+const DAY_TO_INT = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 }
 
 function OnbStepper({ step }) {
   return (
@@ -113,7 +114,7 @@ export function BuyerOnboardingPage() {
         },
         {
           accepted_materials:  formData.selectedMaterials,
-          open_days:           formData.openDays,
+          open_days:           formData.openDays.map(d => DAY_TO_INT[d]),
           onboarding_complete: true,
         }
       )

@@ -7,7 +7,7 @@ export function useOnboardingActions() {
         owner_id: userId,
         ...shopData,
         status: 'pending',
-      })
+      }, { onConflict: 'owner_id' })
       if (shopErr) throw shopErr
 
       const { error: profileErr } = await supabase
