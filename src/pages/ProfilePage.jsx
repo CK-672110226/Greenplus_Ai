@@ -106,6 +106,7 @@ function UserProfile({ profile, session, t, language }) {
                     type="text"
                     value={displayName}
                     onChange={e => setDisplayName(e.target.value)}
+                    maxLength={50}
                     className="w-full px-3 py-1.5 border-[1.5px] border-[var(--ink)] bg-[var(--paper)] font-body text-[15px] outline-none focus:border-[var(--green)]"
                   />
                 </div>
@@ -115,6 +116,7 @@ function UserProfile({ profile, session, t, language }) {
                     value={bio}
                     onChange={e => setBio(e.target.value)}
                     rows={2}
+                    maxLength={300}
                     placeholder={t.profileBioHelp}
                     className="w-full px-3 py-1.5 border-[1.5px] border-[var(--ink)] bg-[var(--paper)] font-body text-[13px] outline-none focus:border-[var(--green)] resize-none"
                   />
@@ -180,6 +182,7 @@ function UserProfile({ profile, session, t, language }) {
               value={pickupNotes}
               onChange={e => setPickupNotes(e.target.value)}
               rows={3}
+              maxLength={400}
               placeholder={t.profilePickupNotesHelp}
               className="w-full px-3 py-2 border-[1.5px] border-[var(--ink)] bg-[var(--paper)] font-body text-[13px] outline-none focus:border-[var(--green)] resize-none"
             />
@@ -426,6 +429,7 @@ function BuyerProfile({ profile, session, t, language }) {
                 type="text"
                 value={shopName}
                 onChange={e => setShopName(e.target.value)}
+                maxLength={80}
                 className="w-full px-3 py-2 border-[1.5px] border-[var(--ink)] bg-[var(--paper)] font-body text-[15px] outline-none focus:border-[var(--green)]"
               />
             </div>
@@ -435,6 +439,7 @@ function BuyerProfile({ profile, session, t, language }) {
                 type="text"
                 value={shopArea}
                 onChange={e => setShopArea(e.target.value)}
+                maxLength={100}
                 className="w-full px-3 py-2 border-[1.5px] border-[var(--ink)] bg-[var(--paper)] font-body text-[15px] outline-none focus:border-[var(--green)]"
               />
             </div>
@@ -455,6 +460,7 @@ function BuyerProfile({ profile, session, t, language }) {
                 value={shopDesc}
                 onChange={e => setShopDesc(e.target.value)}
                 rows={3}
+                maxLength={500}
                 placeholder={t.shopDescriptionHelp}
                 className="w-full px-3 py-2 border-[1.5px] border-[var(--ink)] bg-[var(--paper)] font-body text-[13px] outline-none focus:border-[var(--green)] resize-none"
               />
@@ -501,6 +507,7 @@ function BuyerProfile({ profile, session, t, language }) {
               <input
                 type="number"
                 min="1"
+                max="100"
                 step="0.5"
                 value={shopRadius}
                 onChange={e => setShopRadius(parseFloat(e.target.value) || 5)}

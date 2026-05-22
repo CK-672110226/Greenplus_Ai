@@ -152,6 +152,7 @@ export function SlotCreatePopup({ date, hour, onClose, onCreated, shopId }) {
             onChange={e => setNote(e.target.value)}
             placeholder="Any instructions for this slot..."
             rows={2}
+            maxLength={300}
             className="font-body"
             style={{
               border: '1.5px solid var(--ink)',

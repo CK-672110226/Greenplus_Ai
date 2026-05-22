@@ -164,6 +164,7 @@ function ModelRegistrySection() {
         <input
           type="text"
           placeholder="Version tag (e.g. v1.0-jun26)"
+          maxLength={30}
           value={versionTag}
           onChange={e => setVersionTag(e.target.value)}
           className="w-full px-3 py-2 border-[1.5px] border-[var(--ink-4)] bg-[var(--paper)] font-data text-[12px] text-[var(--ink)] outline-none focus:border-[var(--ink)] placeholder:text-[var(--ink-4)]"
@@ -186,8 +187,9 @@ function ModelRegistrySection() {
           <div className="flex flex-col gap-1.5">
             <div className="relative">
               <input
-                type="text"
+                type="url"
                 placeholder="https://teachablemachine.withgoogle.com/models/XXXX/model.json"
+                maxLength={300}
                 value={tmUrl}
                 onChange={e => handleUrlChange(e.target.value)}
                 className="w-full px-3 py-2 border-[1.5px] border-[var(--ink-4)] bg-[var(--paper)] font-data text-[11px] text-[var(--ink)] outline-none focus:border-[var(--green)] placeholder:text-[var(--ink-4)]"
@@ -504,14 +506,14 @@ function TransferJobsPanel() {
           </div>
           <div className="flex flex-col gap-1">
             <label className="font-data text-[9px] text-[var(--ink-3)] uppercase tracking-widest">Weight (kg) *</label>
-            <input type="number" min="0" step="0.1" value={form.weight_kg}
+            <input type="number" min="0" max="10000" step="0.1" value={form.weight_kg}
               onChange={e => setForm(f => ({ ...f, weight_kg: e.target.value }))}
               className="px-2 py-2 border-[1.5px] border-[var(--ink-4)] focus:border-[var(--ink)] bg-[var(--paper)] font-data text-[11px] outline-none"
               placeholder="0.0" />
           </div>
           <div className="flex flex-col gap-1">
             <label className="font-data text-[9px] text-[var(--ink-3)] uppercase tracking-widest">Offered Price (฿)</label>
-            <input type="number" min="0" step="1" value={form.offered_price}
+            <input type="number" min="0" max="9999999" step="1" value={form.offered_price}
               onChange={e => setForm(f => ({ ...f, offered_price: e.target.value }))}
               className="px-2 py-2 border-[1.5px] border-[var(--ink-4)] focus:border-[var(--ink)] bg-[var(--paper)] font-data text-[11px] outline-none"
               placeholder="optional" />
@@ -1094,6 +1096,7 @@ export function AdminPage() {
                       <label className="font-data text-[10px] uppercase tracking-widest text-[var(--ink-3)]">{t.shopName}</label>
                       <input
                         value={editShopForm.name}
+                        maxLength={80}
                         onChange={e => setEditShopForm(f => ({ ...f, name: e.target.value }))}
                         className="font-body text-[14px] border-[1.5px] border-[var(--ink)] px-3 py-2 bg-[var(--paper)] text-[var(--ink)] outline-none focus:border-[var(--green)] w-full"
                       />
@@ -1102,6 +1105,7 @@ export function AdminPage() {
                       <label className="font-data text-[10px] uppercase tracking-widest text-[var(--ink-3)]">{t.shopArea}</label>
                       <input
                         value={editShopForm.area}
+                        maxLength={100}
                         onChange={e => setEditShopForm(f => ({ ...f, area: e.target.value }))}
                         className="font-body text-[14px] border-[1.5px] border-[var(--ink)] px-3 py-2 bg-[var(--paper)] text-[var(--ink)] outline-none focus:border-[var(--green)] w-full"
                       />
@@ -1317,6 +1321,7 @@ export function AdminPage() {
                         <label className="font-data text-[10px] uppercase tracking-widest text-[var(--ink-3)]">{t.displayName}</label>
                         <input
                           value={editUserForm.display_name}
+                          maxLength={50}
                           onChange={e => setEditUserForm(f => ({ ...f, display_name: e.target.value }))}
                           className="font-body text-[14px] border-[1.5px] border-[var(--ink)] px-3 py-2 bg-[var(--paper)] text-[var(--ink)] outline-none focus:border-[var(--green)] w-full"
                         />

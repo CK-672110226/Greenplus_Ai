@@ -158,6 +158,7 @@ export function PricingPage() {
                     <input
                       type="number"
                       min="0"
+                      max="9999"
                       step="0.5"
                       value={vals.price_per_kg ?? 0}
                       onChange={e => handlePriceChange(mat, e.target.value)}
@@ -172,6 +173,7 @@ export function PricingPage() {
                     <input
                       type="number"
                       min="0"
+                      max="50000"
                       step="10"
                       value={vals.cap_kg ?? DEFAULT_CAP_KG}
                       onChange={e => handleCapChange(mat, e.target.value)}
