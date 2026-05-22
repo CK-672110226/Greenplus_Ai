@@ -583,6 +583,7 @@ export function DashboardPage() {
             <input
               ref={rejectCustomRef}
               type="text"
+              maxLength={200}
               value={rejectReason}
               onChange={e => setRejectReason(e.target.value)}
               placeholder={language === 'th' ? 'หรือพิมพ์เหตุผลเอง…' : 'or type a reason…'}

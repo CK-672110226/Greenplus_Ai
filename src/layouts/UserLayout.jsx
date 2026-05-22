@@ -164,11 +164,11 @@ export function UserLayout() {
   ]
 
   const mobileNav = [
-    { to: '/home',   icon: <IconHome />,   label: t.home },
-    { to: '/basket', icon: <IconBasket />, label: t.basket, badge: activeCount },
-    { to: '/scan',   icon: <IconScan />,   label: 'Scan' },
-    { to: '/map',    icon: <IconMap />,    label: t.map },
-    { to: '/chat',   icon: <IconChat />,   label: t.chat, badge: unreadChat },
+    { to: '/home',    icon: <IconHome />,    label: t.home },
+    { to: '/basket',  icon: <IconBasket />,  label: t.basket, badge: activeCount },
+    { to: '/scan',    icon: <IconScan />,    label: 'Scan' },
+    { to: '/map',     icon: <IconMap />,     label: t.map },
+    { to: '/profile', icon: <IconProfile />, label: t.profile },
   ]
 
   // Avatar initial
@@ -282,6 +282,13 @@ export function UserLayout() {
                   {unreadCount}
                 </span>
               )}
+            </button>
+            <button
+              onClick={() => navigate('/marketplace')}
+              className="flex items-center justify-center w-11 h-11 bg-transparent border-none cursor-pointer text-[var(--ink)] hover:text-[var(--green)] transition-colors"
+              aria-label={t.marketplace}
+            >
+              <IconMarket />
             </button>
             <button
               onClick={() => navigate('/basket')}

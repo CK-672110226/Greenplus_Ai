@@ -105,7 +105,7 @@ function ActiveOrderPanel({ order, onArrived, onComplete, onCancel, t }) {
         <div className="flex flex-col gap-2">
           <label className="font-data text-[10px] text-[var(--ink-3)] uppercase tracking-widest">{t.actualWeight}</label>
           <input
-            type="number" min="0" step="0.1"
+            type="number" min="0" max="10000" step="0.1"
             value={actualWeight}
             onChange={e => setActualWeight(parseFloat(e.target.value) || 0)}
             className="w-full px-3 py-2 border-[1.5px] border-[var(--ink)] bg-[var(--paper)] font-data text-[16px] outline-none focus:border-[var(--green)]"
@@ -200,7 +200,11 @@ export function DriverDashboardPage() {
     if (!session?.user?.id) return
     const { error } = await supabase
       .from('bookings')
-      .update({ status: 'accepted', buyer_id: session.user.id })
+      .update({
+        status: 'accepted',
+        assigned_driver_id: session.user.id,
+        driver_assignment_status: 'accepted',
+      })
       .eq('id', order.id)
     if (error) { toast.error('Failed to accept'); return }
     setActiveOrder({ ...order, _arrived: false })
@@ -301,6 +305,36 @@ export function DriverDashboardPage() {
           {/* My Assignments tab */}
           {tab === 'assignments' && (
             <div className="flex flex-col gap-3">
+              {/* Today's jobs — pinned at top */}
+              {(() => {
+                const todayStr = new Date().toDateString()
+                const todayJobs = myAssignments.filter(a =>
+                  a.scheduled_for && new Date(a.scheduled_for).toDateString() === todayStr
+                )
+                if (todayJobs.length === 0) return null
+                return (
+                  <div className="flex flex-col gap-2 p-3 bg-[var(--green-soft)] border-[1.5px] border-[var(--green-ink)]">
+                    <span className="font-data text-[10px] uppercase tracking-widest text-[var(--green-ink)]">{t.todayAssignments}</span>
+                    {todayJobs.map(a => (
+                      <div key={a.id} className="flex items-center justify-between gap-2">
+                        <span className="font-body text-[13px] text-[var(--ink)] truncate">{a.shops?.name ?? '—'}</span>
+                        <span className="font-data text-[13px] text-[var(--ink)] shrink-0">
+                          {new Date(a.scheduled_for).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Asia/Bangkok' })}
+                        </span>
+                        <span className={[
+                          'font-data text-[9px] uppercase tracking-widest px-1.5 py-0.5 border-[1px] shrink-0',
+                          a.driver_assignment_status === 'invited'
+                            ? 'border-[var(--orange)] text-[var(--orange)]'
+                            : 'border-[var(--green-ink)] text-[var(--green-ink)]',
+                        ].join(' ')}>
+                          {a.driver_assignment_status === 'invited' ? t.assignmentInvited : t.assignmentAccepted}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )
+              })()}
+
               {myAssignments.length === 0 && (
                 <div className="border-[1.5px] border-dashed border-[var(--ink-4)] p-6 text-center">
                   <span className="font-data text-[11px] text-[var(--ink-3)] uppercase tracking-widest">{t.noMyAssignments}</span>
@@ -330,8 +364,9 @@ export function DriverDashboardPage() {
                       <div className="flex gap-2">
                         <button
                           onClick={async () => {
-                            const ok = await respondToAssignment(a.id, true)
+                            const { ok, error } = await respondToAssignment(a.id, true)
                             if (ok) toast.success(t.assignmentAccepted)
+                            else toast.error(error ?? t.errorGeneric)
                           }}
                           className="flex-1 font-data text-[10px] uppercase tracking-widest py-2.5 border-[1.5px] border-[var(--green)] bg-[var(--green-soft)] text-[var(--green-ink)] cursor-pointer hover:opacity-90 transition-opacity"
                         >
@@ -339,8 +374,9 @@ export function DriverDashboardPage() {
                         </button>
                         <button
                           onClick={async () => {
-                            await respondToAssignment(a.id, false)
-                            toast(t.declineAssignment)
+                            const { ok, error } = await respondToAssignment(a.id, false)
+                            if (ok) toast(t.declineAssignment)
+                            else toast.error(error ?? t.errorGeneric)
                           }}
                           className="px-4 font-data text-[10px] uppercase tracking-widest py-2.5 border-[1.5px] border-[var(--ink-3)] text-[var(--ink-3)] bg-[var(--paper)] cursor-pointer hover:bg-[var(--paper-2)] transition-colors"
                         >

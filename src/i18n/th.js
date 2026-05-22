@@ -22,6 +22,7 @@ export const th = {
   map:           'แผนที่',
   marketplace:   'ตลาด',
   dashboard:     'แดชบอร์ด',
+  shopSetup:     'ตั้งค่าร้าน',
   admin:         'ผู้ดูแล',
   role:          'บทบาท',
   home:          'หน้าหลัก',
@@ -58,21 +59,19 @@ export const th = {
   // Marketplace
   marketplaceTitle: 'ตลาดซื้อขาย',
   filterAll:     'ทั้งหมด',
-  filterA:       'เกรด A',
-  filterB:       'เกรด B',
-  filterC:       'เกรด C',
   noListings:    'ไม่มีรายการที่ตรงกับตัวกรอง',
   postAd:           'ลงประกาศ',
   cancelLabel:      'ยกเลิก',
   postSuccess:      'ลงประกาศสำเร็จ',
   materialTypeLabel:'ประเภทวัสดุ',
-  gradeLabel:       'เกรด',
   weightKg:         'น้ำหนัก (กก.)',
   pricePerKgLabel:  'ราคา (฿/กก.)',
   contactInfo:      'ติดต่อ (โทร/LINE)',
   shopName:         'ชื่อร้าน',
   requiredFields:   'กรุณากรอกข้อมูลที่จำเป็น',
   contactSeller:    'ติดต่อ',
+  openNow:          'เปิด',
+  closed:           'ปิด',
 
   // Map
   mapTitle:      'แผนที่อัจฉริยะ',
@@ -87,7 +86,6 @@ export const th = {
   pendingOrders:     'รอดำเนินการ',
   completedOrders:   'เสร็จวันนี้',
   totalRevenue:      'รายได้วันนี้',
-  avgGrade:          'เกรดเฉลี่ย',
   recentBookings:    'การจองล่าสุด',
   acceptOrder:       'รับ',
   rejectOrder:       'ปฏิเสธ',
@@ -134,8 +132,6 @@ export const th = {
 
   // Dashboard pricing CRUD (B-02)
   myPricing:         'ราคารับซื้อ',
-  gradeClean:        'สะอาด (฿/กก.)',
-  gradeDirty:        'ไม่สะอาด (฿/กก.)',
   savePricing:       'บันทึกราคา',
 
   // Settings
@@ -272,7 +268,7 @@ export const th = {
   // Pricing page
   pricing:           'ราคารับซื้อ',
   pricingTitle:      'ราคารับซื้อของฉัน',
-  pricingHint:       'ตั้งราคารับซื้อต่อกิโลกรัมสำหรับวัสดุและเกรดแต่ละประเภท',
+  pricingHint:       'ตั้งราคารับซื้อและปริมาณจำกัดต่อวันสำหรับแต่ละวัสดุ สามารถเปิด/ปิดรับแต่ละรายการได้',
   marketRate:        'ราคาตลาด',
   resetToMarket:     'รีเซ็ตตามราคาตลาด',
   saveChanges:       'บันทึก',
@@ -301,7 +297,6 @@ export const th = {
   filterBasket:      'กรอง',
   allItems:          'ทั้งหมด',
   selectMaterial:    'เลือกวัสดุ',
-  selectGrade:       'เกรด',
   addItem:           'เพิ่ม',
 
   // Pricing page — new single-price columns (migration 013b)
@@ -320,7 +315,8 @@ export const th = {
   searchingRider:    'กำลังหาไรเดอร์...',
   riderFound:        'พบไรเดอร์แล้ว!',
   riderAccepted:     'ไรเดอร์รับงานของคุณแล้ว',
-  riderArrived:      'ไรเดอร์มาถึงแล้ว',
+  riderArrived:      'ไรเดอร์มาถึงแล้ว! กรุณาออกมาพบ',
+  riderApproaching:  'ไรเดอร์ใกล้มาถึงแล้ว! เตรียมของได้เลย',
   orderCompleted:    'งานเสร็จสมบูรณ์',
   nearbyPickups:     'งานรับซื้อใกล้เคียง',
   acceptPickup:      'รับงาน',
@@ -405,12 +401,38 @@ export const th = {
   micDenied:         'ไมโครโฟนถูกบล็อก — อนุญาตในการตั้งค่าเบราว์เซอร์และระบบ',
   micHold:           'กดค้างเพื่อบันทึก',
   micRecording:      'กำลังบันทึก… ปล่อยเพื่อส่ง',
+  micRequestAccess:  'อนุญาตการเข้าถึงไมโครโฟน',
+  micAccessGranted:  'อนุญาตไมโครโฟนแล้ว',
+  micBlocked:        'ไมโครโฟนถูกบล็อก',
 
   // Shop open/close toggle
   shopOpen:          'เปิดรับ',
   shopClosed:        'หยุดรับ',
   shopPauseIntake:   'หยุดรับขยะ',
   shopResumeIntake:  'เปิดรับขยะ',
+
+  // Profile edit — all roles
+  profileEdit:           'แก้ไขโปรไฟล์',
+  profileSave:           'บันทึก',
+  profileCancel:         'ยกเลิก',
+  profileBioLabel:       'เกี่ยวกับฉัน',
+  profileBioHelp:        'บอกให้ร้านและไดร์เวอร์รู้จักคุณมากขึ้น',
+  profilePickupNotes:    'คำแนะนำสำหรับการรับขยะ',
+  profilePickupNotesHelp:'เช่น "ถุงเขียวหน้าประตู กดกริ่งชั้น 3"',
+  profileDisplayName:    'ชื่อที่แสดง',
+  profileAvatarUpload:   'เปลี่ยนรูป',
+  uploadingPhoto:        'กำลังอัปโหลด…',
+
+  // Shop profile — buyer role
+  shopDescription:       'คำอธิบายร้าน',
+  shopDescriptionHelp:   'ช่วยให้ผู้ใช้เข้าใจว่าร้านของคุณรับอะไร',
+  shopOpensAt:           'เปิด',
+  shopClosesAt:          'ปิด',
+  shopVerifiedHint:      'อัปโหลดรูปร้านเพื่อเพิ่มความน่าเชื่อถือ',
+
+  // Marketplace image upload
+  mpImageLabel:          'รูปสินค้า (ไม่บังคับ)',
+  mpImageHelp:           'รูปช่วยให้ผู้ซื้อเห็นคุณภาพและสภาพสินค้า',
 
   // Buyer profile — shop info edit
   saveShopInfo:      'บันทึกข้อมูลร้าน',
@@ -492,7 +514,10 @@ export const th = {
   assignmentAccepted:   'รับงานแล้ว',
   assignmentRejected:   'ปฏิเสธ',
   tabMyAssignments:     'งานที่ได้รับมอบหมาย',
-  noMyAssignments:      'ไม่มีงานที่ได้รับมอบหมายวันนี้',
+  noMyAssignments:      'ยังไม่มีงาน',
+  newAssignmentToast:   'มีงานรับซื้อใหม่สำหรับคุณ',
+  todayAssignments:     'งานวันนี้',
+  driverAssigned:       'มอบหมายคนขับแล้ว',
   acceptAssignment:     'รับงาน',
   declineAssignment:    'ปฏิเสธ',
 

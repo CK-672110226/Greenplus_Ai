@@ -1,27 +1,79 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { toast } from 'sonner'
 import { useSelector, useDispatch } from 'react-redux'
 import { useNavigate } from 'react-router-dom'
 import { useT } from '../hooks/useT'
 import { useScanHistory } from '../hooks/useScanHistory'
 import { useMyShop } from '../hooks/useMyShop'
+import { useProfileActions } from '../hooks/useProfileActions'
 import { Card } from '../components/Card'
 import { Button } from '../components/Button'
+import { PhoneInput } from '../components/PhoneInput'
+import { isPhoneValid } from '../utils/phoneUtils'
 import { WASTE_ITEMS, localName } from '../data/wasteItems'
 import { supabase } from '../lib/supabase'
-import { clearUser } from '../store/userSlice'
+import { clearUser, setProfile } from '../store/userSlice'
+import { setAcceptedMaterials } from '../store/buyerSlice'
 
-function Avatar({ name }) {
+function AvatarDisplay({ url, name, size = 16 }) {
   const initials = (name ?? 'U').slice(0, 2).toUpperCase()
+  const dim = `w-${size} h-${size}`
+  if (url) {
+    return (
+      <img
+        src={url}
+        alt={name}
+        className={`${dim} object-cover border-[1.5px] border-[var(--ink)] shadow-[2px_2px_0_var(--ink)]`}
+      />
+    )
+  }
   return (
-    <div className="w-16 h-16 bg-[var(--green)] border-[1.5px] border-[var(--ink)] flex items-center justify-center shadow-[2px_2px_0_var(--ink)]">
-      <span className="font-brand text-[22px] text-[#062040]">{initials}</span>
+    <div className={`${dim} bg-[var(--green)] border-[1.5px] border-[var(--ink)] flex items-center justify-center shadow-[2px_2px_0_var(--ink)]`}>
+      <span className="font-brand text-[22px] text-[var(--green-ink)]">{initials}</span>
     </div>
   )
 }
 
 function UserProfile({ profile, session, t, language }) {
   const { scans, loading, totalKg, totalValue } = useScanHistory()
+  const { saving, updateProfile, uploadAvatar } = useProfileActions()
+  const avatarInputRef = useRef(null)
+
+  const [editing,      setEditing]      = useState(false)
+  const [displayName,  setDisplayName]  = useState(profile?.display_name ?? '')
+  const [bio,          setBio]          = useState(profile?.bio ?? '')
+  const [pickupNotes,  setPickupNotes]  = useState(profile?.pickup_notes ?? '')
+
+  useEffect(() => {
+    if (!editing) {
+      async function sync() {
+        setDisplayName(profile?.display_name ?? '')
+        setBio(profile?.bio ?? '')
+        setPickupNotes(profile?.pickup_notes ?? '')
+      }
+      sync()
+    }
+  }, [profile, editing])
+
+  async function handleAvatarChange(e) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    e.target.value = ''
+    const res = await uploadAvatar(file)
+    if (!res.ok) toast.error(res.error ?? t.errorGeneric)
+    else toast.success(t.micAccessGranted.replace('Microphone', 'Photo'))
+  }
+
+  async function handleSave() {
+    const res = await updateProfile({
+      display_name:  displayName.trim() || undefined,
+      bio:           bio.trim() || null,
+      pickup_notes:  pickupNotes.trim() || null,
+    })
+    if (!res.ok) { toast.error(res.error ?? t.errorGeneric); return }
+    toast.success(t.shopUpdated)
+    setEditing(false)
+  }
 
   const emptyMsg = language === 'th'
     ? 'ยังไม่มีการสแกน ชี้กล้องไปที่วัสดุรีไซเคิลเพื่อเริ่มต้น'
@@ -30,16 +82,72 @@ function UserProfile({ profile, session, t, language }) {
   return (
     <>
       <Card className="w-full max-w-2xl flex flex-col gap-4">
-        <div className="flex items-center gap-4">
-          <Avatar name={profile?.display_name ?? session?.user?.email} />
-          <div>
-            <p className="font-body text-[17px] text-[var(--ink)] m-0 font-semibold">
-              {profile?.display_name ?? session?.user?.email?.split('@')[0]}
-            </p>
-            <p className="font-data text-[11px] text-[var(--ink-3)] m-0">{session?.user?.email}</p>
-            <span className="inline-block mt-1 px-2 py-0.5 bg-[var(--green-soft)] border-[1px] border-[var(--green)] font-data text-[10px] text-[var(--green-ink)] uppercase">
-              {t.roleUser}
-            </span>
+        <div className="flex items-start gap-4">
+          {/* Avatar + upload */}
+          <div className="flex flex-col items-center gap-1 flex-shrink-0">
+            <AvatarDisplay url={profile?.avatar_url} name={profile?.display_name ?? session?.user?.email} />
+            <button
+              type="button"
+              onClick={() => avatarInputRef.current?.click()}
+              disabled={saving}
+              className="font-data text-[9px] text-[var(--ink-3)] uppercase tracking-widest bg-transparent border-none cursor-pointer hover:text-[var(--ink)] disabled:opacity-40"
+            >
+              {saving ? t.uploadingPhoto : t.profileAvatarUpload}
+            </button>
+            <input ref={avatarInputRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarChange} />
+          </div>
+
+          <div className="flex-1 min-w-0">
+            {editing ? (
+              <div className="flex flex-col gap-2">
+                <div className="flex flex-col gap-1">
+                  <label className="font-data text-[10px] text-[var(--ink-3)] uppercase tracking-widest">{t.profileDisplayName}</label>
+                  <input
+                    type="text"
+                    value={displayName}
+                    onChange={e => setDisplayName(e.target.value)}
+                    maxLength={50}
+                    className="w-full px-3 py-1.5 border-[1.5px] border-[var(--ink)] bg-[var(--paper)] font-body text-[15px] outline-none focus:border-[var(--green)]"
+                  />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label className="font-data text-[10px] text-[var(--ink-3)] uppercase tracking-widest">{t.profileBioLabel}</label>
+                  <textarea
+                    value={bio}
+                    onChange={e => setBio(e.target.value)}
+                    rows={2}
+                    maxLength={300}
+                    placeholder={t.profileBioHelp}
+                    className="w-full px-3 py-1.5 border-[1.5px] border-[var(--ink)] bg-[var(--paper)] font-body text-[13px] outline-none focus:border-[var(--green)] resize-none"
+                  />
+                </div>
+                <div className="flex gap-2 pt-1">
+                  <Button variant="primary" onClick={handleSave} disabled={saving}>{t.profileSave}</Button>
+                  <Button variant="ghost" onClick={() => setEditing(false)}>{t.profileCancel}</Button>
+                </div>
+              </div>
+            ) : (
+              <div className="flex flex-col gap-0.5">
+                <div className="flex items-center gap-2 justify-between">
+                  <p className="font-body text-[17px] text-[var(--ink)] m-0 font-semibold">
+                    {profile?.display_name ?? session?.user?.email?.split('@')[0]}
+                  </p>
+                  <button
+                    onClick={() => setEditing(true)}
+                    className="font-data text-[10px] uppercase tracking-widest text-[var(--ink-3)] hover:text-[var(--ink)] bg-transparent border-none cursor-pointer"
+                  >
+                    {t.profileEdit}
+                  </button>
+                </div>
+                <p className="font-data text-[11px] text-[var(--ink-3)] m-0">{session?.user?.email}</p>
+                {profile?.bio && (
+                  <p className="font-body text-[13px] text-[var(--ink-2)] m-0 mt-1">{profile.bio}</p>
+                )}
+                <span className="inline-block mt-1 px-2 py-0.5 bg-[var(--green-soft)] border-[1px] border-[var(--green)] font-data text-[10px] text-[var(--green-ink)] uppercase">
+                  {t.roleUser}
+                </span>
+              </div>
+            )}
           </div>
         </div>
         {/* Lifetime stats grid */}
@@ -53,6 +161,41 @@ function UserProfile({ profile, session, t, language }) {
             <span className="font-data text-[9px] text-[var(--ink-3)] uppercase tracking-widest leading-tight">earned</span>
           </div>
         </div>
+      </Card>
+
+      {/* Pickup instructions — visible to drivers and shops */}
+      <Card className="w-full max-w-2xl flex flex-col gap-3">
+        <div className="flex items-center justify-between gap-2">
+          <span className="font-data text-[12px] text-[var(--ink-2)] uppercase tracking-widest">{t.profilePickupNotes}</span>
+          {!editing && (
+            <button
+              onClick={() => setEditing(true)}
+              className="font-data text-[10px] uppercase tracking-widest text-[var(--ink-3)] hover:text-[var(--ink)] bg-transparent border-none cursor-pointer"
+            >
+              {t.profileEdit}
+            </button>
+          )}
+        </div>
+        {editing ? (
+          <div className="flex flex-col gap-2">
+            <textarea
+              value={pickupNotes}
+              onChange={e => setPickupNotes(e.target.value)}
+              rows={3}
+              maxLength={400}
+              placeholder={t.profilePickupNotesHelp}
+              className="w-full px-3 py-2 border-[1.5px] border-[var(--ink)] bg-[var(--paper)] font-body text-[13px] outline-none focus:border-[var(--green)] resize-none"
+            />
+            <div className="flex gap-2">
+              <Button variant="primary" onClick={handleSave} disabled={saving}>{t.profileSave}</Button>
+              <Button variant="ghost" onClick={() => setEditing(false)}>{t.profileCancel}</Button>
+            </div>
+          </div>
+        ) : profile?.pickup_notes ? (
+          <p className="font-body text-[14px] text-[var(--ink)] m-0 whitespace-pre-line">{profile.pickup_notes}</p>
+        ) : (
+          <p className="font-data text-[11px] text-[var(--ink-4)] m-0">{t.profilePickupNotesHelp}</p>
+        )}
       </Card>
 
       {/* Scan history */}
@@ -102,17 +245,25 @@ function UserProfile({ profile, session, t, language }) {
 }
 
 function BuyerProfile({ profile, session, t, language }) {
+  const dispatch = useDispatch()
   const { shop } = useMyShop()
+  const { saving, uploadAvatar } = useProfileActions()
+  const avatarInputRef = useRef(null)
 
-  const [accepted,   setAccepted]   = useState(profile?.accepted_materials ?? [])
-  const [shopName,   setShopName]   = useState('')
-  const [shopArea,   setShopArea]   = useState('')
-  const [shopPhone,  setShopPhone]  = useState('')
-  const [shopLat,    setShopLat]    = useState(null)
-  const [shopLng,    setShopLng]    = useState(null)
-  const [shopRadius, setShopRadius] = useState(5)
-  const [isOpen,     setIsOpen]     = useState(true)
+  const [accepted,          setAccepted]          = useState(profile?.accepted_materials ?? [])
+  const [shopName,          setShopName]          = useState('')
+  const [shopArea,          setShopArea]          = useState('')
+  const [shopPhone,         setShopPhone]         = useState('')
+  const [shopPhoneDialCode, setShopPhoneDialCode] = useState('+66')
+  const [shopDesc,          setShopDesc]          = useState('')
+  const [shopLat,     setShopLat]     = useState(null)
+  const [shopLng,     setShopLng]     = useState(null)
+  const [shopRadius,  setShopRadius]  = useState(5)
+  const [shopOpensAt, setShopOpensAt] = useState('')
+  const [shopClosesAt,setShopClosesAt]= useState('')
+  const [isOpen,      setIsOpen]      = useState(true)
   const [editingShop, setEditingShop] = useState(false)
+  const [shopSaving,  setShopSaving]  = useState(false)
 
   // Sync shop data once loaded
   useEffect(() => {
@@ -121,13 +272,25 @@ function BuyerProfile({ profile, session, t, language }) {
       setShopName(shop.name ?? '')
       setShopArea(shop.area ?? '')
       setShopPhone(shop.phone ?? '')
+      setShopDesc(shop.description ?? '')
       setShopLat(shop.lat ?? null)
       setShopLng(shop.lng ?? null)
       setShopRadius(shop.pickup_radius_km ?? 5)
+      setShopOpensAt(shop.opens_at ?? '')
+      setShopClosesAt(shop.closes_at ?? '')
       setIsOpen(shop.is_open ?? true)
     }
     sync()
   }, [shop])
+
+  async function handleAvatarChange(e) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    e.target.value = ''
+    const res = await uploadAvatar(file)
+    if (!res.ok) toast.error(res.error ?? t.errorGeneric)
+    else toast.success(t.shopUpdated)
+  }
 
   function toggleMaterial(mat) {
     setAccepted(a => a.includes(mat) ? a.filter(m => m !== mat) : [...a, mat])
@@ -135,26 +298,45 @@ function BuyerProfile({ profile, session, t, language }) {
 
   async function handleSaveMaterials() {
     if (!session?.user?.id) return
-    await supabase.from('user_profiles').update({ accepted_materials: accepted }).eq('id', session.user.id)
+    const { error } = await supabase
+      .from('user_profiles')
+      .update({ accepted_materials: accepted })
+      .eq('id', session.user.id)
+    if (error) { toast.error(error.message ?? t.errorGeneric); return }
+    dispatch(setProfile({ ...profile, accepted_materials: accepted }))
+    dispatch(setAcceptedMaterials(accepted))
     toast.success(t.shopUpdated)
   }
 
   async function handleSaveShop() {
-    if (!shop?.id) return
-    const { error } = await supabase
-      .from('shops')
-      .update({
-        name:              shopName.trim(),
-        area:              shopArea.trim(),
-        phone:             shopPhone.trim() || null,
-        lat:               shopLat,
-        lng:               shopLng,
-        pickup_radius_km:  shopRadius,
-      })
-      .eq('id', shop.id)
-    if (error) { toast.error(error.message); return }
-    toast.success(t.saveShopInfo)
-    setEditingShop(false)
+    if (!shop?.id) {
+      toast.error(language === 'th' ? 'ไม่พบข้อมูลร้านค้า' : 'Shop data not loaded — please refresh')
+      return
+    }
+    setShopSaving(true)
+    try {
+      const { error } = await supabase
+        .from('shops')
+        .update({
+          name:             shopName.trim(),
+          area:             shopArea.trim(),
+          phone:            shopPhone.trim() || null,
+          description:      shopDesc.trim() || null,
+          lat:              shopLat,
+          lng:              shopLng,
+          pickup_radius_km: shopRadius,
+          opens_at:         shopOpensAt || null,
+          closes_at:        shopClosesAt || null,
+        })
+        .eq('id', shop.id)
+      if (error) throw error
+      toast.success(t.saveShopInfo)
+      setEditingShop(false)
+    } catch (err) {
+      toast.error(err?.message ?? t.errorGeneric)
+    } finally {
+      setShopSaving(false)
+    }
   }
 
   function handleUseMyLocation() {
@@ -169,12 +351,13 @@ function BuyerProfile({ profile, session, t, language }) {
     if (!shop?.id) return
     const next = !isOpen
     setIsOpen(next)
-    try {
-      await supabase.from('shops').update({ is_open: next }).eq('id', shop.id)
-      toast.success(next ? t.shopResumeIntake : t.shopPauseIntake)
-    } catch {
+    const { error } = await supabase.from('shops').update({ is_open: next }).eq('id', shop.id)
+    if (error) {
       setIsOpen(!next)
+      toast.error(error.message ?? t.errorGeneric)
+      return
     }
+    toast.success(next ? t.shopResumeIntake : t.shopPauseIntake)
   }
 
   return (
@@ -182,12 +365,26 @@ function BuyerProfile({ profile, session, t, language }) {
       {/* Identity card */}
       <Card className="w-full max-w-2xl flex flex-col gap-4">
         <div className="flex items-center gap-4">
-          <Avatar name={profile?.display_name ?? 'B'} />
-          <div>
+          <div className="flex flex-col items-center gap-1 flex-shrink-0">
+            <AvatarDisplay url={profile?.avatar_url} name={profile?.display_name ?? 'B'} />
+            <button
+              type="button"
+              onClick={() => avatarInputRef.current?.click()}
+              disabled={saving}
+              className="font-data text-[9px] text-[var(--ink-3)] uppercase tracking-widest bg-transparent border-none cursor-pointer hover:text-[var(--ink)] disabled:opacity-40"
+            >
+              {saving ? t.uploadingPhoto : t.profileAvatarUpload}
+            </button>
+            <input ref={avatarInputRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarChange} />
+          </div>
+          <div className="flex-1 min-w-0">
             <p className="font-body text-[17px] text-[var(--ink)] m-0 font-semibold">
               {profile?.display_name ?? 'Shop Owner'}
             </p>
             <p className="font-data text-[11px] text-[var(--ink-3)] m-0">{session?.user?.email}</p>
+            {!profile?.avatar_url && (
+              <p className="font-data text-[10px] text-[var(--orange)] m-0 mt-1">{t.shopVerifiedHint}</p>
+            )}
             <span className="inline-block mt-1 px-2 py-0.5 bg-[var(--paper-2)] border-[1px] border-[var(--ink-4)] font-data text-[10px] text-[var(--ink-3)] uppercase">
               {t.roleBuyer}
             </span>
@@ -232,6 +429,7 @@ function BuyerProfile({ profile, session, t, language }) {
                 type="text"
                 value={shopName}
                 onChange={e => setShopName(e.target.value)}
+                maxLength={80}
                 className="w-full px-3 py-2 border-[1.5px] border-[var(--ink)] bg-[var(--paper)] font-body text-[15px] outline-none focus:border-[var(--green)]"
               />
             </div>
@@ -241,18 +439,51 @@ function BuyerProfile({ profile, session, t, language }) {
                 type="text"
                 value={shopArea}
                 onChange={e => setShopArea(e.target.value)}
+                maxLength={100}
                 className="w-full px-3 py-2 border-[1.5px] border-[var(--ink)] bg-[var(--paper)] font-body text-[15px] outline-none focus:border-[var(--green)]"
               />
             </div>
             <div className="flex flex-col gap-1">
-              <label className="font-data text-[10px] text-[var(--ink-3)] uppercase tracking-widest">{t.shopPhone}</label>
-              <input
-                type="text"
+              <label className="font-data text-[10px] text-[var(--ink-3)] uppercase tracking-widest">{t.shopPhone} *</label>
+              <PhoneInput
                 value={shopPhone}
-                onChange={e => setShopPhone(e.target.value)}
-                placeholder="08X-XXX-XXXX"
-                className="w-full px-3 py-2 border-[1.5px] border-[var(--ink)] bg-[var(--paper)] font-body text-[15px] outline-none focus:border-[var(--green)]"
+                onChange={setShopPhone}
+                dialCode={shopPhoneDialCode}
+                onDialChange={setShopPhoneDialCode}
+                language={language}
+                inputClassName="flex-1 px-3 py-2 border-[1.5px] border-l-0 border-[var(--ink)] bg-[var(--paper)] font-body text-[15px] outline-none focus:border-[var(--green)]"
               />
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className="font-data text-[10px] text-[var(--ink-3)] uppercase tracking-widest">{t.shopDescription}</label>
+              <textarea
+                value={shopDesc}
+                onChange={e => setShopDesc(e.target.value)}
+                rows={3}
+                maxLength={500}
+                placeholder={t.shopDescriptionHelp}
+                className="w-full px-3 py-2 border-[1.5px] border-[var(--ink)] bg-[var(--paper)] font-body text-[13px] outline-none focus:border-[var(--green)] resize-none"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="flex flex-col gap-1">
+                <label className="font-data text-[10px] text-[var(--ink-3)] uppercase tracking-widest">{t.shopOpensAt}</label>
+                <input
+                  type="time"
+                  value={shopOpensAt}
+                  onChange={e => setShopOpensAt(e.target.value)}
+                  className="w-full px-3 py-2 border-[1.5px] border-[var(--ink)] bg-[var(--paper)] font-data text-[14px] outline-none focus:border-[var(--green)]"
+                />
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className="font-data text-[10px] text-[var(--ink-3)] uppercase tracking-widest">{t.shopClosesAt}</label>
+                <input
+                  type="time"
+                  value={shopClosesAt}
+                  onChange={e => setShopClosesAt(e.target.value)}
+                  className="w-full px-3 py-2 border-[1.5px] border-[var(--ink)] bg-[var(--paper)] font-data text-[14px] outline-none focus:border-[var(--green)]"
+                />
+              </div>
             </div>
             <div className="flex flex-col gap-1">
               <label className="font-data text-[10px] text-[var(--ink-3)] uppercase tracking-widest">{t.shopLocation}</label>
@@ -276,19 +507,30 @@ function BuyerProfile({ profile, session, t, language }) {
               <input
                 type="number"
                 min="1"
+                max="100"
                 step="0.5"
                 value={shopRadius}
                 onChange={e => setShopRadius(parseFloat(e.target.value) || 5)}
                 className="w-32 px-3 py-2 border-[1.5px] border-[var(--ink)] bg-[var(--paper)] font-data text-[15px] outline-none focus:border-[var(--green)]"
               />
             </div>
-            <Button variant="primary" onClick={handleSaveShop}>{t.saveShopInfo}</Button>
+            <Button variant="primary" onClick={handleSaveShop} disabled={shopSaving || !isPhoneValid(shopPhone, shopPhoneDialCode)}>
+              {shopSaving ? (language === 'th' ? 'กำลังบันทึก…' : 'Saving…') : t.saveShopInfo}
+            </Button>
           </div>
         ) : (
           <div className="flex flex-col gap-1">
             <span className="font-body text-[15px] text-[var(--ink)]">{shopName || '—'}</span>
             {shopArea && <span className="font-data text-[11px] text-[var(--ink-3)]">{shopArea}</span>}
             {shopPhone && <span className="font-data text-[11px] text-[var(--ink-3)]">{shopPhone}</span>}
+            {shopDesc && (
+              <p className="font-body text-[13px] text-[var(--ink-2)] m-0 mt-1 whitespace-pre-line">{shopDesc}</p>
+            )}
+            {(shopOpensAt || shopClosesAt) && (
+              <span className="font-data text-[11px] text-[var(--ink-3)]">
+                {shopOpensAt} – {shopClosesAt}
+              </span>
+            )}
             {shopLat != null && shopLng != null && (
               <span className="font-data text-[11px] text-[var(--ink-3)]">
                 {shopLat.toFixed(5)}, {shopLng.toFixed(5)}
@@ -345,7 +587,7 @@ function AdminProfile({ profile, session, t }) {
   return (
     <Card className="w-full max-w-2xl flex flex-col gap-4">
       <div className="flex items-center gap-4">
-        <Avatar name={profile?.display_name ?? 'A'} />
+        <AvatarDisplay url={profile?.avatar_url} name={profile?.display_name ?? 'A'} />
         <div>
           <p className="font-body text-[17px] text-[var(--ink)] m-0 font-semibold">
             {profile?.display_name ?? 'Admin'}

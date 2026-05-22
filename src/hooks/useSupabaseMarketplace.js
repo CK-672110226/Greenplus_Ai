@@ -22,15 +22,27 @@ export function useSupabaseMarketplace() {
 
         if (fetchErr) throw fetchErr
         if (data) {
+          const userIds = [...new Set(data.map(p => p.user_id).filter(Boolean))]
+          let shopHours = {}
+          if (userIds.length > 0) {
+            const { data: shops } = await supabase
+              .from('shops')
+              .select('owner_id, opens_at, closes_at')
+              .in('owner_id', userIds)
+            if (shops) shops.forEach(s => { shopHours[s.owner_id] = { opensAt: s.opens_at, closesAt: s.closes_at } })
+          }
           setPosts(data.map(p => ({
             id:           p.id,
             materialType: p.material_type,
-            grade:        p.grade,
             qty:          p.quantity_kg,
             pricePerKg:   p.price_per_kg,
             shop:         p.user?.display_name ?? '',
+            contact:      p.contact ?? '',
+            image_url:    p.image_url ?? null,
             flagged:      p.flagged ?? false,
             distanceKm:   null,
+            opensAt:      shopHours[p.user_id]?.opensAt ?? null,
+            closesAt:     shopHours[p.user_id]?.closesAt ?? null,
           })))
         }
       } catch (err) {
@@ -50,9 +62,10 @@ export function useSupabaseMarketplace() {
         .insert({
           user_id:       session.user.id,
           material_type: payload.materialType,
-          grade:         payload.grade,
           quantity_kg:   payload.qty,
           price_per_kg:  payload.pricePerKg,
+          contact:       payload.contact || null,
+          image_url:     payload.image_url || null,
           status:        'active',
         })
         .select('*, user:user_id(display_name)')
@@ -62,10 +75,11 @@ export function useSupabaseMarketplace() {
       setPosts(prev => [{
         id:           data.id,
         materialType: data.material_type,
-        grade:        data.grade,
         qty:          data.quantity_kg,
         pricePerKg:   data.price_per_kg,
         shop:         data.user?.display_name ?? payload.shop ?? '',
+        contact:      data.contact ?? '',
+        image_url:    data.image_url ?? null,
         flagged:      false,
         distanceKm:   null,
       }, ...prev])

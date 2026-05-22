@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import { useT } from '../hooks/useT'
@@ -10,21 +10,13 @@ import { useSupabaseMarketplace } from '../hooks/useSupabaseMarketplace'
 import { useMarketPricing } from '../hooks/useMarketPricing'
 
 const MATERIAL_KEYS = Object.keys(WASTE_ITEMS)
-const GRADES = ['A', 'B', 'C']
 
-/* ── Grade badge ─────────────────────────────────────────────────── */
-function GradeBadge({ grade }) {
-  const cls = {
-    A: 'border-[var(--green)] bg-[var(--green-soft)] text-[var(--green-ink)]',
-    B: 'border-[var(--ink)] text-[var(--ink)]',
-    C: 'border-[var(--orange)] text-[var(--orange)]',
-  }[grade] ?? 'border-[var(--ink-4)] text-[var(--ink-3)]'
-
-  return (
-    <span className={`font-data text-[11px] uppercase tracking-widest px-2 py-0.5 border-[1.5px] shrink-0 ${cls}`}>
-      {grade ?? '—'}
-    </span>
-  )
+function isOpenNow(opensAt, closesAt) {
+  if (!opensAt || !closesAt) return null
+  const now = new Date()
+  const pad = n => String(n).padStart(2, '0')
+  const nowStr = `${pad(now.getHours())}:${pad(now.getMinutes())}`
+  return nowStr >= opensAt && nowStr < closesAt
 }
 
 /* ── Individual listing card ─────────────────────────────────────── */
@@ -34,12 +26,31 @@ function ListingCard({ post, language, t }) {
     ? (WASTE_ITEMS[post.materialType]?.nameTh ?? post.materialType)
     : (WASTE_ITEMS[post.materialType]?.nameEn ?? post.materialType)
 
+  const openStatus = isOpenNow(post.opensAt, post.closesAt)
+
   return (
-    <div className="flex flex-col gap-2 p-4 border-[1.5px] border-[var(--ink)] bg-[var(--paper)] shadow-[2px_2px_0_var(--ink)]">
+    <div className="flex flex-col gap-2 border-[1.5px] border-[var(--ink)] bg-[var(--paper)] shadow-[2px_2px_0_var(--ink)] overflow-hidden">
+      {post.image_url && (
+        <img
+          src={post.image_url}
+          alt={name}
+          className="w-full h-36 object-cover border-b-[1.5px] border-[var(--ink)]"
+        />
+      )}
+      <div className="flex flex-col gap-2 p-4 pt-3">
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2 min-w-0">
-          <GradeBadge grade={post.grade} />
           <span className="font-body text-[16px] text-[var(--ink)] truncate">{name}</span>
+          {openStatus !== null && (
+            <span className={[
+              'font-data text-[9px] uppercase tracking-widest px-1.5 py-0.5 border-[1px] shrink-0',
+              openStatus
+                ? 'border-[var(--green-ink)] text-[var(--green-ink)] bg-[var(--green-soft)]'
+                : 'border-[var(--ink-3)] text-[var(--ink-3)] bg-[var(--paper-2)]',
+            ].join(' ')}>
+              {openStatus ? (t.openNow ?? 'Open') : (t.closed ?? 'Closed')}
+            </span>
+          )}
         </div>
         <span className="font-data text-[18px] text-[var(--green-ink)] shrink-0 leading-none">
           ฿{(post.pricePerKg ?? 0).toFixed(0)}/kg
@@ -62,6 +73,7 @@ function ListingCard({ post, language, t }) {
           {t.contactSeller} →
         </button>
       </div>
+      </div>
     </div>
   )
 }
@@ -71,10 +83,11 @@ function PostAdForm({ onClose, onAdd, marketPrice }) {
   const t        = useT()
   const dispatch = useDispatch()
   const language = useSelector(s => s.user.language)
+  const session  = useSelector(s => s.user.session)
+  const imgRef   = useRef(null)
 
   const [form, setForm] = useState({
     materialType: MATERIAL_KEYS[0],
-    grade:        'A',
     qty:          '',
     pricePerKg:   '',
     contact:      '',
@@ -82,16 +95,49 @@ function PostAdForm({ onClose, onAdd, marketPrice }) {
     lat:          null,
     lng:          null,
   })
+  const [imageFile,    setImageFile]    = useState(null)
+  const [imagePreview, setImagePreview] = useState(null)
+  const [uploading,    setUploading]    = useState(false)
+
   function set(k, v) { setForm(prev => ({ ...prev, [k]: v })) }
+
+  function handleImageSelect(e) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    e.target.value = ''
+    setImageFile(file)
+    setImagePreview(URL.createObjectURL(file))
+  }
+
+  async function uploadImage() {
+    if (!imageFile || !session?.user?.id) return null
+    const { supabase: sb } = await import('../lib/supabase')
+    const ext  = imageFile.name.split('.').pop().toLowerCase()
+    const path = `${session.user.id}/${Date.now()}.${ext}`
+    const { error } = await sb.storage
+      .from('marketplace-images')
+      .upload(path, imageFile, { contentType: imageFile.type, upsert: false })
+    if (error) return null
+    const { data: { publicUrl } } = sb.storage.from('marketplace-images').getPublicUrl(path)
+    return publicUrl
+  }
 
   async function handleSubmit(e) {
     e.preventDefault()
     if (!form.qty || !form.pricePerKg) { toast.error(t.requiredFields); return }
+    setUploading(true)
+    let image_url = null
+    try {
+      if (imageFile) image_url = await uploadImage()
+    } finally {
+      setUploading(false)
+    }
     const payload = {
       ...form,
-      qty:         Number(form.qty),
-      pricePerKg:  Number(form.pricePerKg),
-      distanceKm:  0,
+      qty:        Number(form.qty),
+      pricePerKg: Number(form.pricePerKg),
+      distanceKm: 0,
+      image_url,
     }
     if (onAdd) {
       const res = await onAdd(payload)
@@ -103,7 +149,7 @@ function PostAdForm({ onClose, onAdd, marketPrice }) {
     onClose()
   }
 
-  const suggested = marketPrice(form.materialType, true) ?? pricePerKg(form.materialType, true)
+  const suggested = marketPrice(form.materialType) ?? pricePerKg(form.materialType)
 
   return (
     <div className="fixed inset-0 bg-[#1A1A1Ae6] flex items-end justify-center z-50 sm:items-center sm:p-4">
@@ -131,29 +177,12 @@ function PostAdForm({ onClose, onAdd, marketPrice }) {
             </select>
           </div>
 
-          {/* Grade */}
-          <div className="flex flex-col gap-1">
-            <label className="font-data text-[10px] text-[var(--ink-3)] uppercase tracking-widest">{t.gradeLabel}</label>
-            <div className="flex gap-2">
-              {GRADES.map(g => (
-                <button
-                  key={g}
-                  type="button"
-                  onClick={() => set('grade', g)}
-                  className={`flex-1 py-2 font-data text-[13px] uppercase tracking-widest border-[1.5px] border-[var(--ink)] transition-colors cursor-pointer ${form.grade === g ? 'bg-[var(--ink)] text-[var(--paper)]' : 'bg-transparent text-[var(--ink)] hover:bg-[var(--paper-2)]'}`}
-                >
-                  {g}
-                </button>
-              ))}
-            </div>
-          </div>
-
           {/* Weight + Price */}
           <div className="grid grid-cols-2 gap-3">
             <div className="flex flex-col gap-1">
               <label className="font-data text-[10px] text-[var(--ink-3)] uppercase tracking-widest">{t.weightKg}</label>
               <input
-                type="number" min="0.1" step="0.1" required
+                type="number" min="0.1" max="10000" step="0.1" required
                 value={form.qty} onChange={e => set('qty', e.target.value)}
                 placeholder="kg"
                 className="w-full px-3 py-2 border-[1.5px] border-[var(--ink)] bg-[var(--paper)] font-body text-[15px] outline-none focus:border-[var(--green)]"
@@ -167,7 +196,7 @@ function PostAdForm({ onClose, onAdd, marketPrice }) {
                 )}
               </label>
               <input
-                type="number" min="0" step="0.1" required
+                type="number" min="0" max="9999" step="0.1" required
                 value={form.pricePerKg} onChange={e => set('pricePerKg', e.target.value)}
                 className="w-full px-3 py-2 border-[1.5px] border-[var(--ink)] bg-[var(--paper)] font-body text-[15px] outline-none focus:border-[var(--green)]"
               />
@@ -179,6 +208,7 @@ function PostAdForm({ onClose, onAdd, marketPrice }) {
             <label className="font-data text-[10px] text-[var(--ink-3)] uppercase tracking-widest">{t.shopName}</label>
             <input
               type="text"
+              maxLength={80}
               value={form.shop} onChange={e => set('shop', e.target.value)}
               className="w-full px-3 py-2 border-[1.5px] border-[var(--ink)] bg-[var(--paper)] font-body text-[15px] outline-none focus:border-[var(--green)]"
             />
@@ -189,6 +219,7 @@ function PostAdForm({ onClose, onAdd, marketPrice }) {
             <label className="font-data text-[10px] text-[var(--ink-3)] uppercase tracking-widest">{t.contactInfo}</label>
             <input
               type="text"
+              maxLength={50}
               value={form.contact} onChange={e => set('contact', e.target.value)}
               placeholder="LINE / Tel"
               className="w-full px-3 py-2 border-[1.5px] border-[var(--ink)] bg-[var(--paper)] font-body text-[15px] outline-none focus:border-[var(--green)]"
@@ -222,7 +253,25 @@ function PostAdForm({ onClose, onAdd, marketPrice }) {
             </div>
           </div>
 
-          <Button type="submit" variant="primary" fullWidth>{t.postAd}</Button>
+          {/* Image upload */}
+          <div className="flex flex-col gap-1">
+            <label className="font-data text-[10px] text-[var(--ink-3)] uppercase tracking-widest">{t.mpImageLabel}</label>
+            {imagePreview && (
+              <img src={imagePreview} alt="preview" className="w-full h-32 object-cover border-[1.5px] border-[var(--ink)] mb-1" />
+            )}
+            <button
+              type="button"
+              onClick={() => imgRef.current?.click()}
+              className="px-3 py-2 font-data text-[11px] uppercase tracking-widest border-[1.5px] border-[var(--ink-4)] bg-transparent hover:border-[var(--ink)] transition-colors cursor-pointer text-left text-[var(--ink-3)] hover:text-[var(--ink)]"
+            >
+              {imageFile ? imageFile.name : t.mpImageHelp}
+            </button>
+            <input ref={imgRef} type="file" accept="image/*" className="hidden" onChange={handleImageSelect} />
+          </div>
+
+          <Button type="submit" variant="primary" fullWidth disabled={uploading}>
+            {uploading ? t.uploadingPhoto : t.postAd}
+          </Button>
         </form>
       </div>
     </div>
@@ -243,19 +292,7 @@ export function MarketplacePage() {
     if (posts.length > 0) dispatch(setPosts(posts))
   }, [posts, dispatch])
 
-  const [gradeFilter, setGradeFilter] = useState('all')
-  const [isPosting,   setIsPosting]   = useState(false)
-
-  const filtered = gradeFilter === 'all'
-    ? posts
-    : posts.filter(p => p.grade === gradeFilter)
-
-  const GRADE_TABS = [
-    { key: 'all', label: t.filterAll },
-    { key: 'A',   label: t.filterA   },
-    { key: 'B',   label: t.filterB   },
-    { key: 'C',   label: t.filterC   },
-  ]
+  const [isPosting, setIsPosting] = useState(false)
 
   // Bottom inset: user role has a 68px bottom tab bar, buyer does not
   const bottomInset = role === 'user' ? 'bottom-[76px]' : 'bottom-4'
@@ -272,25 +309,6 @@ export function MarketplacePage() {
           {t.marketplaceTitle}
         </h1>
 
-        {/* Grade filter tabs */}
-        <div className="overflow-x-auto scrollbar-hide mt-4">
-          <div className="flex gap-2 flex-nowrap min-w-max pb-1">
-            {GRADE_TABS.map(tab => (
-              <button
-                key={tab.key}
-                onClick={() => setGradeFilter(tab.key)}
-                className={[
-                  'px-3 py-1.5 font-data text-[11px] uppercase tracking-widest border-[1.5px] transition-colors cursor-pointer whitespace-nowrap',
-                  gradeFilter === tab.key
-                    ? 'bg-[var(--ink)] text-[var(--paper)] border-[var(--ink)]'
-                    : 'bg-transparent text-[var(--ink-3)] border-[var(--ink-4)] hover:border-[var(--ink)] hover:text-[var(--ink)]',
-                ].join(' ')}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </div>
-        </div>
       </div>
 
       {/* Listing cards */}
@@ -302,14 +320,14 @@ export function MarketplacePage() {
             <div className="h-24 bg-[var(--paper-2)] animate-pulse border-[1.5px] border-[var(--ink-4)]" />
           </>
         )}
-        {!loading && filtered.length === 0 && (
+        {!loading && posts.length === 0 && (
           <div className="flex items-center justify-center py-20">
             <span className="font-data text-[11px] text-[var(--ink-4)] uppercase tracking-widest">
               {t.noListings}
             </span>
           </div>
         )}
-        {!loading && filtered.map((post, idx) => (
+        {!loading && posts.map((post, idx) => (
           <ListingCard
             key={post.id ?? idx}
             post={post}

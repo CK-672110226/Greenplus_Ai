@@ -159,10 +159,8 @@ These rules govern all AI-assisted work in this repository.
 
 ### Mandatory workflow for every task
 
-1. Review relevant history files in `HistoryVersions/` **before** planning or editing code.
-2. Read versions from `.00` through latest in ascending order for the target scope.
-3. Make focused changes only to files required by the task.
-4. After completing changes, create a new history version file.
+1. Make focused changes only to files required by the task.
+2. After completing changes, create a new history version file.
 
 ### History file structure
 

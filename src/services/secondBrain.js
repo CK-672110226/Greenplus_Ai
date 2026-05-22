@@ -22,11 +22,6 @@ export const DEFAULT_SYSTEM_PROMPT = [
   'Use ONLY these exact materialType identifiers:',
   MATERIAL_LINES,
   '',
-  '## GRADING CRITERIA',
-  '  A — Clean, dry, uncontaminated, structurally intact. Full market value.',
-  '  B — Slightly soiled, minor surface stains, small dents. Acceptable quality.',
-  '  C — Heavily soiled, contaminated, broken, or mixed with foreign material.',
-  '',
   '## WEIGHT ESTIMATION (estimatedWeight in kg)',
   '  Estimate based on the described quantity/size. Use typical unit weights:',
   '  • PET bottle: 0.01–0.05 kg  • Aluminum can: 0.01–0.02 kg',
@@ -41,17 +36,17 @@ export const DEFAULT_SYSTEM_PROMPT = [
   '',
   '## OUTPUT FORMAT',
   'Return ONLY a valid JSON object. No markdown fences. No text outside the JSON.',
-  'Schema: {"materialType":string,"grade":"A"|"B"|"C","estimatedWeight":number,"confidence":number,"explanation":string}',
+  'Schema: {"materialType":string,"estimatedWeight":number,"confidence":number,"explanation":string}',
   '',
   '## EXAMPLES',
   'Input: "3 clear empty plastic water bottles, clean and dry"',
-  'Output: {"materialType":"pet_bottle_clear","grade":"A","estimatedWeight":0.08,"confidence":0.95,"explanation":"Clear PET bottles (ขวด PET ใส), clean and empty — Grade A."}',
+  'Output: {"materialType":"pet_bottle_clear","estimatedWeight":0.08,"confidence":0.95,"explanation":"Clear PET bottles (ขวด PET ใส), clean and empty."}',
   '',
   'Input: "old newspaper pile with some food stains"',
-  'Output: {"materialType":"newspaper","grade":"C","estimatedWeight":1.5,"confidence":0.82,"explanation":"Newspaper (หนังสือพิมพ์) with food contamination — Grade C reduces value."}',
+  'Output: {"materialType":"newspaper","estimatedWeight":1.5,"confidence":0.82,"explanation":"Newspaper (หนังสือพิมพ์) with food contamination — value reduced."}',
   '',
   'Input: "something metal, hard to tell what it is"',
-  'Output: {"materialType":"aluminum_can","grade":"B","estimatedWeight":0.05,"confidence":0.35,"explanation":"Possibly metal — insufficient detail. Low confidence."}',
+  'Output: {"materialType":"aluminum_can","estimatedWeight":0.05,"confidence":0.35,"explanation":"Possibly metal — insufficient detail. Low confidence."}',
 ].join('\n')
 
 const API_TIMEOUT_MS = 15_000
@@ -100,7 +95,7 @@ export async function classifyWaste(description, config = {}) {
     const json = JSON.parse(match[0])
 
     // Validate required keys before using the result
-    const REQUIRED = ['materialType', 'grade', 'estimatedWeight', 'confidence', 'explanation']
+    const REQUIRED = ['materialType', 'estimatedWeight', 'confidence', 'explanation']
     const missing  = REQUIRED.filter(k => json[k] === undefined)
     if (missing.length) throw new Error(`Response missing keys: ${missing.join(', ')}`)
 
@@ -142,15 +137,11 @@ function mockClassify(description) {
   else if (lower.includes('paper')     || lower.includes('หนังสือพิมพ์'))   materialType = 'newspaper'
   else if (lower.includes('pet')       || lower.includes('bottle') || lower.includes('ขวด')) materialType = 'pet_bottle_clear'
 
-  const score = 50 + Math.floor(Math.random() * 50)
-  const grade = score >= 80 ? 'A' : score >= 50 ? 'B' : 'C'
-
   return {
     materialType,
-    grade,
     estimatedWeight: +(0.1 + Math.random() * 0.9).toFixed(2),
     confidence:      +(0.6 + Math.random() * 0.35).toFixed(2),
-    explanation:     `Detected ${materialType.replace(/_/g, ' ')} from keywords. Grade ${grade}.`,
+    explanation:     `Detected ${materialType.replace(/_/g, ' ')} from keywords.`,
     source:          'mock',
   }
 }

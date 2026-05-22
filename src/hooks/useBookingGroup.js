@@ -38,14 +38,13 @@ export function useBookingGroup() {
       if (slotItems.length === 0) continue
       const groups = {}
       slotItems.forEach(item => {
-        if (!groups[item.materialType]) groups[item.materialType] = { weight_kg: 0, clean: item.clean ?? true }
+        if (!groups[item.materialType]) groups[item.materialType] = { weight_kg: 0 }
         groups[item.materialType].weight_kg += item.weight ?? 0
       })
-      const rows = Object.entries(groups).map(([material_type, { weight_kg, clean }]) => ({
+      const rows = Object.entries(groups).map(([material_type, { weight_kg }]) => ({
         shop_id:          slot.shop.id,
         seller_id:        session.user.id,
         material_type,
-        grade:            clean ? 'A' : 'C',
         weight_kg,
         status:           'searching',
         pickup_mode:      'onDemand',

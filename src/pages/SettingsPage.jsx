@@ -6,6 +6,7 @@ import { useT } from '../hooks/useT'
 import { SectionDivider } from '../components/SectionDivider'
 import { Button } from '../components/Button'
 import { useSettingsActions } from '../hooks/useSettingsActions'
+import { persistor } from '../store'
 import { toast } from 'sonner'
 
 function LangBtn({ active, onClick, children }) {
@@ -73,12 +74,13 @@ export function SettingsPage() {
 
   async function performDeleteAccount() {
     setDeleting(true)
-    try {
-      await settingsActions.deleteAccount(session.user.id)
+    const { ok, error } = await settingsActions.deleteAccount(session.user.id)
+    if (ok) {
       dispatch(clearUser())
+      persistor.purge()
       navigate('/')
-    } catch {
-      toast.error('Could not delete account. Please contact support.')
+    } else {
+      toast.error(error ?? 'Could not delete account. Please contact support.')
       setDeleting(false)
       setDeleteModal(false)
     }
@@ -86,7 +88,9 @@ export function SettingsPage() {
 
   async function handleExport() {
     if (!session?.user?.id) return
-    const { scans, bookings } = await settingsActions.exportData(session.user.id)
+    const { ok, data, error } = await settingsActions.exportData(session.user.id)
+    if (!ok) { toast.error(error ?? t.errorGeneric); return }
+    const { scans, bookings } = data
 
     function escapeCell(v) {
       return `"${String(v ?? '').replace(/"/g, '""')}"`

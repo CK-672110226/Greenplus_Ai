@@ -1,10 +1,17 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useSelector } from 'react-redux'
+import { toast } from 'sonner'
 import { supabase } from '../lib/supabase'
+import { useT } from './useT'
 
 export function useDriverAssignment() {
   const session = useSelector(s => s.user.session)
+  const t       = useT()
+  const tRef    = useRef(t)
   const [myAssignments, setMyAssignments] = useState([])
+  const prevIdsRef = useRef(null)
+
+  useEffect(() => { tRef.current = t }, [t])
 
   // Shop: list all is_driver users with load count for a given date
   const fetchAvailableDrivers = useCallback(async (date) => {
@@ -65,7 +72,7 @@ export function useDriverAssignment() {
       .from('bookings')
       .update({ driver_assignment_status: accept ? 'accepted' : 'rejected' })
       .eq('id', bookingId)
-    return !error
+    return { ok: !error, error: error?.message ?? null }
   }, [])
 
   // Driver: load + subscribe to own assignments
@@ -80,7 +87,26 @@ export function useDriverAssignment() {
         .eq('assigned_driver_id', session.user.id)
         .in('driver_assignment_status', ['invited', 'accepted'])
         .order('scheduled_for', { ascending: true })
-      setMyAssignments(data ?? [])
+
+      const rows = data ?? []
+
+      // Toast when a new invitation arrives (not on first load)
+      if (prevIdsRef.current !== null) {
+        const newInvited = rows.filter(
+          a => a.driver_assignment_status === 'invited' && !prevIdsRef.current.has(a.id)
+        )
+        if (newInvited.length > 0) {
+          const a       = newInvited[0]
+          const shop    = a.shops?.name ?? ''
+          const timeStr = a.scheduled_for
+            ? new Date(a.scheduled_for).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Bangkok' })
+            : ''
+          const tr = tRef.current
+          toast(`${tr.newAssignmentToast}${shop ? ` — ${shop}` : ''}${timeStr ? ` ${timeStr}` : ''}`)
+        }
+      }
+      prevIdsRef.current = new Set(rows.map(r => r.id))
+      setMyAssignments(rows)
     }
 
     load()

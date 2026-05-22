@@ -5,7 +5,6 @@ import { useNavigate } from 'react-router-dom'
 import { useT } from '../hooks/useT'
 import { Card } from '../components/Card'
 import { Button } from '../components/Button'
-import { GradeTag } from '../components/GradeTag'
 import { EmptyState } from '../components/EmptyState'
 import { SectionDivider } from '../components/SectionDivider'
 import { localName, WASTE_ITEMS } from '../data/wasteItems'
@@ -29,7 +28,7 @@ function distOf(shop, userLat, userLng) {
 
 function shopTotalFor(shop, activeItems, shopPrice, marketPrice) {
   return activeItems.reduce((sum, i) => {
-    const p = shopPrice(shop.id, i.materialType, i.clean ?? true) ?? marketPrice(i.materialType, i.clean ?? true)
+    const p = shopPrice(shop.id, i.materialType) ?? marketPrice(i.materialType)
     return sum + p * (i.weight ?? 0)
   }, 0)
 }
@@ -113,12 +112,11 @@ function BookingModal({ shop, estValue, onConfirm, onCancel }) {
 
 function ManualAddPanel({ t, language, onAdd }) {
   const [mat,    setMat]    = useState('')
-  const [clean,  setClean]  = useState(true)
   const [weight, setWeight] = useState('')
 
   function submit() {
     if (!mat || !weight || parseFloat(weight) <= 0) return
-    onAdd(mat, clean, parseFloat(weight))
+    onAdd(mat, parseFloat(weight))
     setWeight('')
   }
 
@@ -142,20 +140,10 @@ function ManualAddPanel({ t, language, onAdd }) {
         ))}
       </div>
       <div className="flex gap-2 items-center">
-        <div className="flex gap-1">
-          {[
-            { label: t.cleanLabel, val: true },
-            { label: t.dirtyLabel, val: false },
-          ].map(({ label, val }) => (
-            <button key={label} onClick={() => setClean(val)}
-              className={['px-3 h-8 font-data text-[11px] border-[1.5px] border-[var(--ink)]', clean === val ? 'bg-[var(--ink)] text-[var(--paper)]' : 'bg-[var(--paper)] text-[var(--ink)]'].join(' ')}>
-              {label}
-            </button>
-          ))}
-        </div>
         <input
           type="number"
           min="0.01"
+          max="10000"
           step="0.1"
           value={weight}
           onChange={e => setWeight(e.target.value)}
@@ -200,7 +188,7 @@ export function BasketPage() {
   const activeItems  = useMemo(() => basket.filter(i => !i.skipped), [basket])
   const basketMats   = [...new Set(basket.map(i => i.materialType))]
   const visibleItems = filterMat === 'all' ? basket : basket.filter(i => i.materialType === filterMat)
-  const total        = activeItems.reduce((sum, i) => sum + marketPrice(i.materialType, i.clean ?? true) * (i.weight ?? 0), 0)
+  const total        = activeItems.reduce((sum, i) => sum + marketPrice(i.materialType) * (i.weight ?? 0), 0)
 
   // Sync phase from hook to onDemandStep
   useEffect(() => {
@@ -244,11 +232,10 @@ export function BasketPage() {
     setBookingShop(null)
   }
 
-  function handleManualAdd(mat, clean, weight) {
+  function handleManualAdd(mat, weight) {
     dispatch(addToBasket({
       id:           `manual-${Date.now()}`,
       materialType: mat,
-      clean,
       weight,
       confidence:   1,
       source:       'manual',
@@ -345,13 +332,12 @@ export function BasketPage() {
           {/* Basket items list */}
           <div className="flex flex-col gap-3">
             {visibleItems.map(item => {
-              const unitPrice = marketPrice(item.materialType, item.clean ?? true)
+              const unitPrice = marketPrice(item.materialType)
               const lineTotal = unitPrice * (item.weight ?? 0)
               return (
                 <Card key={item.id} className={`flex flex-col gap-3 ${item.skipped ? 'opacity-40' : ''}`}>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <GradeTag clean={item.clean} />
                       <span className={`font-body text-[15px] text-[var(--ink)]${item.skipped ? ' line-through' : ''}`}>
                         {localName(item.materialType, language)}
                       </span>
@@ -367,6 +353,7 @@ export function BasketPage() {
                     <input
                       type="number"
                       min="0.01"
+                      max="10000"
                       step="0.01"
                       value={item.weight ?? 0}
                       onChange={e => dispatch(updateWeight({ id: item.id, weight: parseFloat(e.target.value) || 0 }))}
