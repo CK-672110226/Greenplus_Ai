@@ -1,216 +1,384 @@
----
-project: GreenPlus Ai
-register: product
-language: bilingual (Thai primary, English peer)
-personality: Honest · Practical · Community
-generated: 2026-05-21
----
+# GreenPlus Ai — Project Design Document
 
-# Design System
-
-## Overview
-
-GreenPlus Ai uses a **neo-brutalist product aesthetic**: ink-on-paper surfaces, flat offset shadows, crisp 1.5px borders, and monospace data type. Nothing is softened by blur, gradient, or rounded corner. The visual language signals that data is unmediated — a price, a grade, a route — not dressed up for confidence or comfort.
-
-The palette is deliberately off-white (warm paper, not pure white) with a single green accent kept well below saturation. Color earns its place only when it carries meaning: green = accepted/value, orange = warning/status, blue = location/map. Decorative color is absent.
-
-Typography splits cleanly by register: `font-brand` (Architects Daughter + Mitr) for display and heading hierarchy; `font-body` (Caveat + Sarabun) for prose; `font-data` (JetBrains Mono + IBM Plex Sans Thai) for every piece of structured information — prices, weights, labels, tags, timestamps. The data font is the workhorse; it appears on ~70% of UI surfaces.
-
-Both Thai and Latin scripts are peers, not translations of each other. Font stacks are paired: every English face has a Thai equivalent at the same weight and optical size.
-
-The UI is mobile-first and outdoors-legible: 44px minimum tap targets, WCAG 2.1 AA contrast, and animations that respect `prefers-reduced-motion`.
+> อัปเดตล่าสุด: 22 พฤษภาคม 2569 (22 May 2026)  
+> สถานะของทุก feature สะท้อน production branch `main` ณ วันนี้
 
 ---
 
-## Colors
+## 1. Product Overview
 
-### Tokens
+GreenPlus Ai เป็น waste-to-value platform ที่เชื่อม **ผู้มีขยะรีไซเคิล** กับ **ร้านรับซื้อ** โดยใช้ AI สแกนประเมินราคาก่อนเดินทาง  
+Pilot zone: ย่านมช. / ตำบลสุเทพ เชียงใหม่ — bilingual TH/EN
 
-| Token | Light | Dark | Role |
-|---|---|---|---|
-| `--ink` | `#1A1A1A` | `#FAFAF7` | Primary text, borders, shadows |
-| `--ink-2` | `#3A3A3A` | `#D8D8D0` | Secondary text |
-| `--ink-3` | `#7A7A7A` | `#9A9A92` | Muted labels, placeholders |
-| `--ink-4` | `#B8B8B8` | `#4A4A48` | Disabled states, dividers |
-| `--paper` | `#FAFAF7` | `#151512` | Page background |
-| `--paper-2` | `#F1EFE8` | `#1E1E1A` | Card/section background |
-| `--green` | `#22C55E` | `#22C55E` | Primary action, accepted state |
-| `--green-soft` | `rgba(34,197,94,.14)` | `rgba(34,197,94,.18)` | Tinted highlight, avatar bg |
-| `--green-ink` | `#0F7A3A` | `#4ADE80` | Green text on light surface |
-| `--orange` | `#F59E0B` | `#FBBF24` | Warning, flagged, degraded |
-| `--blue` | `#5BC0BE` | `#5BC0BE` | Map, location, distance |
-| `--line` | `var(--ink-4)` | `var(--ink-4)` | Horizontal rules, section lines |
-| `--shadow` | `var(--ink)` | `var(--ink)` | Flat shadow color |
-
-### Strategy
-
-**Restrained** (one accent ≤10%). Paper backgrounds dominate. Green appears on primary CTAs, accepted-material indicators, and ProgressBar fills only. Orange is reserved for warnings and flagged posts. Blue is map-only. Everything else is ink on paper.
-
-### Rules
-
-- Never use raw hex in JSX. Always reference CSS tokens: `var(--green)` not `#22C55E`.
-- `--ink-5` does not exist. Scale stops at `--ink-4`.
-- Green text on light surfaces uses `--green-ink` (dark), not `--green` (light). On dark surfaces, `--green-ink` flips to `#4ADE80`.
-- Color is never the sole carrier of meaning. Grade labels, status chips, and trend indicators always pair color with a text label or symbol.
+**เป้าหมาย:** ผู้ขายเดินถูกร้าน ได้ราคาตรง ร้านรับซื้อเต็ม intake queue โดยไม่ต้องวิ่งหาซัพพลาย
 
 ---
 
-## Typography
+## 2. Roles
 
-### Font Stack
-
-| Class | Faces | Use |
-|---|---|---|
-| `font-brand` | Architects Daughter → Mitr → sans-serif | Display, H1, logo, large KPI numbers |
-| `font-body` | Caveat → Sarabun → sans-serif | Prose, form values, descriptions |
-| `font-data` | JetBrains Mono → IBM Plex Sans Thai → monospace | All structured data: prices, weights, labels, tags, timestamps |
-
-Base body: `font-body 17px / 1.5`, `--paper` background, `-webkit-font-smoothing: antialiased`.
-
-### Scale (observed)
-
-| Step | Size | Font | Weight | Case | Usage |
-|---|---|---|---|---|---|
-| Display | 32–34px | brand | regular | mixed | Homepage KPI values |
-| H1 | 28px | brand | regular | mixed | Page titles |
-| H2 / card value | 32px | brand | regular | mixed | `KpiCard` value |
-| Data large | 18px | data | regular | mixed | Marketplace price |
-| Body | 15–17px | body | regular | mixed | Card content, prose |
-| Label | 10–11px | data | regular | UPPERCASE | Section labels, field labels |
-| Sub-label | 9px | data | regular | UPPERCASE | Chart axes, timestamps |
-
-Tracking on labels: `tracking-widest` (≈0.15em). No letter-spacing on body or display text.
-
-### Rules
-
-- `font-data` for anything the user scans or acts on: prices, grades, weights, distances, times.
-- `font-brand` for hierarchy and display only — never for body copy.
-- Thai text is set in Mitr (brand), Sarabun (body), IBM Plex Sans Thai (data). These faces share optical sizing with their English counterparts.
-- Line length: cap prose at ~65ch with `max-w-prose` where applicable.
+| Role | คือใคร | เข้าระบบจาก |
+|------|--------|-------------|
+| `user` | ผู้ขาย (นักศึกษา, freelancer) — สแกนขยะ จองร้าน ติดตาม driver | `/` → Login → `/home` |
+| `buyer` | ร้านรับซื้อ — จัดการ order, ตั้งราคา, มอบหมาย driver | `/` → Login → `/dashboard` |
+| `buyer` + `is_driver:true` | พนักงาน/driver ของร้าน — รับงานและขับรับ | `/driver` |
+| `admin` | Moderator แพลตฟอร์ม — อนุมัติร้าน, ดูแล marketplace | `/x/admin` → `/admin` |
 
 ---
 
-## Elevation
+## 3. Navigation Structure
 
-GreenPlus Ai uses **flat offset shadows only**. There is no blur, no ambient glow, no layered shadow stack.
+### User Shell — `UserLayout`
+```
+TopBar (sticky, h:56px)
+  [G+ Logo]  [EN/TH toggle]  [basket icon + badge]
 
-### Shadow levels
+<page content>  (pb-68px)
 
-| Level | CSS | Usage |
-|---|---|---|
-| Resting | `box-shadow: 2px 2px 0 var(--ink)` | Cards, buttons, inputs, chips |
-| Lifted (hover) | `box-shadow: 3px 3px 0 var(--ink)` + `transform: translate(-1px,-1px)` | Card hover, interactive surfaces |
-| Pressed (active) | `box-shadow: none` + `transform: translate(2px,2px)` | Button press, active CTA |
-| Modal overlay | `box-shadow: 4px 4px 0 var(--ink)` | Modals, drawers |
-| None | — | Ghost buttons, dividers, nav items |
+BottomTabBar (fixed bottom, h:68px)
+  [Home] [Scan] [Basket🔴badge] [Map] [Profile]
+```
 
-### Borders
+### Buyer Shell — `BuyerLayout`
+```
+Desktop (≥768px):
+  Sidebar (fixed left, w:220px)
+    [G+ Logo]
+    Dashboard · Schedule · Pricing · Marketplace
+    Shop Setup (badge เมื่อยังไม่ onboard)
+    Driver Mode (ถ้า is_driver=true)
+    Chat (badge unread)
+    ─────
+    Profile · Settings · Sign Out
 
-- **Standard:** `1.5px solid var(--ink)` — cards, buttons, inputs, chips
-- **Quiet:** `1px solid var(--ink-4)` — dividers, secondary containers
-- No `border-radius` anywhere. Square corners are structural to the aesthetic.
+Mobile (<768px):
+  TopBar + BottomTabBar
+    [Dashboard] [Marketplace] [Driver*] [Chat] [Profile]
+    (* ถ้า is_driver=true)
+```
 
-### Depth model
-
-There is no z-axis depth implied by blur or opacity. Depth is communicated only through offset: a shadow at 2px means the element is "on" the surface; 4px means it's lifted above it. Pressing an element returns it to zero.
-
----
-
-## Components
-
-### Button
-
-Variants: `primary`, `secondary`, `ghost`.
-
-- `primary`: `--green` background, `#062040` text — primary CTAs only
-- `secondary`: `--paper` background, `--ink` text, full ink border + shadow — secondary actions
-- `ghost`: transparent, no border, no shadow — nav items, inline text actions
-- All variants: 1.5px ink border (except ghost), 2px flat shadow, 0.075s press transition
-- Minimum height: 44px (mobile tap target)
-- Disabled: `opacity: 0.5`, `cursor: not-allowed`
-
-### Card
-
-- Background: `--paper-2`
-- Border: `1.5px solid var(--ink)`
-- Shadow: `2px 2px 0 var(--ink)`, hover lifts to `3px 3px`
-- Padding: 1rem–1.25rem
-- Use only when the grouping is genuinely a distinct unit. No nested cards.
-
-### KpiCard
-
-Label → Value → Unit → Trend → Sub pattern.
-
-- Label: `font-data 10px` uppercase `--ink-3`
-- Value: `font-brand 2rem` `--ink`
-- Unit: `font-data 14px`
-- Trend up: `font-data 11px --green-ink`; trend down: `--orange`
-- Sub: `font-data 11px --ink-3`
-
-### Chip
-
-Inline status/category tag. Variants: `default`, `soft`, `green`, `orange`.
-
-- `default`: ink border, paper bg, ink text
-- `soft`: `--ink-4` border, `--paper-2` bg, `--ink-2` text
-- `green`: `--green-ink` border, `--green-soft` bg, `--green-ink` text
-- `orange`: `--orange` border, transparent bg, `--orange` text
-- Font: `font-data 11px` uppercase, `letter-spacing: 0.1em`
-
-### SectionDivider
-
-Thin horizontal rule with a label. Label: `font-data 10px --ink-3` uppercase. Line: `1px --ink-4`.
-
-### ProgressBar
-
-Track: `--paper-2` bg, `1.5px --ink` border. Fill: `--green`. Optional tick marks (ink, 30% opacity).
-
-### MiniLabel
-
-`font-data 9px --ink-3` uppercase, `letter-spacing: 0.15em`. Use for axis labels, secondary metadata.
-
-### Avatar
-
-Circular. Background: `--green-soft`. Text: `--green-ink` font-brand. Border: `1.5px --ink`. Shows initials or `<img>` when `avatar_url` present.
-
-### Skeleton
-
-Shimmer animation: `paper-2 → ink-4 → paper-2` gradient, 1.4s ease, disabled under `prefers-reduced-motion`.
-
-### NavBar / UserLayout bottom tabs
-
-NavBar: `border-b-[1.5px] --ink`. Logo: `font-brand 22px` with `--green` period. Lang toggle: `font-data 12px` ink-4 bordered pill.
-
-UserLayout bottom tab: fixed 68px, icon + label, active state in `--green-ink`.
+### Admin Shell
+```
+NavBar + full-width content
+ไม่มี sidebar — ใช้ tabs ภายใน AdminPage
+```
 
 ---
 
-## Do's and Don'ts
+## 4. Feature Map by Role
 
-### Do
+### 4.1 role: `user`
 
-- Use `font-data` for all prices, weights, distances, grades, timestamps, and field labels.
-- Pair every color signal with a text label (chip text, grade letter, trend symbol).
-- Apply `2px 2px 0 var(--ink)` shadow to every interactive surface that needs resting elevation.
-- Use `--paper-2` for card/section backgrounds; `--paper` for the page body.
-- Keep `--green` to primary CTAs and accepted-state indicators. Keep `--orange` to warnings only.
-- Respect `prefers-reduced-motion`: disable all keyframe animations; keep static states readable.
-- Minimum 44px tap height for all interactive elements on mobile.
-- Add new i18n keys to both `en.js` and `th.js` simultaneously.
-- Use CSS tokens in JSX — `var(--ink)` not `#1A1A1A`.
+| Route | หน้า | ฟีดเจอร์ | สถานะ |
+|-------|------|---------|-------|
+| `/home` | HomePage | KPI (kg, ฿, pending payout), hatch bar chart, recent scans, nearby shops | ✅ |
+| `/scan` | ScanPage | กล้อง AI 2-stage pipeline, batch queue, dirty/clean alert, add to basket, report misid | ✅ |
+| `/basket` | BasketPage | รายการ scan, weight editor, TSP route planner, GPS, book pickup | ✅ |
+| `/map` | MapPage | Leaflet map, shop markers (basket match), material filter, Open/Closed badge, directions | ✅ |
+| `/marketplace` | MarketplacePage | ตลาดโพสต์, Open/Closed badge (shop hours), Post Ad form | ✅ |
+| `/profile` | ProfilePage | Scan history, lifetime stats, avatar upload | ✅ |
+| `/notifications` | NotificationsPage | รายการแจ้งเตือน (Redux only — ไม่มี push จาก backend) | ⚠️ |
+| — | UserTrackingPanel | ติดตาม driver realtime, ETA, toast เมื่อ accepted/ใกล้มาถึง/arrived | ✅ |
 
-### Don't
+**Toast notifications (user role):**
+- Rider รับงาน → `"พบไรเดอร์แล้ว! กำลังมาหาคุณ"`
+- Driver ระยะ < 500m → `"ไรเดอร์ใกล้มาถึงแล้ว! เตรียมของได้เลย"` (ยิงครั้งเดียว/booking)
+- Driver arrived → `"ไรเดอร์มาถึงแล้ว! กรุณาออกมาพบ"`
 
-- No `border-radius`. Square corners throughout.
-- No blur shadows (`box-shadow` with blur > 0).
-- No gradient text (`background-clip: text`).
-- No gradient hero sections or decorative background gradients.
-- No leaf, globe, or earth icon sets. No eco-app visual language.
-- No streak counters, badge animations, or dopamine-loop UI patterns.
-- No `--ink-5` (doesn't exist).
-- No raw hex values in JSX — always use CSS tokens.
-- No side-stripe `border-left` or `border-right` as a colored accent on cards or callouts.
-- No `border-radius` on cards, chips, buttons, or inputs — square corners everywhere.
-- Don't use `--green` for text on light surfaces — use `--green-ink` instead.
-- Don't nest cards inside cards.
-- Don't add gamification copy ("You helped save X trees", streaks, confetti).
+---
+
+### 4.2 role: `buyer` (ร้านรับซื้อ)
+
+| Route | หน้า | ฟีดเจอร์ | สถานะ |
+|-------|------|---------|-------|
+| `/dashboard` | DashboardPage | Orders (accept/reject), Assign Driver modal, KPI, Bookings tab, pricing tab | ✅ |
+| `/schedule` | SchedulePage | Calendar week view, list view (morning/afternoon/evening), confirm/cancel/complete, **inline assign driver picker** | ✅ |
+| `/pricing` | PricingPage | ตั้งราคา per material, market rate comparison | ⚠️ local only |
+| `/marketplace` | MarketplacePage | ดูโพสต์, Post Ad | ✅ |
+| `/onboarding` | BuyerOnboardingPage | 3-step: shop info → materials → location + **opens_at / closes_at** | ✅ |
+| `/chat` | ChatPage | Real-time 1:1 chat กับผู้ขาย, offer modal | ✅ |
+| `/driver` | DriverDashboardPage | (ถ้า is_driver=true) ดูหัวข้อ driver ด้านล่าง | — |
+
+**Assign Driver Flow (SchedulePage):**
+1. ร้านเห็น booking ที่ confirmed ใน list view
+2. กด `+ Assign Driver` → inline picker แสดง driver ทุกคน + จำนวนงานวันนี้
+3. เลือก driver → ระบบเช็ค conflict ±30 นาที
+4. หากไม่ conflict → `driver_assignment_status: 'invited'`
+
+---
+
+### 4.3 role: `buyer` + `is_driver: true` (Driver)
+
+> Driver คือ user ของร้านที่ถูก flag `is_driver = true` ใน `user_profiles`  
+> สามารถมีได้หลายคนต่อร้าน — จัดการผ่าน AdminPage Users tab
+
+| Tab / ส่วน | ฟีดเจอร์ | สถานะ |
+|-----------|---------|-------|
+| Online/Offline toggle | อัปเดต `is_online` + เริ่ม GPS broadcast ทุก 30s | ✅ |
+| **Today's Jobs panel** | แสดง jobs ของวันนี้ (สีเขียว) sorted by time, invited/accepted badge | ✅ |
+| My Assignments tab | งานที่ร้านมอบหมาย (invited/accepted), accept/decline | ✅ |
+| Customer Pickups tab | on-demand orders ภายใน 5km radius | ✅ |
+| Inter-Shop Transfers tab | งานโอนวัสดุระหว่างร้าน (accept/cancel) | ✅ |
+| GPS tracking | `current_lat/lng` → `user_profiles` → Realtime → UserTrackingPanel (ฝั่ง user) | ✅ |
+| **Toast เมื่อได้งานใหม่** | Realtime subscription ตรวจ invited assignment ใหม่ → toast ชื่อร้าน + เวลา | ✅ |
+
+**Driver Assignment Columns (bookings table):**
+```
+assigned_driver_id        UUID  → user_profiles.id ของ driver
+driver_assignment_status  TEXT  → 'unassigned' | 'invited' | 'accepted' | 'rejected'
+```
+
+---
+
+### 4.4 role: `admin`
+
+| Tab | ฟีดเจอร์ | สถานะ |
+|-----|---------|-------|
+| Shops | pending list, approve/reject, active shops | ✅ |
+| Users | list all users, ban/unban, edit role, **avatar display** | ✅ |
+| Moderation | flag/remove marketplace posts | ✅ |
+| Logistics | **RiderAssignmentPanel** (assign driver to booking), **TransferJobsPanel** (create/cancel transfer jobs) | ✅ |
+| AI Studio | model registry, upload, activate/deploy | ✅ |
+| Heatmap | placeholder | ❌ |
+| System Monitor | presence (shops/users/drivers), anomaly rules, 30s refresh | ✅ |
+
+---
+
+## 5. Architecture
+
+```
+src/main.jsx
+  <StrictMode>
+    <Provider store>       ← Redux (12 slices)
+      <PersistGate>        ← redux-persist (waste + pricing slices)
+        <App />
+```
+
+```
+src/App.jsx
+  <AuthInitializer>        ← useAuth + useActiveModels + usePresence + darkMode sync
+    <SmartLayout>          ← role → UserLayout | BuyerLayout | NavBar shell
+      <Routes>
+        /              LandingPage
+        /login         LoginPage
+        /x/admin       AdminLoginPage
+        /home          HomePage            (user only)
+        /scan          ScanPage            (user only)
+        /basket        BasketPage          (user only)
+        /map           MapPage             (user only)
+        /marketplace   MarketplacePage     (user + buyer)
+        /profile       ProfilePage         (all)
+        /notifications NotificationsPage   (all)
+        /settings      SettingsPage        (all)
+        /chat          ChatPage            (buyer)
+        /dashboard     DashboardPage       (buyer)
+        /schedule      SchedulePage        (buyer)
+        /pricing       PricingPage         (buyer)
+        /onboarding    BuyerOnboardingPage (buyer)
+        /driver        DriverDashboardPage (buyer + is_driver)
+        /rider         RiderDashboardPage  (buyer only — on-demand mode)
+        /admin         AdminPage           (admin)
+```
+
+---
+
+## 6. Redux Store (12 slices)
+
+| Slice | Persist | ข้อมูลหลัก |
+|-------|---------|-----------|
+| `user` | ❌ | session, profile, language, darkMode, loading |
+| `waste` | ✅ | basket[], lastScan |
+| `bookings` | ❌ | bookings[] |
+| `marketplace` | ❌ | posts[] |
+| `aiConfig` | localStorage | model, ONNX/TM/Vertex URLs, confidenceThreshold |
+| `buyer` | localStorage | openDays, acceptedMaterials |
+| `schedule` | ❌ | slots[] |
+| `notifications` | ❌ | items[] |
+| `pricing` | ✅ | prices{}, savedAt |
+| `customLabels` | localStorage | {materialKey: {th, en}} |
+| `logistics` | ❌ | activeBooking, nearbyOrders, riderLocation, isOnline |
+| `chat` | ❌ | rooms[], activeRoomId, messages{} |
+
+---
+
+## 7. Supabase Database
+
+### Tables (24 migrations, ล่าสุด: 024)
+
+| Table | ใช้โดย |
+|-------|--------|
+| `user_profiles` | ทุก role — id ตรงกับ auth.users |
+| `shops` | buyer onboarding, map, marketplace, bookings |
+| `shop_pricing` | PricingPage, MarketplacePage, BasketPage |
+| `bookings` | BasketPage (INSERT), DashboardPage/SchedulePage (SELECT/UPDATE), driver assignment |
+| `booking_groups` | multi-shop on-demand (10-min expires_at) |
+| `scan_history` | ScanPage (INSERT), ProfilePage (SELECT) |
+| `marketplace_posts` | MarketplacePage |
+| `notifications` | NotificationsPage (SELECT/INSERT) |
+| `transfer_jobs` | AdminPage TransferJobsPanel, DriverDashboardPage |
+| `chat_rooms` | ChatPage |
+| `chat_messages` | ChatPage |
+| `model_registry` | AdminPage AI Studio |
+| `user_reports` | ScanPage (INSERT), AdminPage (SELECT/UPDATE) |
+
+### Key booking columns (migrations 019–021)
+```
+pickup_mode              'dropOff' | 'onDemand'
+pickup_lat / pickup_lng  พิกัดนัดรับ
+booking_group_id         UUID → booking_groups
+scheduled_for            TIMESTAMPTZ
+assigned_driver_id       UUID → auth.users
+driver_assignment_status 'unassigned' | 'invited' | 'accepted' | 'rejected'
+```
+
+### Key user_profiles columns (migrations 008, 020–023)
+```
+role              'user' | 'buyer' | 'admin'
+is_driver         BOOLEAN
+driver_vehicle    TEXT
+is_online         BOOLEAN
+current_lat/lng   FLOAT8  (driver GPS)
+last_seen         TIMESTAMPTZ (2-min heartbeat)
+avatar_url        TEXT    (Supabase Storage: avatars bucket)
+onboarding_complete BOOLEAN
+```
+
+### Key shops columns (migrations 001, 023)
+```
+owner_id          UUID → user_profiles
+opens_at          TIME  (e.g. '08:00')
+closes_at         TIME  (e.g. '18:00')
+status            'pending' | 'active' | 'rejected'
+```
+
+---
+
+## 8. AI Pipeline
+
+```
+Camera / Upload
+      ↓
+Stage 1 — material type detection (priority order):
+  1. YOLO ONNX   /model_ai/yolo_stage1.onnx        6 classes
+  2. TM local    /model_ai/tm-my-image-model/       11 classes
+  3. ONNX url    (if aiConfig.onnxStage1Url set)
+  4. Vertex AI   (if aiConfig.vertexStage1Endpoint set)
+  fallback → noDetection:true → toast ให้ user scan ใหม่
+      ↓
+Stage 2 — clean/dirty per material:
+  1. TM per-material  /model_ai/{ขวด,กระดาษ,...}/
+  2. ONNX cleanliness (if onnxStage2Url set)
+  3. Vertex AI        (if vertexStage2Endpoint set)
+  fallback → stage2Pass:true, stage2Skipped:true
+      ↓
+Result: { materialType, clean, confidence, factorScores, price }
+→ dispatch addToBasket + INSERT scan_history
+```
+
+**WASTE_ITEMS (8 materials):**
+`pet_bottle_clear`, `aluminum_can`, `cardboard`, `newspaper`, `mixed_plastic`, `copper`, `glass`, `cooking_oil`
+
+---
+
+## 9. Design System
+
+| Token | ค่า | ใช้เมื่อ |
+|-------|-----|---------|
+| `--ink` | #1a1a1a | text, borders, shadows |
+| `--ink-2` | #3a3a3a | secondary text |
+| `--ink-3` | #6a6a6a | labels, metadata |
+| `--ink-4` | #c0c0c0 | dividers, dashed borders |
+| `--paper` | #f5f0e8 | background |
+| `--paper-2` | #ede8dc | card, input background |
+| `--green` | #4caf50 | active state fill |
+| `--green-soft` | #e8f5e9 | success background |
+| `--green-ink` | #2e7d32 | positive metric, CTA text |
+| `--orange` | #e65100 | warning, pending |
+
+**Border rule:** `1.5px solid var(--ink)` ทุก interactive surface  
+**Shadow rule:** `2px 2px 0 var(--ink)` — flat, ไม่ใช่ blur  
+**No border-radius** ยกเว้น avatar (rounded-full) และ status dots
+
+**Typography classes:** `font-brand` (headings), `font-body` (prose), `font-data` (labels/metrics/mono)
+
+---
+
+## 10. Feature Status Summary
+
+### ✅ Fully built
+- AI scan pipeline (YOLO + TM local)
+- Basket + route planner (TSP)
+- Map with shop markers, Open/Closed, directions
+- Marketplace with Open/Closed badge
+- Shop onboarding (3-step, saves hours to DB)
+- Dashboard orders (accept/reject/complete)
+- Schedule calendar + list view + inline driver assignment
+- Driver dashboard (today's jobs, assignments, transfers, GPS)
+- Driver approaching notifications (3 states)
+- Chat (real-time 1:1)
+- Admin: shops/users/moderation/logistics/AI Studio
+- Auth: email, Google OAuth, forgot password
+
+### ⚠️ Partial (core works, gaps remain)
+| ฟีดเจอร์ | ขาดอะไร |
+|---------|---------|
+| PricingPage | บันทึกแค่ localStorage — ยังไม่ persist ลง `shop_pricing` ใน Supabase |
+| Notifications | Redux only — ไม่มี push จาก backend (DB trigger / Edge Function) |
+| HomePage pending payout | สูตร ×63% hardcode — ควรคำนวณจาก actual bookings |
+| LandingPage global stats | hardcode "—" — ควร query จาก scan_history + bookings |
+| ProfilePage admin stats | hardcode 0 |
+| `/rider` RiderDashboardPage | ซ้อนกับ `/driver` — ควร consolidate หรือแยก use case ให้ชัด |
+
+### ❌ Not built
+| ฟีดเจอร์ | หมายเหตุ |
+|---------|---------|
+| Admin Heatmap | placeholder — ต้อง aggregate scan_history by district |
+| Flash / multi-camera | UI disabled ใน ScanPage |
+| Settings: delete account | ปุ่มมีแต่ไม่มี handler |
+| Export CSV (marketplace) | toast "coming soon" |
+
+---
+
+## 11. Key Hooks Reference
+
+| Hook | ทำอะไร |
+|------|--------|
+| `useAuth` | Supabase session listener → Redux setSession/setProfile |
+| `useSupabaseBookings` | SELECT bookings for current shop (buyer), applyStatus |
+| `useBookingActions` | updateStatus (accept/reject/complete) with optimistic update |
+| `useDriverAssignment` | fetchAvailableDrivers, assignDriver (±30-min conflict), respondToAssignment, myAssignments (Realtime + new-job toast) |
+| `useRealtimeLogistics` | seller: booking status sub + driver GPS sub + approaching toasts; rider: nearby orders |
+| `useBookingGroup` | multi-shop on-demand group (10-min expires_at, Realtime countdown) |
+| `useSupabaseMarketplace` | posts + secondary query for shop hours (opensAt/closesAt) |
+| `useSystemMonitor` | admin: presence tracking, 5 anomaly rules, 30s auto-refresh |
+| `usePresence` | heartbeat ทุก 2 นาที → user_profiles.last_seen (mount ใน AuthInitializer only) |
+| `useGPS` | navigator.geolocation wrapper |
+| `useT` | wraps useTranslation() → t object |
+
+---
+
+## 12. Environment Variables
+
+```
+VITE_SUPABASE_URL        Supabase project URL
+VITE_SUPABASE_ANON_KEY   Supabase anon key
+VITE_SENTRY_DSN          Sentry error monitoring (optional)
+```
+
+---
+
+## 13. CI/CD Pipeline (`.github/workflows/pr.yml`)
+
+```
+PR → main:
+  Stage 1: Lint + Unit Tests    (Vitest + ESLint)
+  Stage 2: Build                (Vite, injects VITE_* secrets)
+  Stage 3: Smoke Tests          (Playwright, 00-smoke.spec.js only)
+
+Merge → Vercel auto-deploy (production)
+```
+
+---
+
+*สำหรับรายละเอียด visual spec อ่าน `docs/design-spec.md`  
+สำหรับ component API อ่าน `docs/ui-components.md`  
+สำหรับ page composition อ่าน `docs/user-flow.md`*

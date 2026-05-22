@@ -7,8 +7,11 @@ import { useT } from './useT'
 export function useDriverAssignment() {
   const session = useSelector(s => s.user.session)
   const t       = useT()
+  const tRef    = useRef(t)
   const [myAssignments, setMyAssignments] = useState([])
   const prevIdsRef = useRef(null)
+
+  useEffect(() => { tRef.current = t }, [t])
 
   // Shop: list all is_driver users with load count for a given date
   const fetchAvailableDrivers = useCallback(async (date) => {
@@ -98,7 +101,8 @@ export function useDriverAssignment() {
           const timeStr = a.scheduled_for
             ? new Date(a.scheduled_for).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Bangkok' })
             : ''
-          toast(`${t.newAssignmentToast}${shop ? ` — ${shop}` : ''}${timeStr ? ` ${timeStr}` : ''}`)
+          const tr = tRef.current
+          toast(`${tr.newAssignmentToast}${shop ? ` — ${shop}` : ''}${timeStr ? ` ${timeStr}` : ''}`)
         }
       }
       prevIdsRef.current = new Set(rows.map(r => r.id))
@@ -118,7 +122,7 @@ export function useDriverAssignment() {
       .subscribe()
 
     return () => { supabase.removeChannel(channel) }
-  }, [session, t])
+  }, [session])
 
   return { fetchAvailableDrivers, assignDriver, respondToAssignment, myAssignments }
 }
