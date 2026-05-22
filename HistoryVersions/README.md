@@ -46,3 +46,7 @@ This folder stores canonical implementation history for the repository.
 - `Feature/M7Components/` — M7 shared UI components and milestone-7 deliverables
 - `Feature/ScheduleCalendarSlotPopup/` — slot popup / detail modal on the SchedulePage calendar view
 - `Feature/SmartRouteMap/` — smart multi-stop route optimisation overlay on MapPage (TSP + haversine)
+- `Fix/ReregisterSoftDelete/` — `.00` restore soft-deleted account on re-login: clear deleted_at and dispatch profile instead of signing out
+- `Fix/CspLeafletShopsRls/` — `.00` bundle Leaflet marker icons locally (CSP img-src fix) + drop recursive shops admin-update RLS policy (500 fix)
+- `Fix/PhoneLineValidation/` — `.00` PhoneInput component with country dial-code selector; LINE ID optional regex validation; enforced in BuyerOnboarding + ProfilePage
+- `Fix/InputValidationAudit/` — `.00` full audit: maxLength + max constraints on every unconstrained input/textarea across 11 files
