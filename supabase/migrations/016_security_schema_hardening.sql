@@ -86,11 +86,6 @@ CREATE INDEX IF NOT EXISTS idx_model_deployments_activated_by
 CREATE INDEX IF NOT EXISTS idx_messages_sender_id
   ON public.messages (sender_id);
 
--- training_images.report_id (added in 20260518095412 but not indexed)
-CREATE INDEX IF NOT EXISTS idx_training_images_report_id
-  ON public.training_images (report_id)
-  WHERE report_id IS NOT NULL;
-
 -- bookings.scheduled_date (useSmartRoute.js filters .eq('scheduled_date', today))
 CREATE INDEX IF NOT EXISTS idx_bookings_scheduled_date
   ON public.bookings (scheduled_date)
