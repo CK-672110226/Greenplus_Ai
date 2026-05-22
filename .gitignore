@@ -22,9 +22,53 @@ out
 .env
 .env.*
 !.env.example
+!.env.local.example
 *.local
 secrets.json
 credentials.json
+service_account*.json
+*_service_account*.json
+auth.json
+token.json
+refresh_token
+*.secret
+private_key*
+*_private_key*
+
+# ── Certificates & cryptographic keys ────────────────────
+*.pem
+*.key
+*.p12
+*.pfx
+*.crt
+*.cer
+*.cert
+*.jks
+*.keystore
+
+# ── Mobile SDK config (contains API keys) ────────────────
+google-services.json
+GoogleService-Info.plist
+firebase*.json
+!firebase.json
+
+# ── CI / deployment tools ────────────────────────────────
+.sentryclirc
+.vercel/
+.netlify/
+
+# ── Database dumps & local DBs ───────────────────────────
+*.dump
+*.sql.gz
+dump.sql
+backup.sql
+*.sqlite
+*.db
+!ruvector.db
+
+# ── User-uploaded content (never commit) ─────────────────
+uploads/
+public/uploads/
 
 # ── Test & coverage outputs ──────────────────────────────
 coverage

@@ -25,3 +25,9 @@ END $$;
 
 -- Keep the public read-access policy from migration 003 (anyone can read).
 -- It is already named "Anyone can read training images" — no change needed.
+
+-- Index report_id for admin report queries (must be in this migration, not 016,
+-- because the column doesn't exist until this ALTER TABLE runs).
+CREATE INDEX IF NOT EXISTS idx_training_images_report_id
+  ON public.training_images (report_id)
+  WHERE report_id IS NOT NULL;
