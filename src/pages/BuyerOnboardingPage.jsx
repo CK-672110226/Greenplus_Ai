@@ -5,6 +5,11 @@ import { toast } from 'sonner'
 import { useOnboardingActions } from '../hooks/useOnboardingActions'
 import { WASTE_ITEMS, localName } from '../data/wasteItems'
 import { LocationPicker } from '../components/LocationPicker'
+import { PhoneInput } from '../components/PhoneInput'
+import { isPhoneValid } from '../utils/phoneUtils'
+
+const LINE_ID_RE = /^@?[a-zA-Z0-9._-]{6,20}$/
+function isValidLineId(id) { return !id || LINE_ID_RE.test(id) }
 
 const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 
@@ -51,10 +56,13 @@ export function BuyerOnboardingPage() {
   const [step, setStep] = useState(1)
   const [saving, setSaving] = useState(false)
 
+  const language = useSelector(s => s.user.language)
+
   const [formData, setFormData] = useState({
     shopName:          '',
     description:       '',
     phone:             '',
+    phoneDialCode:     '+66',
     lineId:            '',
     selectedMaterials: [],
     openDays:          [],
@@ -154,30 +162,44 @@ export function BuyerOnboardingPage() {
           </div>
 
           <div className="flex flex-col gap-1">
-            <label className="font-data text-[11px] uppercase tracking-widest text-[var(--ink-3)]">Phone</label>
-            <input
-              className={INPUT_CLS}
-              type="tel"
+            <label className="font-data text-[11px] uppercase tracking-widest text-[var(--ink-3)]">
+              {language === 'th' ? 'เบอร์โทรศัพท์ *' : 'Phone *'}
+            </label>
+            <PhoneInput
               value={formData.phone}
-              onChange={e => set('phone', e.target.value)}
-              placeholder="08x-xxx-xxxx"
+              onChange={v => set('phone', v)}
+              dialCode={formData.phoneDialCode}
+              onDialChange={v => set('phoneDialCode', v)}
+              language={language}
+              inputClassName={`flex-1 ${INPUT_CLS} border-l-0`}
             />
           </div>
 
           <div className="flex flex-col gap-1">
-            <label className="font-data text-[11px] uppercase tracking-widest text-[var(--ink-3)]">LINE ID</label>
+            <label className="font-data text-[11px] uppercase tracking-widest text-[var(--ink-3)]">
+              LINE ID <span className="normal-case text-[var(--ink-4)]">({language === 'th' ? 'ไม่บังคับ' : 'optional'})</span>
+            </label>
             <input
               className={INPUT_CLS}
               value={formData.lineId}
               onChange={e => set('lineId', e.target.value)}
               placeholder="@yourlineid"
             />
+            {formData.lineId && !isValidLineId(formData.lineId) && (
+              <span className="font-data text-[10px] text-[var(--orange)]">
+                {language === 'th' ? 'รูปแบบไม่ถูกต้อง (6–20 ตัวอักษร/ตัวเลข)' : 'Invalid format (6–20 letters/numbers)'}
+              </span>
+            )}
           </div>
 
           <div className="flex justify-end mt-2">
             <button
               className={BTN_PRIMARY}
-              disabled={!formData.shopName.trim()}
+              disabled={
+                !formData.shopName.trim() ||
+                !isPhoneValid(formData.phone, formData.phoneDialCode) ||
+                !isValidLineId(formData.lineId)
+              }
               onClick={() => setStep(2)}
             >
               Next
