@@ -9,29 +9,17 @@ import { useRealtimeLogistics } from '../hooks/useRealtimeLogistics'
 import { setIsOnline, setRiderLocation } from '../store/logisticsSlice'
 import { haversineKm } from '../utils/haversine'
 
-// Fix Leaflet default icon paths for Vite bundling
-delete L.Icon.Default.prototype._getIconUrl
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
-  iconUrl:       'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
-  shadowUrl:     'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-})
+function pinIcon(fill) {
+  return new L.DivIcon({
+    className: '',
+    html: `<svg xmlns="http://www.w3.org/2000/svg" width="25" height="41" viewBox="0 0 25 41"><path d="M12.5 0C5.6 0 0 5.6 0 12.5 0 23.1 12.5 41 12.5 41S25 23.1 25 12.5C25 5.6 19.4 0 12.5 0z" fill="${fill}" stroke="#333" stroke-width="1"/><circle cx="12.5" cy="12.5" r="4.5" fill="rgba(255,255,255,0.75)"/></svg>`,
+    iconSize:   [25, 41],
+    iconAnchor: [12, 41],
+  })
+}
 
-const riderMiniIcon = new L.Icon({
-  iconUrl:    'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-blue.png',
-  shadowUrl:  'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-  iconSize:   [25, 41],
-  iconAnchor: [12, 41],
-  shadowSize: [41, 41],
-})
-
-const pickupMiniIcon = new L.Icon({
-  iconUrl:    'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-green.png',
-  shadowUrl:  'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-  iconSize:   [25, 41],
-  iconAnchor: [12, 41],
-  shadowSize: [41, 41],
-})
+const riderMiniIcon  = pinIcon('#3b82f6')
+const pickupMiniIcon = pinIcon('#22c55e')
 
 const PRICE_PER_KG = { PET: 12, HDPE: 8, Paper: 5, Glass: 3, Metal: 18, Mixed: 4 }
 

@@ -72,7 +72,6 @@ export function useSystemMonitor() {
     // bogus values into `.filter(...)` / `.forEach(...)`.
     const toArray = (res) => {
       if (res && res.error) {
-        // eslint-disable-next-line no-console
         console.error('[useSystemMonitor] supabase error:', res.error)
         return { rows: [], error: res.error }
       }
