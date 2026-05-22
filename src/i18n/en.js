@@ -387,6 +387,8 @@ export const en = {
   shopArea:       'Area',
   userRole:       'Role',
   conditionLabel: 'Condition',
+  cleanLabel:     'Clean',
+  dirtyLabel:     'Dirty',
   locationLabel:  'Location (for map)',
   tapToLocate:    "Tap 'Use location'",
   chatMessages:      'Messages',
