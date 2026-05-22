@@ -56,11 +56,12 @@ test.describe('Landing Page', () => {
     })
     await page.goto('/')
     await expect(page.locator('body')).toBeVisible()
-    // Filter out known third-party / extension errors
+    // Filter out known third-party / extension errors and CSP warnings for Vercel dev scripts
     const criticalErrors = errors.filter(e =>
       !e.includes('extension') &&
       !e.includes('favicon') &&
-      !e.includes('net::ERR')
+      !e.includes('net::ERR') &&
+      !e.includes('va.vercel-scripts.com')
     )
     expect(criticalErrors).toHaveLength(0)
   })

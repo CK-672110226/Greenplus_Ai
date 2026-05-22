@@ -48,15 +48,15 @@ on conflict (material_type) do nothing;
 
 -- ── Eco point entries for demo user ──────────────────────────────
 -- insert into public.eco_point_ledger (user_id, points, reason) values
---   ('00000000-0000-0000-0000-000000000001', 5,  'Scanned Grade A aluminum_can'),
+--   ('00000000-0000-0000-0000-000000000001', 5,  'Scanned aluminum_can'),
 --   ('00000000-0000-0000-0000-000000000001', 2,  'Scanned cardboard'),
 --   ('00000000-0000-0000-0000-000000000001', 10, 'Completed order #1001'),
---   ('00000000-0000-0000-0000-000000000001', 5,  'Scanned Grade A copper'),
+--   ('00000000-0000-0000-0000-000000000001', 5,  'Scanned copper'),
 --   ('00000000-0000-0000-0000-000000000001', 2,  'Scanned mixed_plastic');
 
 -- ── Marketplace posts ─────────────────────────────────────────────
--- insert into public.marketplace_posts (user_id, material_type, grade, quantity_kg, price_per_kg) values
---   ('00000000-0000-0000-0000-000000000001', 'aluminum_can',    'A', 50,  48.0),
---   ('00000000-0000-0000-0000-000000000001', 'copper',          'A', 10, 240.0),
---   ('00000000-0000-0000-0000-000000000001', 'cardboard',       'B', 200,  3.0),
---   ('00000000-0000-0000-0000-000000000001', 'pet_bottle_clear','A', 80,  9.6);
+-- insert into public.marketplace_posts (user_id, material_type, quantity_kg, price_per_kg) values
+--   ('00000000-0000-0000-0000-000000000001', 'aluminum_can',     50,  48.0),
+--   ('00000000-0000-0000-0000-000000000001', 'copper',           10, 240.0),
+--   ('00000000-0000-0000-0000-000000000001', 'cardboard',       200,   3.0),
+--   ('00000000-0000-0000-0000-000000000001', 'pet_bottle_clear', 80,   9.6);

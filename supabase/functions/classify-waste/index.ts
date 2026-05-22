@@ -45,11 +45,6 @@ Use ONLY these exact materialType identifiers:
   glass_bottle          — Glass Bottle (ขวดแก้ว)
   copper_wire           — Copper Wire (ลวดทองแดง)
 
-## GRADING CRITERIA
-  A — Clean, dry, uncontaminated, structurally intact. Full market value.
-  B — Slightly soiled, minor surface stains, small dents. Acceptable quality.
-  C — Heavily soiled, contaminated, broken, or mixed with foreign material.
-
 ## WEIGHT ESTIMATION (estimatedWeight in kg)
   Estimate based on the described quantity/size. Use typical unit weights:
   • PET bottle: 0.01–0.05 kg  • Aluminum can: 0.01–0.02 kg
@@ -64,7 +59,7 @@ Use ONLY these exact materialType identifiers:
 
 ## OUTPUT FORMAT
 Return ONLY a valid JSON object. No markdown fences. No text outside the JSON.
-Schema: {"materialType":string,"grade":"A"|"B"|"C","estimatedWeight":number,"confidence":number,"explanation":string}`
+Schema: {"materialType":string,"estimatedWeight":number,"confidence":number,"explanation":string}`
 
 serve(async (req: Request) => {
   if (req.method === 'OPTIONS') {

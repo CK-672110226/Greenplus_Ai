@@ -5,7 +5,6 @@ describe('classifyWaste', () => {
   it('classifies aluminum can from description', async () => {
     const result = await classifyWaste('aluminum can drink')
     expect(result.materialType).toBe('aluminum_can')
-    expect(['A', 'B', 'C']).toContain(result.grade)
   })
 
   it('classifies PET bottle from description', async () => {

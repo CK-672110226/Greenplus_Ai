@@ -1,0 +1,44 @@
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.125rem 0.625rem;
+  font-family: var(--font-data);
+  font-size: 0.6875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  border: 1.5px solid var(--ink);
+  transition: opacity 0.1s;
+}
+
+.chip.clickable {
+  cursor: pointer;
+}
+
+.chip.clickable:hover {
+  opacity: 0.8;
+}
+
+.default {
+  border-color: var(--ink);
+  background: var(--paper);
+  color: var(--ink);
+}
+
+.soft {
+  border-color: var(--ink-4);
+  background: var(--paper-2);
+  color: var(--ink-2);
+}
+
+.green {
+  border-color: var(--green-ink);
+  background: var(--green-soft);
+  color: var(--green-ink);
+}
+
+.orange {
+  border-color: var(--orange);
+  background: transparent;
+  color: var(--orange);
+}

@@ -22,7 +22,7 @@ export function BookingModal({ shop, basket, language, onConfirm, onClose }) {
   const activeItems = (basket ?? []).filter(item => !item.skipped)
 
   const totalValue = activeItems.reduce((sum, item) => {
-    return sum + pricePerKg(item.materialType, item.grade) * (item.weight ?? 0)
+    return sum + pricePerKg(item.materialType) * (item.weight ?? 0)
   }, 0)
 
   const label = {
@@ -86,7 +86,7 @@ export function BookingModal({ shop, basket, language, onConfirm, onClose }) {
         ) : (
           <ul className="flex flex-col gap-2">
             {activeItems.map(item => {
-              const unitPrice = pricePerKg(item.materialType, item.grade)
+              const unitPrice = pricePerKg(item.materialType)
               const itemValue = unitPrice * (item.weight ?? 0)
               return (
                 <li

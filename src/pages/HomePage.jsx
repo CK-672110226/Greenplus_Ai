@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useSelector } from 'react-redux'
-import { GradeTag } from '../components/GradeTag'
 import { SectionDivider } from '../components/SectionDivider'
 import { localName, pricePerKg } from '../data/wasteItems'
 import { useShops } from '../hooks/useShops'
@@ -93,7 +92,7 @@ export function HomePage() {
   const [lastRefresh] = useState(() => new Date())
 
   const activeItems  = basket.filter(i => !i.skipped)
-  const totalValue   = activeItems.reduce((sum, i) => sum + pricePerKg(i.materialType, i.clean ?? true) * (i.weight ?? 0), 0)
+  const totalValue   = activeItems.reduce((sum, i) => sum + pricePerKg(i.materialType) * (i.weight ?? 0), 0)
   const weeklyData   = weeklyBuckets(basket, 'weight')
   const weeklyKg     = weeklyData.reduce((s, d) => s + d.val, 0).toFixed(1)
   const co2Saved     = parseFloat(weeklyKg) * 2.5
@@ -216,7 +215,7 @@ export function HomePage() {
             {recentItems.length > 0 ? (
               <div className="flex flex-col">
                 {recentItems.slice(0, 3).map((item, idx) => {
-                  const value = pricePerKg(item.materialType, item.clean ?? true) * (item.weight ?? 0)
+                  const value = pricePerKg(item.materialType) * (item.weight ?? 0)
                   const timeLabels = ['2m ago', '1h ago', 'Yest.', '2d ago', '3d ago']
                   return (
                     <div
@@ -227,7 +226,6 @@ export function HomePage() {
                         {localName(item.materialType, language)} · {(item.weight ?? 0).toFixed(1)}kg
                       </span>
                       <div className="flex items-center gap-2 shrink-0 ml-2">
-                        <GradeTag clean={item.clean} />
                         <span className="font-data text-[13px] text-[var(--ink)]">฿{value.toFixed(0)}</span>
                         <span className="font-data text-[11px] text-[var(--ink-3)]">{timeLabels[idx] ?? 'Recent'}</span>
                       </div>
@@ -247,7 +245,6 @@ export function HomePage() {
                   {localName(lastScan.materialType, language)}
                 </span>
                 <div className="flex items-center gap-2 shrink-0 ml-2">
-                  <GradeTag clean={lastScan.stage2Pass} />
                   <span className="font-data text-[11px] text-[var(--ink-3)]">Just now</span>
                 </div>
               </div>
