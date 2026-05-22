@@ -6,6 +6,7 @@ import { useT } from '../hooks/useT'
 import { SectionDivider } from '../components/SectionDivider'
 import { Button } from '../components/Button'
 import { useSettingsActions } from '../hooks/useSettingsActions'
+import { persistor } from '../store'
 import { toast } from 'sonner'
 
 function LangBtn({ active, onClick, children }) {
@@ -73,12 +74,13 @@ export function SettingsPage() {
 
   async function performDeleteAccount() {
     setDeleting(true)
-    try {
-      await settingsActions.deleteAccount(session.user.id)
+    const { ok, error } = await settingsActions.deleteAccount(session.user.id)
+    if (ok) {
       dispatch(clearUser())
+      persistor.purge()
       navigate('/')
-    } catch {
-      toast.error('Could not delete account. Please contact support.')
+    } else {
+      toast.error(error ?? 'Could not delete account. Please contact support.')
       setDeleting(false)
       setDeleteModal(false)
     }
@@ -86,7 +88,9 @@ export function SettingsPage() {
 
   async function handleExport() {
     if (!session?.user?.id) return
-    const { scans, bookings } = await settingsActions.exportData(session.user.id)
+    const { ok, data, error } = await settingsActions.exportData(session.user.id)
+    if (!ok) { toast.error(error ?? t.errorGeneric); return }
+    const { scans, bookings } = data
 
     function escapeCell(v) {
       return `"${String(v ?? '').replace(/"/g, '""')}"`
@@ -135,23 +139,23 @@ export function SettingsPage() {
 
       {/* Notifications */}
       <section className="flex flex-col gap-1">
-        <SectionDivider label="notifications" />
-        <Toggle on={prefs.price_alerts}      onToggle={() => togglePref('price_alerts')}      label="Price alerts" />
-        <Toggle on={prefs.pickup_reminders}  onToggle={() => togglePref('pickup_reminders')}  label="Pickup reminders" />
-        <Toggle on={prefs.marketing}         onToggle={() => togglePref('marketing')}         label="Promotions & marketing" />
+        <SectionDivider label={t.notifications} />
+        <Toggle on={prefs.price_alerts}      onToggle={() => togglePref('price_alerts')}      label={t.priceAlertsLabel} />
+        <Toggle on={prefs.pickup_reminders}  onToggle={() => togglePref('pickup_reminders')}  label={t.pickupRemindersLabel} />
+        <Toggle on={prefs.marketing}         onToggle={() => togglePref('marketing')}         label={t.marketingLabel} />
       </section>
 
       {/* Account */}
       {profile && (
         <section className="flex flex-col gap-1">
-          <SectionDivider label="account" />
+          <SectionDivider label={t.settingsAccount} />
           <div className="flex flex-col divide-y divide-[var(--ink-4)]">
             <div className="flex items-center justify-between py-3">
-              <span className="font-body text-[15px] text-[var(--ink)]">Role</span>
+              <span className="font-body text-[15px] text-[var(--ink)]">{t.settingsRole}</span>
               <span className="font-data text-[11px] text-[var(--ink-3)] uppercase tracking-widest">{profile.role}</span>
             </div>
             <div className="flex items-center justify-between py-3">
-              <span className="font-body text-[15px] text-[var(--ink)]">Linked accounts</span>
+              <span className="font-body text-[15px] text-[var(--ink)]">{t.linkedAccountsLabel}</span>
               <span className="font-data text-[11px] text-[var(--ink-3)] uppercase">Google</span>
             </div>
             <button
@@ -159,7 +163,7 @@ export function SettingsPage() {
               className="flex items-center justify-between py-3 bg-transparent border-none cursor-pointer text-left w-full"
               onClick={handleExport}
             >
-              <span className="font-body text-[15px] text-[var(--ink)]">Export my data</span>
+              <span className="font-body text-[15px] text-[var(--ink)]">{t.exportMyData}</span>
               <span className="font-data text-[11px] text-[var(--ink-3)]">→</span>
             </button>
             <button
@@ -167,7 +171,7 @@ export function SettingsPage() {
               className="flex items-center justify-between py-3 bg-transparent border-none cursor-pointer text-left w-full"
               onClick={handleDeleteAccount}
             >
-              <span className="font-body text-[15px] text-[var(--orange)]">Delete account</span>
+              <span className="font-body text-[15px] text-[var(--orange)]">{t.deleteAccountLabel}</span>
               <span className="font-data text-[11px] text-[var(--orange)]">→</span>
             </button>
           </div>

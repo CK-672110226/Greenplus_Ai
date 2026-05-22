@@ -1,4 +1,4 @@
-# Logs
+# ── Logs ────────────────────────────────────────────────
 logs
 *.log
 npm-debug.log*
@@ -7,79 +7,119 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+# ── Build outputs ────────────────────────────────────────
 node_modules
 dist
 dist-ssr
-*.local
+build
+out
+.output
+.next
+.nuxt
+.svelte-kit
 
-# Environment files
+# ── Environment & secrets ────────────────────────────────
 .env
 .env.*
 !.env.example
+*.local
+secrets.json
+credentials.json
 
-# Test and coverage outputs
+# ── Test & coverage outputs ──────────────────────────────
 coverage
 .nyc_output
+playwright-report/
+test-results/
+storybook-static/
 
-# Tooling caches
+# ── Tooling caches ───────────────────────────────────────
 .cache
 .turbo
 .parcel-cache
 .vite
+.eslintcache
+.stylelintcache
 *.tsbuildinfo
 
-# Package manager stores
+# ── Package manager stores ───────────────────────────────
 .pnpm-store
-
-# Optional lockfiles from other package managers
+.npm
+.yarn/cache
+.yarn/unplugged
+.yarn/build-state.yml
+.pnp.*
 yarn.lock
 pnpm-lock.yaml
 
-# Editor directories and files
+# ── Python cache ─────────────────────────────────────────
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.venv/
+venv/
+env/
+
+# ── Supabase local dev ───────────────────────────────────
+.supabase/
+
+# ── Temporary & backup files ─────────────────────────────
+*.tmp
+*.temp
+*.bak
+*.orig
+*.swp
+*.swo
+temp/
+tmp/
+
+# ── Editor directories ───────────────────────────────────
 .vscode/*
 !.vscode/extensions.json
 .idea
-.DS_Store
-Thumbs.db
-
-# Obsidian — keep config, ignore cache/workspace state
-.obsidian
-.obsidian/cache
-.obsidian/workspace.json
-.obsidian/workspace-mobile.json
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
 *.sw?
 
-# Claude
+# ── OS ───────────────────────────────────────────────────
+.DS_Store
+.AppleDouble
+.LSOverride
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# ── Obsidian ─────────────────────────────────────────────
+.obsidian/cache
+.obsidian/workspace.json
+.obsidian/workspace-mobile.json
+
+# ── Claude & AI tooling ──────────────────────────────────
 .claude
-
-# Project-specific ignores
-Greenplus/
-
-# Playwright
-playwright-report/
-test-results/
-
-# Ruflo / claude-flow runtime (auto-generated, not source)
 .swarm/
 ruvector.db
-.claude-flow/agents/
-.claude-flow/swarm/
-.claude-flow/tasks/
+.claude-flow/
+agents/
+claude-flow/
 
-# Local development overrides
+# ── Local development overrides ──────────────────────────
 .docs/
 
-# Design
+# ── Design asset folders (local only) ────────────────────
 GreenplusDesign/
-
-# Now Project
-NowProject/
-
-# Notebooks
-notebooks/
-
 Nowdesign/
+
+# ── AI / local working folders ───────────────────────────
+NowProject/
+HistorySystem/
+HistoryVersions/
+
+# ── Project-specific ─────────────────────────────────────
+Greenplus/
+
+# ── Notebooks ────────────────────────────────────────────
+notebooks/

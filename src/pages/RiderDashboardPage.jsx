@@ -195,7 +195,7 @@ export function RiderDashboardPage() {
     if (!profile?.id) return
     const { error } = await supabase
       .from('bookings')
-      .update({ status: 'accepted', buyer_id: profile.id })
+      .update({ status: 'accepted', assigned_driver_id: profile.id, driver_assignment_status: 'accepted' })
       .eq('id', order.id)
     if (error) { toast.error('Failed to accept order'); return }
     setActiveOrder({ ...order, status: 'accepted' })
