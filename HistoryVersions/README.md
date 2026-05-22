@@ -50,3 +50,4 @@ This folder stores canonical implementation history for the repository.
 - `Fix/CspLeafletShopsRls/` — `.00` bundle Leaflet marker icons locally (CSP img-src fix) + drop recursive shops admin-update RLS policy (500 fix)
 - `Fix/PhoneLineValidation/` — `.00` PhoneInput component with country dial-code selector; LINE ID optional regex validation; enforced in BuyerOnboarding + ProfilePage
 - `Fix/InputValidationAudit/` — `.00` full audit: maxLength + max constraints on every unconstrained input/textarea across 11 files
+- `Fix/OnboardingOpenDaysCsp/` — `.00` fix open_days int[] type mismatch in onboarding, add shops UNIQUE(owner_id) + dedup, fix LocationPicker Leaflet CSP
