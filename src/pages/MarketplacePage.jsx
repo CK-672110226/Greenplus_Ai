@@ -182,7 +182,7 @@ function PostAdForm({ onClose, onAdd, marketPrice }) {
             <div className="flex flex-col gap-1">
               <label className="font-data text-[10px] text-[var(--ink-3)] uppercase tracking-widest">{t.weightKg}</label>
               <input
-                type="number" min="0.1" step="0.1" required
+                type="number" min="0.1" max="10000" step="0.1" required
                 value={form.qty} onChange={e => set('qty', e.target.value)}
                 placeholder="kg"
                 className="w-full px-3 py-2 border-[1.5px] border-[var(--ink)] bg-[var(--paper)] font-body text-[15px] outline-none focus:border-[var(--green)]"
@@ -196,7 +196,7 @@ function PostAdForm({ onClose, onAdd, marketPrice }) {
                 )}
               </label>
               <input
-                type="number" min="0" step="0.1" required
+                type="number" min="0" max="9999" step="0.1" required
                 value={form.pricePerKg} onChange={e => set('pricePerKg', e.target.value)}
                 className="w-full px-3 py-2 border-[1.5px] border-[var(--ink)] bg-[var(--paper)] font-body text-[15px] outline-none focus:border-[var(--green)]"
               />
@@ -208,6 +208,7 @@ function PostAdForm({ onClose, onAdd, marketPrice }) {
             <label className="font-data text-[10px] text-[var(--ink-3)] uppercase tracking-widest">{t.shopName}</label>
             <input
               type="text"
+              maxLength={80}
               value={form.shop} onChange={e => set('shop', e.target.value)}
               className="w-full px-3 py-2 border-[1.5px] border-[var(--ink)] bg-[var(--paper)] font-body text-[15px] outline-none focus:border-[var(--green)]"
             />
@@ -218,6 +219,7 @@ function PostAdForm({ onClose, onAdd, marketPrice }) {
             <label className="font-data text-[10px] text-[var(--ink-3)] uppercase tracking-widest">{t.contactInfo}</label>
             <input
               type="text"
+              maxLength={50}
               value={form.contact} onChange={e => set('contact', e.target.value)}
               placeholder="LINE / Tel"
               className="w-full px-3 py-2 border-[1.5px] border-[var(--ink)] bg-[var(--paper)] font-body text-[15px] outline-none focus:border-[var(--green)]"

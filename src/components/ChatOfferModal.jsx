@@ -78,6 +78,7 @@ export function ChatOfferModal({ onSend, onClose, language = 'en' }) {
             <input
               type="number"
               min="0"
+              max="9999"
               step="0.5"
               value={price}
               onChange={e => setPrice(e.target.value)}
@@ -90,6 +91,7 @@ export function ChatOfferModal({ onSend, onClose, language = 'en' }) {
             <input
               type="number"
               min="0"
+              max="10000"
               step="0.1"
               value={weight}
               onChange={e => setWeight(e.target.value)}

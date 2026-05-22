@@ -105,7 +105,7 @@ function ActiveOrderPanel({ order, onArrived, onComplete, onCancel, t }) {
         <div className="flex flex-col gap-2">
           <label className="font-data text-[10px] text-[var(--ink-3)] uppercase tracking-widest">{t.actualWeight}</label>
           <input
-            type="number" min="0" step="0.1"
+            type="number" min="0" max="10000" step="0.1"
             value={actualWeight}
             onChange={e => setActualWeight(parseFloat(e.target.value) || 0)}
             className="w-full px-3 py-2 border-[1.5px] border-[var(--ink)] bg-[var(--paper)] font-data text-[16px] outline-none focus:border-[var(--green)]"

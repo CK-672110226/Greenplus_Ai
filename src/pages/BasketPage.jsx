@@ -143,6 +143,7 @@ function ManualAddPanel({ t, language, onAdd }) {
         <input
           type="number"
           min="0.01"
+          max="10000"
           step="0.1"
           value={weight}
           onChange={e => setWeight(e.target.value)}
@@ -352,6 +353,7 @@ export function BasketPage() {
                     <input
                       type="number"
                       min="0.01"
+                      max="10000"
                       step="0.01"
                       value={item.weight ?? 0}
                       onChange={e => dispatch(updateWeight({ id: item.id, weight: parseFloat(e.target.value) || 0 }))}

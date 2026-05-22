@@ -146,6 +146,7 @@ export function BuyerOnboardingPage() {
               className={INPUT_CLS}
               value={formData.shopName}
               onChange={e => set('shopName', e.target.value)}
+              maxLength={80}
               placeholder="e.g. Green Recycling"
             />
           </div>
@@ -155,6 +156,7 @@ export function BuyerOnboardingPage() {
             <textarea
               className={INPUT_CLS}
               rows={3}
+              maxLength={500}
               value={formData.description}
               onChange={e => set('description', e.target.value)}
               placeholder="What makes your shop special?"
@@ -320,7 +322,7 @@ export function BuyerOnboardingPage() {
               className={INPUT_CLS}
               type="number"
               min={1}
-              max={50}
+              max={100}
               value={formData.pickupRadius}
               onChange={e => set('pickupRadius', Number(e.target.value))}
             />

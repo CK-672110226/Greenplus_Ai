@@ -903,6 +903,7 @@ export function ScanPage() {
               <input
                 type="number"
                 min="0.01"
+                max="10000"
                 step="0.1"
                 value={editedWeight}
                 onChange={e => setEditedWeight(e.target.value)}
