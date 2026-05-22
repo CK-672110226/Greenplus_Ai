@@ -57,9 +57,12 @@ export const th = {
   clearBasket:   'ล้างตะกร้า',
 
   // Marketplace
-  marketplaceTitle: 'ตลาดซื้อขาย',
-  filterAll:     'ทั้งหมด',
-  noListings:    'ไม่มีรายการที่ตรงกับตัวกรอง',
+  marketplaceTitle: 'ชุมชนแลกเปลี่ยนขยะ',
+  filterAll:        'ทั้งหมด',
+  filterSell:       'ขาย',
+  filterRequest:    'ต้องการ',
+  filterEvent:      'กิจกรรม',
+  noListings:       'ยังไม่มีโพสต์',
   postAd:           'ลงประกาศ',
   cancelLabel:      'ยกเลิก',
   postSuccess:      'ลงประกาศสำเร็จ',
@@ -72,6 +75,20 @@ export const th = {
   contactSeller:    'ติดต่อ',
   openNow:          'เปิด',
   closed:           'ปิด',
+  // P2P post types
+  postTypeSell:     'ขาย',
+  postTypeRequest:  'ขอรับ / บริจาค',
+  postTypeEvent:    'กิจกรรม / ประกาศ',
+  postTitleLabel:   'หัวข้อ',
+  postTitlePlaceholder: 'เช่น รวบรวมขวดพลาสติกใกล้ มช.',
+  postDescLabel:    'รายละเอียด',
+  postDescPlaceholder: 'เพิ่มรายละเอียด วิธีรับ หรือข้อมูลกิจกรรม…',
+  materialsLabel:   'วัสดุ',
+  weightOptional:   'น้ำหนัก (กก., ไม่บังคับ)',
+  priceOptional:    'ราคา (฿/กก., ไม่บังคับ)',
+  sellTypeBadge:    'ขาย',
+  requestTypeBadge: 'ต้องการ',
+  eventTypeBadge:   'กิจกรรม',
 
   // Map
   mapTitle:      'แผนที่อัจฉริยะ',

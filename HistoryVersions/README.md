@@ -52,3 +52,4 @@ This folder stores canonical implementation history for the repository.
 - `Fix/InputValidationAudit/` — `.00` full audit: maxLength + max constraints on every unconstrained input/textarea across 11 files
 - `Fix/OnboardingOpenDaysCsp/` — `.00` fix open_days int[] type mismatch in onboarding, add shops UNIQUE(owner_id) + dedup, fix LocationPicker Leaflet CSP
 - `Fix/DashboardPendingShop/` — `.00` pending-approval banner on DashboardPage + fix all remaining Leaflet CSP violations (SmartRouteMap, UserTrackingPanel, RiderDashboardPage)
+- `Feature/MarketplaceP2P/` — `.00` P2P community exchange: post types (sell/request/event), title, description, multi-material picker, optional price, filter tabs
