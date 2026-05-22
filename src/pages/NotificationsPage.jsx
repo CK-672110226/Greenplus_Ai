@@ -4,7 +4,6 @@ import { Card } from '../components/Card'
 import { Button } from '../components/Button'
 import { SectionDivider } from '../components/SectionDivider'
 import { markRead, markAllRead, dismiss, selectUnreadCount } from '../store/notificationSlice'
-import { useRealtimeNotifications } from '../hooks/useRealtimeNotifications'
 import { useNotificationActions } from '../hooks/useNotificationActions'
 
 const TYPE_ICON = {
@@ -70,7 +69,6 @@ export function NotificationsPage() {
   const items    = useSelector(s => s.notifications.items)
   const unread   = useSelector(selectUnreadCount)
 
-  useRealtimeNotifications()
   const notifActions = useNotificationActions()
 
   async function handleRead(id) {
