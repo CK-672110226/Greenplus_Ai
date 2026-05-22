@@ -159,8 +159,13 @@ export const th = {
   orDivider:         'หรือ',
 
   // Booking (C-13)
-  bookAppointment: 'จอง',
-  bookingConfirmed:'ส่งการจองแล้ว',
+  bookAppointment:     'จอง',
+  bookingConfirmed:    'ส่งคำขอแล้ว — รอร้านยืนยัน',
+  myRequestsTitle:     'คำขอของฉัน',
+  noMyRequests:        'ยังไม่มีคำขอ',
+  statusPending:       'รอตอบรับ',
+  bookingAcceptedNotif:'ร้านยืนยันคำขอแล้ว!',
+  bookingRejectedNotif:'ร้านไม่สามารถรับได้ในครั้งนี้',
 
   // Admin Moderation (C-14)
   moderation:      'กลั่นกรอง',

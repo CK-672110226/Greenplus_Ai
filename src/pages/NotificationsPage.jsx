@@ -8,6 +8,8 @@ import { useNotificationActions } from '../hooks/useNotificationActions'
 
 const TYPE_ICON = {
   new_order:       '📦',
+  order_accepted:  '✅',
+  order_rejected:  '❌',
   price_alert:     '📈',
   order_completed: '✅',
   flagged_item:    '🚩',

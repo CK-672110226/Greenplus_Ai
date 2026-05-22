@@ -159,8 +159,13 @@ export const en = {
   orDivider:         'or',
 
   // Booking (C-13)
-  bookAppointment: 'Book',
-  bookingConfirmed:'Booking sent!',
+  bookAppointment:     'Book',
+  bookingConfirmed:    'Request sent — waiting for shop to confirm.',
+  myRequestsTitle:     'My Requests',
+  noMyRequests:        'No requests yet.',
+  statusPending:       'Awaiting',
+  bookingAcceptedNotif:'Shop confirmed your request!',
+  bookingRejectedNotif:'Shop could not accept this time.',
 
   // Admin Moderation (C-14)
   moderation:      'Moderation',

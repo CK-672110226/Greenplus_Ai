@@ -59,7 +59,7 @@ export function NotificationDrawer({ open, onClose }) {
                 className={`flex items-start gap-3 px-5 py-4 border-b-[1.5px] border-[var(--ink-4)] transition-colors cursor-pointer hover:bg-[var(--paper-2)] ${!n.read ? 'bg-[var(--green-soft)]' : ''}`}
               >
                 <div className={`w-9 h-9 shrink-0 flex items-center justify-center border-[1.5px] font-brand text-[18px] ${!n.read ? 'border-[var(--green-ink)] bg-[var(--green-soft)]' : 'border-[var(--ink-4)] bg-[var(--paper-2)]'}`}>
-                  {n.type === 'new_order' ? '📦' : n.type === 'price_alert' ? '💰' : n.type === 'order_completed' ? '✅' : n.type === 'flagged_item' ? '⚠️' : '📢'}
+                  {n.type === 'new_order' ? '📦' : n.type === 'order_accepted' ? '✅' : n.type === 'order_rejected' ? '❌' : n.type === 'price_alert' ? '💰' : n.type === 'order_completed' ? '✅' : n.type === 'flagged_item' ? '⚠️' : '📢'}
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-start gap-2">
