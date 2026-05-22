@@ -1,7 +1,7 @@
 import { Navigate, useLocation } from 'react-router-dom'
 import { useSelector } from 'react-redux'
 
-export function ProtectedRoute({ children, requiredRole }) {
+export function ProtectedRoute({ children, requiredRole, allowIfDriver }) {
   const { session, profile, loading } = useSelector(s => s.user)
   const location = useLocation()
 
@@ -9,7 +9,12 @@ export function ProtectedRoute({ children, requiredRole }) {
 
   if (!session) return <Navigate to="/login" state={{ from: location }} replace />
 
-  if (requiredRole && profile?.role !== requiredRole) return <Navigate to="/" replace />
+  // Wait for profile to finish loading before evaluating role
+  if (!profile) return null
+
+  const roleOk   = !requiredRole || profile.role === requiredRole
+  const driverOk = allowIfDriver && profile.is_driver
+  if (!roleOk && !driverOk) return <Navigate to="/" replace />
 
   return children
 }

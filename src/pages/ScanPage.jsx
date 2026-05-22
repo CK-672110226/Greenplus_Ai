@@ -3,7 +3,6 @@ import { useDispatch, useSelector } from 'react-redux'
 import { toast } from 'sonner'
 import { useT } from '../hooks/useT'
 import { Button } from '../components/Button'
-import { GradeTag } from '../components/GradeTag'
 import { pricePerKg, localName, WASTE_ITEMS } from '../data/wasteItems'
 import { useResolvedName } from '../hooks/useResolvedName'
 import { getRulesFor, SEVERITY_COLOR } from '../data/wasteRules'
@@ -44,14 +43,13 @@ class ScanErrorBoundary extends Component {
 /* ── Batch queue item row ────────────────────────────────────── */
 function QueueRow({ item, onRemove }) {
   const resolve   = useResolvedName()
-  const unitPrice = pricePerKg(item.materialType, item.clean ?? true)
+  const unitPrice = pricePerKg(item.materialType)
   return (
     <div className="flex items-center justify-between py-2.5 border-b-[1px] border-[var(--ink-4)] last:border-b-0">
       <span className="font-body text-[14px] text-[var(--ink)] truncate flex-1 min-w-0">
         {resolve(item.materialType)}
       </span>
       <div className="flex items-center gap-2 shrink-0 ml-2">
-        <GradeTag clean={item.clean} />
         <span className="font-data text-[12px] text-[var(--green)]">฿{unitPrice.toFixed(0)}/kg</span>
         <button
           onClick={() => onRemove(item.id)}
@@ -84,11 +82,9 @@ export function ScanPage() {
 
   const [phase, setPhase]                   = useState('starting')
   const [result, setResult]                 = useState(null)
-  const [pendingItem, setPendingItem]       = useState(null)  // dirty item awaiting confirmation
   const [uploadSrc, setUploadSrc]           = useState(null)
   const [inputMode, setInputMode]           = useState('camera')
   const [, setHasStream]                    = useState(false)
-  const [dirtyAlert, setDirtyAlert]         = useState(false)
   const [batchMode, setBatchMode]           = useState(false)
   const [batchQueue, setBatchQueue]         = useState([])
   const [showReport, setShowReport]         = useState(false)
@@ -98,7 +94,6 @@ export function ScanPage() {
   const [cameras, setCameras]               = useState([])
   const [cameraIdx, setCameraIdx]           = useState(0)
   const [bbox, setBbox]                     = useState(null)
-  const [cleanlinessScore, setCleanlinessScore] = useState(null)
   const [stage, setStage]                   = useState(null)
 
   const [isDragging, setIsDragging]  = useState(false)
@@ -128,14 +123,9 @@ export function ScanPage() {
     const weight = Math.max(0.01, parseFloat(editedWeight) || result.weight || 0.5)
     // eslint-disable-next-line react-hooks/purity
     const item = { ...result, id: `${result.materialType}_${Date.now()}`, weight }
-    if (result.stage2Pass === false) {
-      setPendingItem(item)
-      setDirtyAlert(true)
-    } else {
-      setBatchQueue(q => [...q, item])
-      toast.success(`+ ${resolve(result.materialType)}`, { duration: 1500 })
-      handleReset()
-    }
+    setBatchQueue(q => [...q, item])
+    toast.success(`+ ${resolve(result.materialType)}`, { duration: 1500 })
+    handleReset()
   }
 
   function handleSwipeLeft() {
@@ -143,11 +133,11 @@ export function ScanPage() {
     handleReset()
   }
 
-  const isMockMode = !aiConfig.yoloStage1Url && !aiConfig.tmStage1Url && !aiConfig.onnxStage1Url && !aiConfig.vertexStage1Endpoint
-  const aiMode     = aiConfig.yoloStage1Url ? 'yolo' : aiConfig.tmStage1Url ? 'tfjs' : aiConfig.onnxStage1Url ? 'onnx' : aiConfig.vertexStage1Endpoint ? 'vertex' : 'demo'
+  const isMockMode = !aiConfig.yoloStage1Url && !aiConfig.tmStage1Url && !aiConfig.onnxStage1Url
+  const aiMode     = aiConfig.yoloStage1Url ? 'yolo' : aiConfig.tmStage1Url ? 'tfjs' : aiConfig.onnxStage1Url ? 'onnx' : 'demo'
   const activeBasket = basket.filter(i => !i.skipped)
-  const basketTotal  = activeBasket.reduce((s, i) => s + pricePerKg(i.materialType, i.clean ?? true) * (i.weight ?? 0), 0)
-  const queueTotal   = batchQueue.reduce((s, i) => s + pricePerKg(i.materialType, i.clean ?? true) * (i.weight ?? 0), 0)
+  const basketTotal  = activeBasket.reduce((s, i) => s + pricePerKg(i.materialType) * (i.weight ?? 0), 0)
+  const queueTotal   = batchQueue.reduce((s, i) => s + pricePerKg(i.materialType) * (i.weight ?? 0), 0)
   const queueKg      = batchQueue.reduce((s, i) => s + (i.weight ?? 0), 0)
 
   /* ── Camera lifecycle ─────────────────────────────────────── */
@@ -236,7 +226,6 @@ export function ScanPage() {
       return
     }
     setBbox(null)
-    setCleanlinessScore(null)
     setStage(1)
     setPhase('analyzing')
     try {
@@ -246,13 +235,9 @@ export function ScanPage() {
         yoloClassLabels:      aiConfig.yoloClassLabels    ?? [],
         tmStage1Url:          aiConfig.tmStage1Url        || null,
         stage1ClassLabels:    aiConfig.stage1ClassLabels  ?? [],
-        tmStage2Urls:         aiConfig.tmStage2Urls       ?? {},
-        onnxStage1Url:        aiConfig.onnxStage1Url      || null,
-        onnxStage2Url:        aiConfig.onnxStage2Url      || null,
-        vertexStage1Endpoint: aiConfig.vertexStage1Endpoint || null,
-        vertexStage2Endpoint: aiConfig.vertexStage2Endpoint || null,
+        onnxStage1Url:        aiConfig.onnxStage1Url || null,
       })
-      setStage(2)
+      setStage(null)
       if (infer.noDetection) {
         setStage(null)
         toast.error(
@@ -269,14 +254,12 @@ export function ScanPage() {
       // Multi-object path: YOLO returned several detections at once
       if (infer.multiResult) {
         const newItems = infer.multiResult.map(r => ({
-          id:              crypto.randomUUID(),
-          materialType:    r.materialType,
-          weight:          r.weight,
-          clean:           r.stage2Pass,
-          confidence:      r.confidence,
-          source:          r.source,
-          bbox:            r.bbox,
-          cleanlinessScore: r.cleanlinessScore ?? null,
+          id:           crypto.randomUUID(),
+          materialType: r.materialType,
+          weight:       r.weight,
+          confidence:   r.confidence,
+          source:       r.source,
+          bbox:         r.bbox,
         }))
 
         // Always update Live Analysis with the first (highest-confidence) detection
@@ -284,18 +267,8 @@ export function ScanPage() {
         setResult(first)
         setEditedWeight(String(first.weight ?? 0.5))
         setBbox(first.bbox ?? null)
-        setCleanlinessScore(first.cleanlinessScore ?? null)
-        setStage(null)
         dispatch(setLastScan(first))
         navigator.vibrate?.(100)
-
-        // Single dirty item in normal scan mode → trigger dirty popup
-        if (!batchMode && newItems.length === 1 && newItems[0].clean === false) {
-          setPendingItem(newItems[0])
-          setDirtyAlert(true)
-          setPhase('result')
-          return
-        }
 
         setBatchQueue(prev => [...prev, ...newItems])
         toast.success(
@@ -312,21 +285,13 @@ export function ScanPage() {
       setResult(infer)
       setEditedWeight(String(infer.weight ?? 0.5))
       setBbox(infer.bbox ?? null)
-      setCleanlinessScore(infer.cleanlinessScore ?? null)
-      setStage(null)
       dispatch(setLastScan(infer))
 
-      // Always accumulate in batch queue; dirty items need user confirmation first
+      // Always accumulate in batch queue
       const item = { ...infer, id: `${infer.materialType}_${Date.now()}` }
-      if (infer.stage2Pass === false) {
-        setPendingItem(item)
-        setDirtyAlert(true)
-        setPhase('result')
-      } else {
-        setBatchQueue(q => [...q, item])
-        toast.success(`+ ${resolve(infer.materialType)}`, { duration: 1500 })
-        setPhase(streamRef.current ? 'idle' : 'starting')
-      }
+      setBatchQueue(q => [...q, item])
+      toast.success(`+ ${resolve(infer.materialType)}`, { duration: 1500 })
+      setPhase(streamRef.current ? 'idle' : 'starting')
     } catch (err) {
       console.error('[Scan] inference error:', err)
       setStage(null)
@@ -373,7 +338,6 @@ export function ScanPage() {
     await reportActions.submitReport({
       claimedMaterial: reportMaterial,
       aiMaterial:      result?.materialType,
-      aiClean:         result?.stage2Pass,
       userId,
     })
     toast.success(t.reportSuccess)
@@ -381,29 +345,10 @@ export function ScanPage() {
   }
 
   /* ── Queue / basket actions ───────────────────────────────── */
-  function handleConfirmClean() {
-    const item = pendingItem
-    setDirtyAlert(false)
-    setPendingItem(null)
-    if (!item) { handleReset(); return }
-    navigator.vibrate?.(50)
-    setBatchQueue(q => [...q, item])
-    toast.success(`+ ${resolve(item.materialType)}`, { duration: 1500 })
-    // stay in camera idle if camera is running, else go back to starting
-    setPhase(streamRef.current ? 'idle' : 'starting')
-  }
-
-  function handleRejectClean() {
-    setDirtyAlert(false)
-    setPendingItem(null)
-    toast.error(language === 'th' ? 'กรุณาทำความสะอาดก่อนนำมาขาย' : 'Please wash it before selling')
-    setPhase(streamRef.current ? 'idle' : 'starting')
-  }
-
   function handleAddBatch() {
     if (batchQueue.length === 0) return
     batchQueue.forEach(item => {
-      dispatch(addToBasket({ id: item.id, materialType: item.materialType, clean: item.stage2Pass ?? true, weight: item.weight, pricePerKg: pricePerKg(item.materialType, item.stage2Pass ?? true) }))
+      dispatch(addToBasket({ id: item.id, materialType: item.materialType, weight: item.weight, pricePerKg: pricePerKg(item.materialType) }))
       insertScan(item)
     })
     toast.success(language === 'th' ? `เพิ่ม ${batchQueue.length} รายการลงตะกร้าแล้ว` : `${batchQueue.length} items added to basket`)
@@ -421,16 +366,14 @@ export function ScanPage() {
     setResult(null)
     setEditedWeight('')
     setBbox(null)
-    setCleanlinessScore(null)
     setStage(null)
-    setDirtyAlert(false)
     setInputMode('camera')
     setPhase('starting')
   }
 
   /* ── Derived values for live analysis panel ─────────── */
   const liveResult = result
-  const liveValue  = liveResult ? pricePerKg(liveResult.materialType, liveResult.stage2Pass ?? true) * liveResult.weight : 0
+  const liveValue  = liveResult ? pricePerKg(liveResult.materialType) * liveResult.weight : 0
 
   return (
     <div className="flex flex-col min-h-full">
@@ -566,7 +509,7 @@ export function ScanPage() {
                   <span className="w-2 h-2 rounded-full bg-[var(--green)] animate-pulse" />
                   <span className="font-data text-[11px] uppercase tracking-widest">Stage {stage}</span>
                   <span className="font-data text-[10px] text-[var(--ink-3)]">
-                    {stage === 1 ? '— detecting material' : '— checking cleanliness'}
+                    {'— detecting material'}
                   </span>
                 </div>
               )}
@@ -850,11 +793,11 @@ export function ScanPage() {
             <span className="font-data text-[9px] text-[var(--ink-4)] uppercase tracking-[0.15em]">Live analysis</span>
             {stage ? (
               <span className="font-data text-[9px] border-[1.5px] border-[var(--green)] text-[var(--green)] px-1.5 py-0.5 uppercase tracking-widest animate-pulse">
-                STAGE {stage} / 2
+                detecting
               </span>
             ) : liveResult ? (
               <span className="font-data text-[9px] border-[1.5px] border-[var(--green)] text-[var(--green)] px-1.5 py-0.5 uppercase tracking-widest">
-                STAGE 2 / 2
+                done
               </span>
             ) : null}
           </div>
@@ -864,7 +807,6 @@ export function ScanPage() {
               <div className="flex flex-col gap-1">
                 <span className="font-data text-[9px] text-[var(--ink-4)] uppercase tracking-[0.15em]">Detected</span>
                 <div className="flex items-center gap-2">
-                  <GradeTag clean={liveResult.stage2Pass} />
                   <span className="font-brand text-[18px] text-[var(--ink)] leading-tight">
                     {resolve(liveResult.materialType)}
                   </span>
@@ -880,7 +822,7 @@ export function ScanPage() {
                   <div className="font-data text-[11px] text-[var(--ink-3)]">
                     {liveResult.weight}kg
                     <span className="text-[var(--ink-4)] mx-1">×</span>
-                    ฿{pricePerKg(liveResult.materialType, liveResult.stage2Pass ?? true).toFixed(0)}/kg
+                    ฿{pricePerKg(liveResult.materialType).toFixed(0)}/kg
                   </div>
                   <div className="font-brand text-[28px] text-[var(--ink)] leading-none">
                     ฿ {liveValue.toFixed(2)}
@@ -916,32 +858,6 @@ export function ScanPage() {
                 <span className="font-data text-[13px] text-[var(--ink)]">{(liveResult.confidence * 100).toFixed(0)}%</span>
               </div>
 
-              {cleanlinessScore !== null && (
-                <div className="border-t-[1px] border-[var(--ink-4)] pt-3">
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="font-data text-[10px] uppercase tracking-widest text-[var(--ink-3)]">Cleanliness</span>
-                    <span
-                      className="font-data text-[12px] font-bold"
-                      style={{ color: cleanlinessScore >= 60 ? 'var(--green-ink)' : 'var(--orange)' }}
-                    >
-                      {cleanlinessScore}%
-                    </span>
-                  </div>
-                  <div className="h-2.5 bg-[var(--paper-2)] border-[1.5px] border-[var(--ink)] overflow-hidden">
-                    <div
-                      className="h-full transition-all duration-500"
-                      style={{
-                        width:      `${cleanlinessScore}%`,
-                        background: cleanlinessScore >= 60 ? 'var(--green)' : 'var(--orange)',
-                      }}
-                    />
-                  </div>
-                  <div className="flex justify-between mt-0.5">
-                    <span className="font-data text-[9px] text-[var(--ink-4)]">dirty</span>
-                    <span className="font-data text-[9px] text-[var(--ink-4)]">clean</span>
-                  </div>
-                </div>
-              )}
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center gap-3 flex-1 px-5 py-10 text-center">
@@ -957,32 +873,8 @@ export function ScanPage() {
 
       </div>
 
-      {/* ── Dirty-item overlay ────────────────────────────────── */}
-      {dirtyAlert && (
-        <div className="fixed inset-0 bg-[#1A1A1Ae6] flex items-center justify-center z-50 px-4">
-          <div className="w-full max-w-sm bg-[var(--paper)] border-[2px] border-[var(--orange)] shadow-[4px_4px_0_var(--orange)] p-6 flex flex-col gap-4">
-            <h2 className="font-brand text-[20px] text-[var(--orange)] m-0">
-              {language === 'th' ? 'พบความสกปรก!' : 'Contamination Detected!'}
-            </h2>
-            <p className="font-body text-[14px] text-[var(--ink)] m-0 leading-relaxed">
-              {language === 'th'
-                ? 'สิ่งนี้มีคราบสกปรก คุณได้ทำความสะอาดแล้วใช่ไหม?'
-                : 'This item is dirty. Have you washed it?'}
-            </p>
-            <div className="flex flex-col gap-2 mt-2">
-              <Button variant="primary" onClick={handleConfirmClean}>
-                {language === 'th' ? 'ใช่ (ทำความสะอาดแล้ว)' : 'Yes, I washed it'}
-              </Button>
-              <Button variant="secondary" onClick={handleRejectClean}>
-                {language === 'th' ? 'ไม่ (ยังไม่ได้ทำ)' : 'No, not yet'}
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* ── Result bottom sheet — mobile swipe UX (lg:hidden) ─── */}
-      {phase === 'result' && result && !dirtyAlert && (
+      {phase === 'result' && result && (
         <div
           className="lg:hidden border-t-[1.5px] border-[var(--ink)] flex flex-col gap-3 pt-2 pb-3 px-4 bg-[var(--paper)]"
           onTouchStart={onTouchStart}
@@ -996,7 +888,6 @@ export function ScanPage() {
 
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <GradeTag clean={result.stage2Pass} />
               <span className="font-body text-[17px] text-[var(--ink)] font-semibold">
                 {resolve(result.materialType)}
               </span>
@@ -1012,6 +903,7 @@ export function ScanPage() {
               <input
                 type="number"
                 min="0.01"
+                max="10000"
                 step="0.1"
                 value={editedWeight}
                 onChange={e => setEditedWeight(e.target.value)}
@@ -1022,11 +914,11 @@ export function ScanPage() {
             </div>
             <span className="font-data text-[11px] text-[var(--ink-3)] uppercase">฿/kg</span>
             <span className="font-data text-[13px] text-[var(--ink)] text-right">
-              ฿{pricePerKg(result.materialType, result.stage2Pass ?? true).toFixed(2)}
+              ฿{pricePerKg(result.materialType).toFixed(2)}
             </span>
             <span className="font-data text-[11px] text-[var(--ink-3)] uppercase">Total</span>
             <span className="font-data text-[14px] text-[var(--green)] font-bold text-right">
-              ฿{(pricePerKg(result.materialType, result.stage2Pass ?? true) * (parseFloat(editedWeight) || result.weight || 0)).toFixed(2)}
+              ฿{(pricePerKg(result.materialType) * (parseFloat(editedWeight) || result.weight || 0)).toFixed(2)}
             </span>
           </div>
 

@@ -8,6 +8,7 @@ import { ProtectedRoute } from './components/ProtectedRoute'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import { useAuth } from './hooks/useAuth'
 import { useActiveModels } from './hooks/useActiveModels'
+import { usePresence } from './hooks/usePresence'
 import { setDarkMode } from './store/userSlice'
 
 // Eagerly loaded — always needed on first paint
@@ -15,7 +16,6 @@ import { LandingPage } from './pages/LandingPage'
 import { LoginPage } from './pages/LoginPage'
 import { AdminLoginPage } from './pages/AdminLoginPage'
 import { Page404 } from './pages/Page404'
-
 // Lazy-loaded — split into separate chunks; ONNX WASM only loads when ScanPage mounts
 const HomePage       = lazy(() => import('./pages/HomePage').then(m => ({ default: m.HomePage })))
 const ScanPage       = lazy(() => import('./pages/ScanPage').then(m => ({ default: m.ScanPage })))
@@ -30,8 +30,12 @@ const AdminPage         = lazy(() => import('./pages/AdminPage').then(m => ({ de
 const SettingsPage          = lazy(() => import('./pages/SettingsPage').then(m => ({ default: m.SettingsPage })))
 const ProfilePage           = lazy(() => import('./pages/ProfilePage').then(m => ({ default: m.ProfilePage })))
 const RiderDashboardPage    = lazy(() => import('./pages/RiderDashboardPage').then(m => ({ default: m.RiderDashboardPage })))
+const DriverDashboardPage   = lazy(() => import('./pages/DriverDashboardPage').then(m => ({ default: m.DriverDashboardPage })))
 const ChatPage              = lazy(() => import('./pages/ChatPage').then(m => ({ default: m.ChatPage })))
 const BuyerOnboardingPage   = lazy(() => import('./pages/BuyerOnboardingPage').then(m => ({ default: m.BuyerOnboardingPage })))
+const CatalogListPage   = lazy(() => import('./features/catalog/CatalogListPage').then(m => ({ default: m.CatalogListPage })))
+const CatalogDetailPage = lazy(() => import('./features/catalog/CatalogDetailPage').then(m => ({ default: m.CatalogDetailPage })))
+const CatalogFormPage   = lazy(() => import('./features/catalog/CatalogFormPage').then(m => ({ default: m.CatalogFormPage })))
 
 function PageFallback() {
   return (
@@ -46,6 +50,7 @@ function PageFallback() {
 function AuthInitializer({ children }) {
   useAuth()
   useActiveModels()
+  usePresence()
   const dispatch = useDispatch()
   const darkMode = useSelector(s => s.user.darkMode)
 
@@ -82,6 +87,12 @@ function App() {
             <Route path="/login"   element={<LoginPage />} />
             <Route path="/x/admin" element={<AdminLoginPage />} />
 
+            {/* Catalog — public demo routes (RTK Query + CSS Modules) */}
+            <Route path="/catalog"            element={<CatalogListPage />} />
+            <Route path="/catalog/new"        element={<CatalogFormPage />} />
+            <Route path="/catalog/:id"        element={<CatalogDetailPage />} />
+            <Route path="/catalog/:id/edit"   element={<CatalogFormPage />} />
+
             <Route element={<SmartLayout />}>
 
               {/* User portal */}
@@ -101,6 +112,7 @@ function App() {
 
               {/* Buyer rider routes */}
               <Route path="/rider"      element={<ProtectedRoute requiredRole="buyer"><RiderDashboardPage /></ProtectedRoute>} />
+              <Route path="/driver"     element={<ProtectedRoute requiredRole="buyer" allowIfDriver><DriverDashboardPage /></ProtectedRoute>} />
               <Route path="/onboarding" element={<ProtectedRoute requiredRole="buyer"><BuyerOnboardingPage /></ProtectedRoute>} />
 
               {/* All authenticated roles */}

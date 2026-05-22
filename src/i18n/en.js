@@ -22,6 +22,7 @@ export const en = {
   map:           'Map',
   marketplace:   'Marketplace',
   dashboard:     'Dashboard',
+  shopSetup:     'Shop Setup',
   admin:         'Admin',
   role:          'Role',
   home:          'Home',
@@ -58,21 +59,19 @@ export const en = {
   // Marketplace
   marketplaceTitle: 'Marketplace',
   filterAll:     'All',
-  filterA:       'Grade A',
-  filterB:       'Grade B',
-  filterC:       'Grade C',
   noListings:    'No listings match the filter.',
   postAd:           'Post Ad',
   cancelLabel:      'Cancel',
   postSuccess:      'Ad posted!',
   materialTypeLabel:'Material',
-  gradeLabel:       'Grade',
   weightKg:         'Weight (kg)',
   pricePerKgLabel:  'Price (฿/kg)',
   contactInfo:      'Contact (Phone/LINE)',
   shopName:         'Shop Name',
   requiredFields:   'Please fill in all required fields.',
   contactSeller:    'Contact',
+  openNow:          'Open',
+  closed:           'Closed',
 
   // Map
   mapTitle:      'Smart Map',
@@ -87,7 +86,6 @@ export const en = {
   pendingOrders:     'Pending',
   completedOrders:   'Completed Today',
   totalRevenue:      "Today's Revenue",
-  avgGrade:          'Avg Grade',
   recentBookings:    'Recent Bookings',
   acceptOrder:       'Accept',
   rejectOrder:       'Reject',
@@ -134,8 +132,6 @@ export const en = {
 
   // Dashboard pricing CRUD (B-02)
   myPricing:         'My Pricing',
-  gradeClean:        'Clean (฿/kg)',
-  gradeDirty:        'Dirty (฿/kg)',
   savePricing:       'Save Pricing',
 
   // Settings
@@ -216,6 +212,31 @@ export const en = {
   reportCancel:        'Cancel',
   adminReports:        'Reports',
   pendingReports:      'Pending Reports',
+
+  // System monitor tab
+  monitorTab:           'Monitor',
+  monitorRefresh:       'Refresh',
+  monitorRefreshedAt:   'Updated',
+  monitorShopsOpen:     'Open',
+  monitorShopsClosed:   'Closed',
+  monitorUsersOnline:   'Users online',
+  monitorDriversOnline: 'Drivers online',
+  monitorAnomalies:     'Anomalies',
+  monitorNoAnomalies:   'No anomalies detected',
+  monitorSevHigh:       'HIGH',
+  monitorSevMedium:     'MED',
+  monitorSevLow:        'LOW',
+  monitorTypeRapid:     'Rapid bookings',
+  monitorTypeWeight:    'Weight outlier',
+  monitorTypeCancel:    'Cancellations',
+  monitorTypeGhost:     'No GPS',
+  monitorTypeStale:     'Stale group',
+  monitorShopsSection:  'Shops',
+  monitorUsersSection:  'Active users',
+  monitorDriversSection:'Drivers',
+  monitorOnline:        'Online',
+  monitorOffline:       'Offline',
+  monitorNeverSeen:     'Never',
   approveAsLabel:      'Approve as',
   noReports:           'No pending reports.',
   vertexConfig:        'Vertex AI Config',
@@ -247,7 +268,7 @@ export const en = {
   // Pricing page
   pricing:           'Pricing',
   pricingTitle:      'My Pricing',
-  pricingHint:       'Set your buy price per kg for each material and grade.',
+  pricingHint:       'Set your buy price and daily capacity per material. Toggle to enable or disable each item.',
   marketRate:        'Market',
   resetToMarket:     'Reset to Market Rate',
   saveChanges:       'Save Changes',
@@ -276,7 +297,6 @@ export const en = {
   filterBasket:      'Filter',
   allItems:          'All',
   selectMaterial:    'Select material',
-  selectGrade:       'Grade',
   addItem:           'Add',
 
   // Pricing page — new single-price columns (migration 013b)
@@ -295,7 +315,8 @@ export const en = {
   searchingRider:    'Searching for a rider...',
   riderFound:        'Rider found!',
   riderAccepted:     'Rider accepted your order',
-  riderArrived:      'Rider has arrived',
+  riderArrived:      'Rider has arrived — please come out!',
+  riderApproaching:  'Your rider is almost here — get ready!',
   orderCompleted:    'Order completed',
   nearbyPickups:     'Nearby Pickups',
   acceptPickup:      'Accept Order',
@@ -380,4 +401,131 @@ export const en = {
   micDenied:         'Microphone blocked — allow it in browser & system settings',
   micHold:           'Hold to record',
   micRecording:      'Recording… release to send',
+  micRequestAccess:  'Allow microphone access',
+  micAccessGranted:  'Microphone access granted',
+  micBlocked:        'Microphone blocked',
+
+  // Shop open/close toggle
+  shopOpen:          'Open',
+  shopClosed:        'Paused',
+  shopPauseIntake:   'Pause Intake',
+  shopResumeIntake:  'Resume Intake',
+
+  // Profile edit — all roles
+  profileEdit:           'Edit Profile',
+  profileSave:           'Save',
+  profileCancel:         'Cancel',
+  profileBioLabel:       'About',
+  profileBioHelp:        'Tell shops and drivers a bit about yourself',
+  profilePickupNotes:    'Pickup Instructions',
+  profilePickupNotesHelp:'e.g. "Green bags by the gate, ring bell for 3F"',
+  profileDisplayName:    'Display Name',
+  profileAvatarUpload:   'Change photo',
+  uploadingPhoto:        'Uploading…',
+
+  // Shop profile — buyer role
+  shopDescription:       'Shop Description',
+  shopDescriptionHelp:   'Help users understand what your shop specialises in',
+  shopOpensAt:           'Opens at',
+  shopClosesAt:          'Closes at',
+  shopVerifiedHint:      'Upload a shop photo to build trust with users',
+
+  // Marketplace image upload
+  mpImageLabel:          'Item photo (optional)',
+  mpImageHelp:           'A photo helps buyers see quality and condition',
+
+  // Buyer profile — shop info edit
+  saveShopInfo:      'Save Shop Info',
+
+  // Settings page strings
+  settingsAccount:      'Account',
+  priceAlertsLabel:     'Price alerts',
+  pickupRemindersLabel: 'Pickup reminders',
+  marketingLabel:       'Promotions & marketing',
+  linkedAccountsLabel:  'Linked accounts',
+  exportMyData:         'Export my data',
+  deleteAccountLabel:   'Delete account',
+  settingsRole:         'Role',
+
+  // Basket pickup modes
+  modeDropOff:          'Drop off',
+  modeOnDemand:         'Request pickup',
+  onDemandTitle:        'On-demand pickup',
+  onDemandDesc:         'A buyer will come to your location. Place your waste in a visible spot.',
+  callPickupRider:      'Call a pickup rider →',
+  noGpsWarning:         'Enable GPS first',
+
+  // Shop profile extra fields
+  shopPhone:            'Phone',
+  pickupRadius:         'Pickup radius (km)',
+  shopLocation:         'Shop location',
+  addBranch:            'Add branch',
+
+  // Dashboard pricing table volumes
+  volPending:           'Pending kg',
+  volCompleted:         'Completed kg',
+
+  // Map proximity notification
+  nearbyShopNotifTitle: 'Recycler nearby',
+
+  // On-demand multi-shop scheduling
+  computingRoute:       'Computing route…',
+  minGapBetweenShops:   'Min 30 min between shops',
+  sendPickupRequests:   'Send Pickup Requests →',
+  waitingForShops:      'Waiting for shops',
+  statusSearching:      'Waiting',
+  statusAccepted:       'Accepted',
+  statusRejected:       'Declined',
+  cancelPickupRequest:  'Cancel all requests',
+  noShopAccepted:       'No shop accepted',
+  disposalAlternatives: 'Consider these alternatives:',
+  altCityDrop:          'City recycling drop-off point',
+  altMunicipal:         'Municipal collection day',
+  altScheduleLater:     'Schedule for another day',
+  tryAgain:             'Try again',
+  findDropOff:          'Find drop-off →',
+  allShopsAccepted:     'All shops accepted',
+  trackPickupOnMap:     'Your riders are on their way. Track them on the map.',
+  viewOnMap:            'View on Map →',
+
+  // Driver dashboard
+  driverModeBreadcrumb: 'Buyer / Driver',
+  driverModeTitle:      'Driver Mode',
+  driverOnline:         'You are now online',
+  driverOffline:        'You are offline',
+  driverOnlineLabel:    'Online',
+  driverOfflineLabel:   'Offline',
+  toggleOnlineToSee:    'Toggle online to see nearby jobs',
+  tabCustomerPickups:   'Customer Pickups',
+  tabInterShop:         'Inter-shop Jobs',
+  noNearbyPickups:      'No orders within 5 km',
+  noTransferJobs:       'No transfer jobs available',
+  driverEnRoute:        'En route',
+  driverArrived:        'Arrived — verify weight',
+  iArrived:             "I've Arrived",
+
+  // Driver assignment
+  assignDriver:         'Assign Driver',
+  assignDriverTitle:    'Assign a Driver',
+  driverPickupsToday:   'jobs today',
+  noDriversAvailable:   'No drivers registered yet',
+  conflictWarning:      'Driver already has a pickup within 30 min of this slot',
+  assignmentInvited:    'Invited',
+  assignmentAccepted:   'Assigned',
+  assignmentRejected:   'Declined',
+  tabMyAssignments:     'My Assignments',
+  noMyAssignments:      'No assignments yet',
+  newAssignmentToast:   'New pickup assigned',
+  todayAssignments:     "Today's Jobs",
+  driverAssigned:       'Driver assigned',
+  acceptAssignment:     'Accept',
+  declineAssignment:    'Decline',
+
+  // Generic error
+  errorGeneric:         'Something went wrong. Please try again.',
+
+  // Driver QR invite
+  driverQrTitle:        'Share with Driver',
+  driverQrDesc:         '{name} has been invited. Show them this QR code to open their assignments.',
+  driverQrInviteHint:   'Share this QR code so drivers can register and see their jobs:',
 }
