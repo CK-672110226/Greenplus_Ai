@@ -1,0 +1,58 @@
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 1rem;
+  background: var(--paper-2);
+  border: 1.5px solid var(--ink);
+  box-shadow: 2px 2px 0 var(--ink);
+}
+
+.label {
+  font-family: var(--font-data);
+  font-size: 0.625rem;
+  color: var(--ink-3);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.valueRow {
+  display: flex;
+  align-items: baseline;
+  gap: 0.25rem;
+}
+
+.value {
+  font-family: var(--font-brand);
+  font-size: 2rem;
+  color: var(--ink);
+  line-height: 1;
+}
+
+.unit {
+  font-family: var(--font-data);
+  font-size: 0.875rem;
+}
+
+.trendUp {
+  font-family: var(--font-data);
+  font-size: 0.6875rem;
+  color: var(--green-ink);
+}
+
+.trendDown {
+  font-family: var(--font-data);
+  font-size: 0.6875rem;
+  color: var(--orange);
+}
+
+.trendNote {
+  color: var(--ink-3);
+  margin-left: 0.25rem;
+}
+
+.sub {
+  font-family: var(--font-data);
+  font-size: 0.6875rem;
+  color: var(--ink-3);
+}
