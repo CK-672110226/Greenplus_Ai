@@ -8,6 +8,8 @@ import { useMyShop } from '../hooks/useMyShop'
 import { useProfileActions } from '../hooks/useProfileActions'
 import { Card } from '../components/Card'
 import { Button } from '../components/Button'
+import { PhoneInput } from '../components/PhoneInput'
+import { isPhoneValid } from '../utils/phoneUtils'
 import { WASTE_ITEMS, localName } from '../data/wasteItems'
 import { supabase } from '../lib/supabase'
 import { clearUser, setProfile } from '../store/userSlice'
@@ -245,11 +247,12 @@ function BuyerProfile({ profile, session, t, language }) {
   const { saving, uploadAvatar } = useProfileActions()
   const avatarInputRef = useRef(null)
 
-  const [accepted,    setAccepted]    = useState(profile?.accepted_materials ?? [])
-  const [shopName,    setShopName]    = useState('')
-  const [shopArea,    setShopArea]    = useState('')
-  const [shopPhone,   setShopPhone]   = useState('')
-  const [shopDesc,    setShopDesc]    = useState('')
+  const [accepted,          setAccepted]          = useState(profile?.accepted_materials ?? [])
+  const [shopName,          setShopName]          = useState('')
+  const [shopArea,          setShopArea]          = useState('')
+  const [shopPhone,         setShopPhone]         = useState('')
+  const [shopPhoneDialCode, setShopPhoneDialCode] = useState('+66')
+  const [shopDesc,          setShopDesc]          = useState('')
   const [shopLat,     setShopLat]     = useState(null)
   const [shopLng,     setShopLng]     = useState(null)
   const [shopRadius,  setShopRadius]  = useState(5)
@@ -436,13 +439,14 @@ function BuyerProfile({ profile, session, t, language }) {
               />
             </div>
             <div className="flex flex-col gap-1">
-              <label className="font-data text-[10px] text-[var(--ink-3)] uppercase tracking-widest">{t.shopPhone}</label>
-              <input
-                type="text"
+              <label className="font-data text-[10px] text-[var(--ink-3)] uppercase tracking-widest">{t.shopPhone} *</label>
+              <PhoneInput
                 value={shopPhone}
-                onChange={e => setShopPhone(e.target.value)}
-                placeholder="08X-XXX-XXXX"
-                className="w-full px-3 py-2 border-[1.5px] border-[var(--ink)] bg-[var(--paper)] font-body text-[15px] outline-none focus:border-[var(--green)]"
+                onChange={setShopPhone}
+                dialCode={shopPhoneDialCode}
+                onDialChange={setShopPhoneDialCode}
+                language={language}
+                inputClassName="flex-1 px-3 py-2 border-[1.5px] border-l-0 border-[var(--ink)] bg-[var(--paper)] font-body text-[15px] outline-none focus:border-[var(--green)]"
               />
             </div>
             <div className="flex flex-col gap-1">
@@ -503,7 +507,7 @@ function BuyerProfile({ profile, session, t, language }) {
                 className="w-32 px-3 py-2 border-[1.5px] border-[var(--ink)] bg-[var(--paper)] font-data text-[15px] outline-none focus:border-[var(--green)]"
               />
             </div>
-            <Button variant="primary" onClick={handleSaveShop} disabled={shopSaving}>
+            <Button variant="primary" onClick={handleSaveShop} disabled={shopSaving || !isPhoneValid(shopPhone, shopPhoneDialCode)}>
               {shopSaving ? (language === 'th' ? 'กำลังบันทึก…' : 'Saving…') : t.saveShopInfo}
             </Button>
           </div>
