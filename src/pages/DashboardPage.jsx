@@ -9,7 +9,7 @@ import { SlotCreatePopup } from '../components/SlotCreatePopup'
 import SmartRouteMap from '../components/SmartRouteMap'
 
 import { useSelector, useDispatch } from 'react-redux'
-import { localName, WASTE_ITEMS } from '../data/wasteItems'
+import { localName, WASTE_ITEMS, pricePerKg } from '../data/wasteItems'
 import { setBookings } from '../store/bookingSlice'
 import { setAcceptedMaterials } from '../store/buyerSlice'
 import { useSupabaseBookings } from '../hooks/useSupabaseBookings'
@@ -47,6 +47,8 @@ function StatusChip({ status }) {
     return <span className="font-data text-[9px] uppercase tracking-widest px-2 py-0.5 border-[1.5px] border-[var(--ink)] text-[var(--ink)]">pending</span>
   if (status === 'accepted')
     return <span className="font-data text-[9px] uppercase tracking-widest px-2 py-0.5 border-[1.5px] border-[var(--green)] bg-[var(--green-soft)] text-[var(--green-ink)]">accepted</span>
+  if (status === 'in_transit')
+    return <span className="font-data text-[9px] uppercase tracking-widest px-2 py-0.5 border-[1.5px] border-[var(--green)] text-[var(--green)]">in transit</span>
   if (status === 'completed')
     return <span className="font-data text-[9px] uppercase tracking-widest px-2 py-0.5 border-[1.5px] border-[var(--ink-4)] bg-[var(--paper-2)] text-[var(--ink-3)]">completed</span>
   if (status === 'rejected')
@@ -137,7 +139,7 @@ function BookingRow({ b, language, t, onAccept, onReject, onComplete, onCancel, 
           </span>
           {b.scheduledAt && (
             <span className="font-data text-[10px] text-[var(--ink-4)] uppercase tracking-widest">
-              {new Date(b.scheduledAt).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Asia/Bangkok' })} today
+              {new Date(b.scheduledAt).toLocaleString('en-GB', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Asia/Bangkok' })}
             </span>
           )}
         </div>
@@ -328,6 +330,7 @@ export function DashboardPage() {
   const { shop } = useMyShop()
   const { bookings, loading, acceptBooking, rejectBooking, completeBooking, cancelBooking } = useSupabaseBookings()
   const { fetchAvailableDrivers, assignDriver } = useDriverAssignment()
+  const [shopPricing, setShopPricing] = useState({}) // { [material_type]: price_per_kg }
 
   useEffect(() => {
     dispatch(setBookings(bookings))
@@ -388,6 +391,20 @@ export function DashboardPage() {
     loadSettings()
   }, [session?.user?.id, dispatch])
 
+  useEffect(() => {
+    if (!shop?.id) return
+    supabase
+      .from('shop_pricing')
+      .select('material_type, price_per_kg')
+      .eq('shop_id', shop.id)
+      .then(({ data }) => {
+        if (!data) return
+        const map = {}
+        data.forEach(r => { map[r.material_type] = r.price_per_kg })
+        setShopPricing(map)
+      })
+  }, [shop?.id])
+
   function handleAccept(id)   { acceptBooking(id);   toast.success('Order accepted') }
   function handleOpenReject(id) { setRejectModal({ id }); setRejectReason('') }
   function handleConfirmReject() {
@@ -403,7 +420,7 @@ export function DashboardPage() {
   const pending   = bookings.filter(b => b.status === 'pending').length
   const accepted  = bookings.filter(b => b.status === 'accepted').length
   const completed = bookings.filter(b => b.status === 'completed').length
-  const revenue   = bookings.filter(b => b.status === 'accepted').reduce((s, b) => s + (b.estValue ?? 0), 0)
+  const revenue   = bookings.filter(b => b.status === 'accepted' || b.status === 'completed').reduce((s, b) => s + (b.estValue ?? 0), 0)
   const newReqs   = pending
 
   const shopName  = shop?.name ?? t.shopNameFallback
@@ -615,12 +632,12 @@ export function DashboardPage() {
             <span className="font-data text-[9px] text-[var(--ink-4)] uppercase tracking-[0.15em] text-right">{t.volCompleted}</span>
           </div>
           {acceptedMaterials.map(key => {
-            const item = WASTE_ITEMS[key]
-            if (!item) return null
+            if (!WASTE_ITEMS[key]) return null
+            const price = shopPricing[key] ?? pricePerKg(key)
             return (
               <div key={key} className="grid grid-cols-4 py-3 border-b-[1px] border-[var(--ink-4)] items-center">
                 <span className="font-body text-[15px] text-[var(--ink)]">{localName(key, language)}</span>
-                <span className="font-data text-[18px] text-[var(--green-ink)] text-right">฿{item.basePrice.toFixed(0)}</span>
+                <span className="font-data text-[18px] text-[var(--green-ink)] text-right">฿{Number(price).toFixed(0)}</span>
                 <span className="font-data text-[13px] text-[var(--ink-3)] text-right">{(materialVolumes[key]?.pending ?? 0).toFixed(1)} kg</span>
                 <span className="font-data text-[13px] text-[var(--ink)] text-right">{(materialVolumes[key]?.completed ?? 0).toFixed(1)} kg</span>
               </div>

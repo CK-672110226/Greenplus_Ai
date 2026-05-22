@@ -1485,7 +1485,7 @@ export function AdminPage() {
                   variant="secondary"
                   onClick={() => rejectReport(report.id, '')}
                 >
-                  {t.rejectShop}
+                  {t.rejectOrder}
                 </Button>
               </div>
             </Card>

@@ -24,7 +24,7 @@ describe('classifyWaste', () => {
 
   it('falls back to mock when no apiKey', async () => {
     const result = await classifyWaste('glass bottle', { model: 'claude-haiku-4-5', apiKey: null })
-    expect(['mock', 'mock-fallback']).toContain(result.source)
+    expect(result.source).toBe('mock-fallback')
   })
 
   it('returns confidence between 0 and 1', async () => {
