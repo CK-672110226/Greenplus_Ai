@@ -14,8 +14,21 @@ async function fetchOrCreateProfile(user, dispatch) {
 
     if (data) {
       if (data.deleted_at) {
-        await supabase.auth.signOut()
-        dispatch(clearUser())
+        // Re-login after soft-delete → restore the account
+        const role = localStorage.getItem('gp_pending_role') ?? data.role ?? 'user'
+        localStorage.removeItem('gp_pending_role')
+        const { data: restored } = await supabase
+          .from('user_profiles')
+          .update({ deleted_at: null, role })
+          .eq('id', user.id)
+          .select()
+          .single()
+        if (restored) {
+          dispatch(setProfile(restored))
+          if (restored.language_pref) dispatch(setLanguage(restored.language_pref))
+          if (Array.isArray(restored.open_days)) dispatch(setOpenDays(restored.open_days))
+          if (Array.isArray(restored.accepted_materials)) dispatch(setAcceptedMaterials(restored.accepted_materials))
+        }
         return
       }
       dispatch(setProfile(data))
