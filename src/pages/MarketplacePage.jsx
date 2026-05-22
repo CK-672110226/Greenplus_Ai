@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import { useT } from '../hooks/useT'
@@ -7,482 +7,354 @@ import { useSelector, useDispatch } from 'react-redux'
 import { localName, WASTE_ITEMS, pricePerKg } from '../data/wasteItems'
 import { addPost, setPosts } from '../store/marketplaceSlice'
 import { useSupabaseMarketplace } from '../hooks/useSupabaseMarketplace'
-import { useShops } from '../hooks/useShops'
 import { useMarketPricing } from '../hooks/useMarketPricing'
 
 const MATERIAL_KEYS = Object.keys(WASTE_ITEMS)
 
-const CATEGORIES = {
-  all:     MATERIAL_KEYS,
-  plastic: ['pet_bottle_clear', 'mixed_plastic'],
-  paper:   ['cardboard', 'newspaper'],
-  metal:   ['aluminum_can', 'copper'],
-  glass:   ['glass', 'cooking_oil'],
+function isOpenNow(opensAt, closesAt) {
+  if (!opensAt || !closesAt) return null
+  const now = new Date()
+  const pad = n => String(n).padStart(2, '0')
+  const nowStr = `${pad(now.getHours())}:${pad(now.getMinutes())}`
+  return nowStr >= opensAt && nowStr < closesAt
 }
 
-/* ── Shop card (replaces mock RequestCard) ────────────────────── */
-function ShopCard({ shop, language, t, marketPrice }) {
-  const navigate  = useNavigate()
-  const materials = (shop.accepts ?? []).slice(0, 3)
-  const bestPrice = materials.length > 0 ? marketPrice(materials[0], true) : null
+/* ── Individual listing card ─────────────────────────────────────── */
+function ListingCard({ post, language, t }) {
+  const navigate = useNavigate()
+  const name = language === 'th'
+    ? (WASTE_ITEMS[post.materialType]?.nameTh ?? post.materialType)
+    : (WASTE_ITEMS[post.materialType]?.nameEn ?? post.materialType)
+
+  const openStatus = isOpenNow(post.opensAt, post.closesAt)
 
   return (
-    <div className="flex flex-col gap-2 border-[1.5px] border-[var(--ink)] p-4 bg-[var(--paper-2)] shadow-[2px_2px_0_var(--ink)]">
-      <div className="flex items-start justify-between gap-2">
-        <div className="flex flex-col gap-0.5">
-          <span className="font-body text-[14px] text-[var(--ink)] leading-tight">{shop.name}</span>
-          {shop.area && (
-            <span className="font-data text-[10px] text-[var(--ink-3)]">{shop.area}</span>
+    <div className="flex flex-col gap-2 border-[1.5px] border-[var(--ink)] bg-[var(--paper)] shadow-[2px_2px_0_var(--ink)] overflow-hidden">
+      {post.image_url && (
+        <img
+          src={post.image_url}
+          alt={name}
+          className="w-full h-36 object-cover border-b-[1.5px] border-[var(--ink)]"
+        />
+      )}
+      <div className="flex flex-col gap-2 p-4 pt-3">
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2 min-w-0">
+          <span className="font-body text-[16px] text-[var(--ink)] truncate">{name}</span>
+          {openStatus !== null && (
+            <span className={[
+              'font-data text-[9px] uppercase tracking-widest px-1.5 py-0.5 border-[1px] shrink-0',
+              openStatus
+                ? 'border-[var(--green-ink)] text-[var(--green-ink)] bg-[var(--green-soft)]'
+                : 'border-[var(--ink-3)] text-[var(--ink-3)] bg-[var(--paper-2)]',
+            ].join(' ')}>
+              {openStatus ? (t.openNow ?? 'Open') : (t.closed ?? 'Closed')}
+            </span>
           )}
         </div>
-        {bestPrice != null && (
-          <span className="font-data text-[18px] text-[var(--green-ink)] shrink-0">
-            ฿ {bestPrice.toFixed(1)}/kg
-          </span>
-        )}
+        <span className="font-data text-[18px] text-[var(--green-ink)] shrink-0 leading-none">
+          ฿{(post.pricePerKg ?? 0).toFixed(0)}/kg
+        </span>
       </div>
 
-      {materials.length > 0 && (
-        <div className="flex items-center gap-2 flex-wrap">
-          <span className="font-data text-[9px] text-[var(--ink-4)] uppercase tracking-widest">{t.shopAccepts}:</span>
-          {materials.map(m => (
-            <span key={m} className="font-data text-[10px] text-[var(--ink-2)] border-[1px] border-[var(--ink-4)] px-1.5 py-0.5">
-              {localName(m, language)}
-            </span>
-          ))}
+      <div className="flex items-end justify-between gap-2">
+        <div className="flex flex-col gap-0.5">
+          <span className="font-data text-[11px] text-[var(--ink-2)]">
+            {post.qty ?? 0} kg
+          </span>
+          <span className="font-data text-[10px] text-[var(--ink-4)]">
+            {post.shop || '—'}{post.distanceKm != null ? ` · ${post.distanceKm.toFixed(1)} km` : ''}
+          </span>
         </div>
-      )}
-
-      <div className="flex gap-2 mt-1">
-        <a
-          href="/map"
-          className="flex-1 py-2 font-data text-[11px] uppercase tracking-widest border-[1.5px] border-[var(--ink)] bg-transparent cursor-pointer hover:bg-[var(--ink)] hover:text-[var(--paper)] transition-colors shadow-[2px_2px_0_var(--ink)] active:shadow-none active:translate-x-[2px] active:translate-y-[2px] text-center block no-underline text-[var(--ink)]"
-        >
-          {t.directions} →
-        </a>
         <button
           onClick={() => navigate('/chat')}
-          className="flex-1 py-2 font-data text-[11px] uppercase tracking-widest border-[1.5px] border-[var(--ink)] bg-transparent cursor-pointer hover:bg-[var(--ink)] hover:text-[var(--paper)] transition-colors shadow-[2px_2px_0_var(--ink)] active:shadow-none active:translate-x-[2px] active:translate-y-[2px]"
+          className="px-4 py-2 min-h-[44px] font-data text-[11px] uppercase tracking-widest border-[1.5px] border-[var(--ink)] bg-transparent cursor-pointer hover:bg-[var(--ink)] hover:text-[var(--paper)] transition-colors shadow-[2px_2px_0_var(--ink)] active:shadow-none active:translate-x-[2px] active:translate-y-[2px] whitespace-nowrap"
         >
-          {t.chat} →
+          {t.contactSeller} →
         </button>
+      </div>
       </div>
     </div>
   )
 }
 
-/* ── Post Ad Form ─────────────────────────────────────────────── */
+/* ── Post Ad form (modal overlay) ────────────────────────────────── */
 function PostAdForm({ onClose, onAdd, marketPrice }) {
   const t        = useT()
   const dispatch = useDispatch()
   const language = useSelector(s => s.user.language)
+  const session  = useSelector(s => s.user.session)
+  const imgRef   = useRef(null)
 
-  const [form, setForm] = useState({ materialType: MATERIAL_KEYS[0], clean: true, qty: '', pricePerKg: '', contact: '', shop: '', lat: null, lng: null })
+  const [form, setForm] = useState({
+    materialType: MATERIAL_KEYS[0],
+    qty:          '',
+    pricePerKg:   '',
+    contact:      '',
+    shop:         '',
+    lat:          null,
+    lng:          null,
+  })
+  const [imageFile,    setImageFile]    = useState(null)
+  const [imagePreview, setImagePreview] = useState(null)
+  const [uploading,    setUploading]    = useState(false)
+
   function set(k, v) { setForm(prev => ({ ...prev, [k]: v })) }
+
+  function handleImageSelect(e) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    e.target.value = ''
+    setImageFile(file)
+    setImagePreview(URL.createObjectURL(file))
+  }
+
+  async function uploadImage() {
+    if (!imageFile || !session?.user?.id) return null
+    const { supabase: sb } = await import('../lib/supabase')
+    const ext  = imageFile.name.split('.').pop().toLowerCase()
+    const path = `${session.user.id}/${Date.now()}.${ext}`
+    const { error } = await sb.storage
+      .from('marketplace-images')
+      .upload(path, imageFile, { contentType: imageFile.type, upsert: false })
+    if (error) return null
+    const { data: { publicUrl } } = sb.storage.from('marketplace-images').getPublicUrl(path)
+    return publicUrl
+  }
 
   async function handleSubmit(e) {
     e.preventDefault()
-    if (!form.qty || !form.pricePerKg || !form.shop) { toast.error(t.requiredFields); return }
-    const payload = { ...form, qty: Number(form.qty), pricePerKg: Number(form.pricePerKg), distanceKm: 0 }
-    if (onAdd) await onAdd(payload)
-    else dispatch(addPost(payload))
+    if (!form.qty || !form.pricePerKg) { toast.error(t.requiredFields); return }
+    setUploading(true)
+    let image_url = null
+    try {
+      if (imageFile) image_url = await uploadImage()
+    } finally {
+      setUploading(false)
+    }
+    const payload = {
+      ...form,
+      qty:        Number(form.qty),
+      pricePerKg: Number(form.pricePerKg),
+      distanceKm: 0,
+      image_url,
+    }
+    if (onAdd) {
+      const res = await onAdd(payload)
+      if (res && !res.ok) { toast.error(res.error ?? t.errorGeneric); return }
+    } else {
+      dispatch(addPost(payload))
+    }
     toast.success(t.postSuccess)
     onClose()
   }
 
-  const suggested = (marketPrice(form.materialType, form.clean) ?? pricePerKg(form.materialType, form.clean)).toFixed(1)
+  const suggested = marketPrice(form.materialType) ?? pricePerKg(form.materialType)
 
   return (
-    <div className="border-[1.5px] border-[var(--green)] bg-[var(--paper-2)] p-5 flex flex-col gap-4">
-      <div className="flex items-center justify-between">
-        <span className="font-brand text-[18px] text-[var(--ink)]">{t.postAd}</span>
-        <button onClick={onClose} className="font-data text-[11px] text-[var(--ink-3)] uppercase tracking-widest bg-transparent border-none cursor-pointer hover:text-[var(--ink)]">{t.cancelLabel}</button>
-      </div>
-      <form onSubmit={handleSubmit} className="flex flex-col gap-3">
-        <div className="flex flex-col gap-1">
-          <label className="font-data text-[10px] text-[var(--ink-3)] uppercase tracking-widest">{t.materialTypeLabel}</label>
-          <select value={form.materialType} onChange={e => set('materialType', e.target.value)} className="w-full px-3 py-2 border-[1.5px] border-[var(--ink)] bg-[var(--paper)] font-body text-[15px] outline-none focus:border-[var(--green)]">
-            {MATERIAL_KEYS.map(k => <option key={k} value={k}>{localName(k, language)}</option>)}
-          </select>
+    <div className="fixed inset-0 bg-[#1A1A1Ae6] flex items-end justify-center z-50 sm:items-center sm:p-4">
+      <div className="w-full sm:max-w-md bg-[var(--paper)] border-[1.5px] border-[var(--green)] shadow-[4px_4px_0_var(--ink)] p-5 flex flex-col gap-4 max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center justify-between">
+          <span className="font-brand text-[20px] text-[var(--ink)]">{t.postAd}</span>
+          <button
+            onClick={onClose}
+            className="font-data text-[11px] text-[var(--ink-3)] uppercase tracking-widest bg-transparent border-none cursor-pointer hover:text-[var(--ink)]"
+          >
+            {t.cancelLabel}
+          </button>
         </div>
-        <div className="flex flex-col gap-1">
-          <label className="font-data text-[10px] text-[var(--ink-3)] uppercase tracking-widest">สภาพ</label>
-          <div className="flex gap-2">
-            {[{ label: 'สะอาด', val: true }, { label: 'ไม่สะอาด', val: false }].map(({ label, val }) => (
-              <button key={label} type="button" onClick={() => set('clean', val)}
-                className={`flex-1 py-2 font-data text-[12px] uppercase tracking-widest border-[1.5px] border-[var(--ink)] transition-colors cursor-pointer ${form.clean === val ? 'bg-[var(--ink)] text-[var(--paper)]' : 'bg-transparent text-[var(--ink)]'}`}>
-                {label}
-              </button>
-            ))}
-          </div>
-        </div>
-        <div className="grid grid-cols-2 gap-3">
+
+        <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+          {/* Material */}
           <div className="flex flex-col gap-1">
-            <label className="font-data text-[10px] text-[var(--ink-3)] uppercase tracking-widest">{t.weightKg}</label>
-            <input type="number" min="0.1" step="0.1" required value={form.qty} onChange={e => set('qty', e.target.value)} placeholder="kg" className="w-full px-3 py-2 border-[1.5px] border-[var(--ink)] bg-[var(--paper)] font-body text-[15px] outline-none focus:border-[var(--green)]" />
+            <label className="font-data text-[10px] text-[var(--ink-3)] uppercase tracking-widest">{t.materialTypeLabel}</label>
+            <select
+              value={form.materialType}
+              onChange={e => set('materialType', e.target.value)}
+              className="w-full px-3 py-2 border-[1.5px] border-[var(--ink)] bg-[var(--paper)] font-body text-[15px] outline-none focus:border-[var(--green)]"
+            >
+              {MATERIAL_KEYS.map(k => <option key={k} value={k}>{localName(k, language)}</option>)}
+            </select>
           </div>
+
+          {/* Weight + Price */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="flex flex-col gap-1">
+              <label className="font-data text-[10px] text-[var(--ink-3)] uppercase tracking-widest">{t.weightKg}</label>
+              <input
+                type="number" min="0.1" max="10000" step="0.1" required
+                value={form.qty} onChange={e => set('qty', e.target.value)}
+                placeholder="kg"
+                className="w-full px-3 py-2 border-[1.5px] border-[var(--ink)] bg-[var(--paper)] font-body text-[15px] outline-none focus:border-[var(--green)]"
+              />
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className="font-data text-[10px] text-[var(--ink-3)] uppercase tracking-widest">
+                {t.pricePerKgLabel}
+                {suggested != null && (
+                  <span className="text-[var(--green)] normal-case ml-1">(~฿{suggested.toFixed(1)})</span>
+                )}
+              </label>
+              <input
+                type="number" min="0" max="9999" step="0.1" required
+                value={form.pricePerKg} onChange={e => set('pricePerKg', e.target.value)}
+                className="w-full px-3 py-2 border-[1.5px] border-[var(--ink)] bg-[var(--paper)] font-body text-[15px] outline-none focus:border-[var(--green)]"
+              />
+            </div>
+          </div>
+
+          {/* Shop name */}
           <div className="flex flex-col gap-1">
-            <label className="font-data text-[10px] text-[var(--ink-3)] uppercase tracking-widest">{t.pricePerKgLabel} <span className="text-[var(--green)] normal-case">(~฿{suggested})</span></label>
-            <input type="number" min="0" step="0.1" required value={form.pricePerKg} onChange={e => set('pricePerKg', e.target.value)} placeholder={`฿ ${suggested}`} className="w-full px-3 py-2 border-[1.5px] border-[var(--ink)] bg-[var(--paper)] font-body text-[15px] outline-none focus:border-[var(--green)]" />
-          </div>
-        </div>
-        <div className="flex flex-col gap-1">
-          <label className="font-data text-[10px] text-[var(--ink-3)] uppercase tracking-widest">{t.shopName}</label>
-          <input type="text" required value={form.shop} onChange={e => set('shop', e.target.value)} className="w-full px-3 py-2 border-[1.5px] border-[var(--ink)] bg-[var(--paper)] font-body text-[15px] outline-none focus:border-[var(--green)]" />
-        </div>
-        <div className="flex flex-col gap-1">
-          <label className="font-data text-[10px] text-[var(--ink-3)] uppercase tracking-widest">{t.contactInfo}</label>
-          <input type="text" value={form.contact} onChange={e => set('contact', e.target.value)} placeholder="LINE / Tel" className="w-full px-3 py-2 border-[1.5px] border-[var(--ink)] bg-[var(--paper)] font-body text-[15px] outline-none focus:border-[var(--green)]" />
-        </div>
-        <div className="flex flex-col gap-1">
-          <label className="font-data text-[10px] text-[var(--ink-3)] uppercase tracking-widest">ที่ตั้ง (สำหรับแผนที่)</label>
-          <div className="flex gap-2">
+            <label className="font-data text-[10px] text-[var(--ink-3)] uppercase tracking-widest">{t.shopName}</label>
             <input
               type="text"
-              value={form.lat != null ? `${form.lat.toFixed(5)}, ${form.lng.toFixed(5)}` : ''}
-              readOnly
-              placeholder="กด 'ใช้ตำแหน่งปัจจุบัน'"
-              className="flex-1 px-3 py-2 border-[1.5px] border-[var(--ink)] bg-[var(--paper-2)] font-data text-[11px] outline-none text-[var(--ink-3)]"
+              maxLength={80}
+              value={form.shop} onChange={e => set('shop', e.target.value)}
+              className="w-full px-3 py-2 border-[1.5px] border-[var(--ink)] bg-[var(--paper)] font-body text-[15px] outline-none focus:border-[var(--green)]"
             />
+          </div>
+
+          {/* Contact */}
+          <div className="flex flex-col gap-1">
+            <label className="font-data text-[10px] text-[var(--ink-3)] uppercase tracking-widest">{t.contactInfo}</label>
+            <input
+              type="text"
+              maxLength={50}
+              value={form.contact} onChange={e => set('contact', e.target.value)}
+              placeholder="LINE / Tel"
+              className="w-full px-3 py-2 border-[1.5px] border-[var(--ink)] bg-[var(--paper)] font-body text-[15px] outline-none focus:border-[var(--green)]"
+            />
+          </div>
+
+          {/* Location */}
+          <div className="flex flex-col gap-1">
+            <label className="font-data text-[10px] text-[var(--ink-3)] uppercase tracking-widest">{t.locationLabel}</label>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={form.lat != null ? `${form.lat.toFixed(5)}, ${form.lng?.toFixed(5)}` : ''}
+                readOnly
+                placeholder={t.tapToLocate}
+                className="flex-1 px-3 py-2 border-[1.5px] border-[var(--ink)] bg-[var(--paper-2)] font-data text-[11px] outline-none text-[var(--ink-3)]"
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  if (!navigator.geolocation) return
+                  navigator.geolocation.getCurrentPosition(
+                    pos => { set('lat', pos.coords.latitude); set('lng', pos.coords.longitude) },
+                    () => {}
+                  )
+                }}
+                className="px-3 py-2 font-data text-[11px] uppercase tracking-widest border-[1.5px] border-[var(--ink)] bg-transparent hover:bg-[var(--ink)] hover:text-[var(--paper)] transition-colors whitespace-nowrap cursor-pointer"
+              >
+                {t.useMyLocation}
+              </button>
+            </div>
+          </div>
+
+          {/* Image upload */}
+          <div className="flex flex-col gap-1">
+            <label className="font-data text-[10px] text-[var(--ink-3)] uppercase tracking-widest">{t.mpImageLabel}</label>
+            {imagePreview && (
+              <img src={imagePreview} alt="preview" className="w-full h-32 object-cover border-[1.5px] border-[var(--ink)] mb-1" />
+            )}
             <button
               type="button"
-              onClick={() => {
-                if (!navigator.geolocation) return
-                navigator.geolocation.getCurrentPosition(
-                  pos => { set('lat', pos.coords.latitude); set('lng', pos.coords.longitude) },
-                  () => {}
-                )
-              }}
-              className="px-3 py-2 font-data text-[11px] uppercase tracking-widest border-[1.5px] border-[var(--ink)] bg-transparent hover:bg-[var(--ink)] hover:text-[var(--paper)] transition-colors whitespace-nowrap cursor-pointer"
+              onClick={() => imgRef.current?.click()}
+              className="px-3 py-2 font-data text-[11px] uppercase tracking-widest border-[1.5px] border-[var(--ink-4)] bg-transparent hover:border-[var(--ink)] transition-colors cursor-pointer text-left text-[var(--ink-3)] hover:text-[var(--ink)]"
             >
-              📍 ตำแหน่ง
+              {imageFile ? imageFile.name : t.mpImageHelp}
             </button>
+            <input ref={imgRef} type="file" accept="image/*" className="hidden" onChange={handleImageSelect} />
           </div>
-        </div>
-        <Button type="submit" variant="primary" fullWidth>{t.postAd}</Button>
-      </form>
+
+          <Button type="submit" variant="primary" fullWidth disabled={uploading}>
+            {uploading ? t.uploadingPhoto : t.postAd}
+          </Button>
+        </form>
+      </div>
     </div>
   )
 }
 
-/* ── CSV export helper ────────────────────────────────────────── */
-function exportCSV(shops) {
-  const rows = [
-    ['Name', 'Area', 'Materials', 'Distance (km)'],
-    ...shops.map(s => [
-      s.name ?? '',
-      s.area ?? '',
-      (s.accepts ?? []).join('; '),
-      s.distanceKm ?? '',
-    ])
-  ]
-  const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n')
-  const blob = new Blob([csv], { type: 'text/csv' })
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
-  a.download = `greenplus-marketplace-${new Date().toISOString().slice(0,10)}.csv`
-  a.click()
-  URL.revokeObjectURL(url)
-}
-
-/* ── MarketplacePage ──────────────────────────────────────────── */
+/* ── MarketplacePage ─────────────────────────────────────────────── */
 export function MarketplacePage() {
   const t        = useT()
   const dispatch = useDispatch()
   const language = useSelector(s => s.user.language)
-  const basket   = useSelector(s => s.waste?.basket ?? [])
+  const role     = useSelector(s => s.user.profile?.role)
 
-  const { posts, addPost: supabaseAddPost } = useSupabaseMarketplace()
-  const { shops } = useShops()
-  const { shopPricing, loading: pricingLoading, marketPrice } = useMarketPricing()
+  const { posts, loading, addPost: supabaseAddPost } = useSupabaseMarketplace()
+  const { marketPrice } = useMarketPricing()
 
   useEffect(() => {
     if (posts.length > 0) dispatch(setPosts(posts))
   }, [posts, dispatch])
 
-  const [catFilter, setCatFilter] = useState('all')
   const [isPosting, setIsPosting] = useState(false)
-  const [mktTab, setMktTab] = useState('listings')
 
-  const basketMaterials = new Set(basket.filter(i => !i.skipped).map(i => i.materialType))
-  const basketCount     = basket.filter(i => !i.skipped).length
-
-  const visibleMaterials = catFilter === 'basket'
-    ? MATERIAL_KEYS.filter(k => basketMaterials.has(k))
-    : CATEGORIES[catFilter] ?? MATERIAL_KEYS
-
-  // Shops that accept at least one material in the current category
-  const categoryMaterials = new Set(CATEGORIES[catFilter] ?? MATERIAL_KEYS)
-  const visibleShops = shops.filter(s =>
-    (s.accepts ?? []).some(m => categoryMaterials.has(m))
-  ).slice(0, 6)
-
-  const sourceCount = new Set(shopPricing.map(p => p.shop_id)).size
-
-  const CAT_TABS = [
-    { key: 'all',     label: 'All materials' },
-    { key: 'plastic', label: 'Plastic' },
-    { key: 'paper',   label: 'Paper' },
-    { key: 'metal',   label: 'Metal' },
-    { key: 'glass',   label: 'Glass' },
-    { key: 'basket',  label: `★ My basket (${basketCount})` },
-  ]
+  // Bottom inset: user role has a 68px bottom tab bar, buyer does not
+  const bottomInset = role === 'user' ? 'bottom-[76px]' : 'bottom-4'
 
   return (
     <div className="flex flex-col min-h-full">
 
-      {/* Breadcrumb */}
-      <div className="px-6 lg:px-10 pt-5 pb-0 border-b-[0px]">
-        <span className="font-data text-[9px] text-[var(--ink-4)] uppercase tracking-[0.15em]">
-          Home / Marketplace / Pricing Table
+      {/* Page header */}
+      <div className="px-4 lg:px-8 pt-6">
+        <span className="font-data text-[10px] text-[var(--ink-3)] uppercase tracking-[0.15em]">
+          Chiang Mai · Today
         </span>
+        <h1 className="font-brand text-[28px] text-[var(--ink)] m-0 mt-1 leading-tight">
+          {t.marketplaceTitle}
+        </h1>
+
       </div>
 
-      {/* 2-column body */}
-      <div className="flex flex-col lg:flex-row flex-1 min-h-0">
-
-        {/* ══ LEFT: Pricing Table ══════════════════════════════ */}
-        <div className="flex flex-col flex-1 min-w-0 lg:border-r-[1.5px] lg:border-[var(--ink)]">
-
-          {/* Table header */}
-          <div className="px-6 lg:px-10 pt-6 pb-4 border-b-[1.5px] border-[var(--ink)]">
-            <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-3">
-              <div className="flex flex-col gap-1">
-                <span className="font-data text-[10px] text-[var(--ink-3)] uppercase tracking-[0.15em]">
-                  Chiang Mai · Today
-                </span>
-                <h1 className="font-brand text-[28px] lg:text-[36px] text-[var(--ink)] m-0 leading-tight">
-                  Today&apos;s market —
-                </h1>
-                <h1 className="font-brand text-[28px] lg:text-[36px] text-[var(--ink)] m-0 leading-tight">
-                  Chiang Mai
-                </h1>
-              </div>
-              <div className="flex items-center gap-2">
-                <button className="font-data text-[11px] border-[1.5px] border-[var(--ink-4)] px-3 py-1.5 bg-transparent cursor-default text-[var(--ink-3)]">฿ THB ▾</button>
-                <button className="font-data text-[11px] border-[1.5px] border-[var(--ink-4)] px-3 py-1.5 bg-transparent cursor-default text-[var(--ink-3)]">/ kg ▾</button>
-              </div>
-            </div>
-
-            {/* Category filter tabs */}
-            <div className="flex gap-2 flex-wrap mt-4">
-              {CAT_TABS.map(tab => (
-                <button
-                  key={tab.key}
-                  onClick={() => setCatFilter(tab.key)}
-                  className={[
-                    'px-3 py-1.5 font-data text-[11px] uppercase tracking-widest border-[1.5px] transition-colors cursor-pointer',
-                    catFilter === tab.key
-                      ? 'bg-[var(--ink)] text-[var(--paper)] border-[var(--ink)]'
-                      : 'bg-transparent text-[var(--ink-3)] border-[var(--ink-4)] hover:border-[var(--ink)] hover:text-[var(--ink)]',
-                  ].join(' ')}
-                >
-                  {tab.label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Table */}
-          <div className="flex-1 overflow-y-auto">
-            {/* Table head */}
-            <div className="grid grid-cols-[1fr_auto] px-6 lg:px-10 py-2.5 border-b-[1.5px] border-[var(--ink)] bg-[var(--paper-2)]">
-              <span className="font-data text-[9px] text-[var(--ink-4)] uppercase tracking-[0.15em]">Material</span>
-              <span className="font-data text-[9px] text-[var(--ink-4)] uppercase tracking-[0.15em] text-right">
-                {sourceCount > 0 ? `Avg · ${sourceCount} shops` : 'Price (฿/kg)'}
-              </span>
-            </div>
-
-            {pricingLoading ? (
-              <div className="flex flex-col gap-2 py-4">
-                <div className="h-12 bg-[var(--paper-2)] animate-pulse border-[1.5px] border-[var(--ink-4)]" />
-                <div className="h-12 bg-[var(--paper-2)] animate-pulse border-[1.5px] border-[var(--ink-4)]" />
-                <div className="h-12 bg-[var(--paper-2)] animate-pulse border-[1.5px] border-[var(--ink-4)]" />
-                <div className="h-12 bg-[var(--paper-2)] animate-pulse border-[1.5px] border-[var(--ink-4)]" />
-              </div>
-            ) : visibleMaterials.length === 0 ? (
-              <div className="flex items-center justify-center py-16">
-                <span className="font-data text-[11px] text-[var(--ink-4)] uppercase tracking-widest">
-                  No items in basket
-                </span>
-              </div>
-            ) : (
-              visibleMaterials.map(key => {
-                const price  = marketPrice(key, true)
-                const inBask = basketMaterials.has(key)
-                return (
-                  <div
-                    key={key}
-                    className={`grid grid-cols-[1fr_auto] items-center px-6 lg:px-10 py-4 border-b-[1px] border-[var(--ink-4)] hover:bg-[var(--paper-2)] transition-colors ${inBask ? 'bg-[var(--green-soft)]' : ''}`}
-                  >
-                    {/* Material name + badge */}
-                    <div className="flex items-center gap-2 min-w-0">
-                      <span className="font-body text-[15px] text-[var(--ink)] truncate">
-                        {language === 'th' ? WASTE_ITEMS[key]?.nameTh : WASTE_ITEMS[key]?.nameEn}
-                      </span>
-                      {inBask && (
-                        <span className="font-data text-[9px] text-[var(--green-ink)] border-[1px] border-[var(--green)] px-1.5 py-0.5 uppercase tracking-wide shrink-0">
-                          in basket
-                        </span>
-                      )}
-                    </div>
-
-                    {/* Price */}
-                    <div className="flex flex-col items-end gap-0.5">
-                      <span className="font-data text-[22px] text-[var(--ink)] leading-none">
-                        ฿ {price != null ? price.toFixed(2) : '—'}
-                      </span>
-                      <span className="font-data text-[10px] text-[var(--ink-4)]">฿/kg</span>
-                    </div>
-                  </div>
-                )
-              })
-            )}
-          </div>
-
-          {/* Table footer */}
-          <div className="flex items-center justify-between px-6 lg:px-10 py-3 border-t-[1.5px] border-[var(--ink)] bg-[var(--paper-2)]">
-            <span className="font-data text-[10px] text-[var(--ink-4)]">
-              {sourceCount > 0
-                ? `source: ${sourceCount} active ${sourceCount === 1 ? 'shop' : 'shops'}`
-                : 'no shop pricing data yet'}
+      {/* Listing cards */}
+      <div className="flex flex-col gap-3 px-4 lg:px-8 py-4 pb-28">
+        {loading && (
+          <>
+            <div className="h-24 bg-[var(--paper-2)] animate-pulse border-[1.5px] border-[var(--ink-4)]" />
+            <div className="h-24 bg-[var(--paper-2)] animate-pulse border-[1.5px] border-[var(--ink-4)]" />
+            <div className="h-24 bg-[var(--paper-2)] animate-pulse border-[1.5px] border-[var(--ink-4)]" />
+          </>
+        )}
+        {!loading && posts.length === 0 && (
+          <div className="flex items-center justify-center py-20">
+            <span className="font-data text-[11px] text-[var(--ink-4)] uppercase tracking-widest">
+              {t.noListings}
             </span>
-            <div className="flex items-center gap-4">
-              <button
-                onClick={() => {
-                  const header = 'material,shop,price_per_kg,grade\n'
-                  const rows   = shopPricing.map(p =>
-                    `${p.material_type},${p.shop_name ?? p.shop_id},${p.price_per_kg},${p.grade ?? ''}`
-                  ).join('\n')
-                  const blob = new Blob([header + rows], { type: 'text/csv' })
-                  const url  = URL.createObjectURL(blob)
-                  const a    = document.createElement('a')
-                  a.href     = url
-                  a.download = `greenplus-prices-${new Date().toISOString().slice(0, 10)}.csv`
-                  a.click()
-                  URL.revokeObjectURL(url)
-                }}
-                className="font-data text-[10px] text-[var(--ink-3)] hover:text-[var(--ink)] bg-transparent border-none cursor-pointer transition-colors uppercase tracking-wide"
-              >
-                ↓ export CSV
-              </button>
-              <button onClick={() => toast.info('Price alerts coming soon')} className="font-data text-[10px] text-[var(--ink-3)] hover:text-[var(--ink)] bg-transparent border-none cursor-pointer transition-colors uppercase tracking-wide">
-                set price alert
-              </button>
-            </div>
           </div>
-        </div>
-
-        {/* ══ RIGHT: Active Shops ═══════════════════════════════ */}
-        <div className="flex flex-col w-full lg:w-[320px] shrink-0 border-t-[1.5px] lg:border-t-0 border-[var(--ink)]">
-
-          {/* Right header */}
-          <div className="px-5 py-5 border-b-[1.5px] border-[var(--ink)]">
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <h2 className="font-brand text-[20px] text-[var(--ink)] m-0 leading-tight">
-                  Active shops —
-                </h2>
-                <h2 className="font-brand text-[20px] text-[var(--ink)] m-0 leading-tight">
-                  Chiang Mai
-                </h2>
-              </div>
-              <button
-                onClick={() => exportCSV(shops)}
-                className="font-data text-[11px] uppercase tracking-widest border-[1.5px] border-[var(--ink-4)] px-3 py-1.5 bg-transparent hover:border-[var(--ink)] hover:bg-[var(--paper-2)] transition-colors cursor-pointer shrink-0 mt-0.5"
-              >
-                ↓ Export CSV
-              </button>
-            </div>
-
-            {/* Listings / Buy Requests tab bar */}
-            <div className="flex gap-0 border-[1.5px] border-[var(--ink)] w-fit mt-4">
-              {['listings', 'requests'].map(tab => (
-                <button
-                  key={tab}
-                  onClick={() => setMktTab(tab)}
-                  className={[
-                    'px-4 py-1.5 font-data text-[11px] uppercase tracking-widest cursor-pointer border-none',
-                    mktTab === tab
-                      ? 'bg-[var(--ink)] text-[var(--paper)]'
-                      : 'bg-[var(--paper)] text-[var(--ink)] hover:bg-[var(--paper-2)]'
-                  ].join(' ')}
-                >
-                  {tab === 'listings' ? 'Listings' : 'Buy Requests'}
-                </button>
-              ))}
-            </div>
-
-          </div>
-
-          {/* Shop cards — Listings tab */}
-          {mktTab === 'listings' && (
-            <>
-              <div className="flex flex-col gap-3 px-5 py-5 flex-1 overflow-y-auto">
-                {visibleShops.length === 0 ? (
-                  <div className="flex items-center justify-center py-10">
-                    <span className="font-data text-[11px] text-[var(--ink-4)] uppercase tracking-widest">
-                      {t.noShopsNear}
-                    </span>
-                  </div>
-                ) : (
-                  visibleShops.map(shop => (
-                    <ShopCard
-                      key={shop.id}
-                      shop={shop}
-                      language={language}
-                      t={t}
-                      marketPrice={marketPrice}
-                    />
-                  ))
-                )}
-              </div>
-
-              {/* Post Ad section — desktop only */}
-              <div className="hidden lg:block px-5 pb-5 border-t-[1.5px] border-[var(--ink)] pt-4">
-                {isPosting ? (
-                  <PostAdForm
-                    onClose={() => setIsPosting(false)}
-                    onAdd={supabaseAddPost}
-                    marketPrice={marketPrice}
-                  />
-                ) : (
-                  <button
-                    onClick={() => setIsPosting(true)}
-                    className="w-full py-3 font-data text-[12px] uppercase tracking-widest border-[1.5px] border-[var(--ink)] bg-transparent cursor-pointer hover:bg-[var(--ink)] hover:text-[var(--paper)] transition-colors shadow-[3px_3px_0_var(--ink)] active:shadow-none active:translate-x-[3px] active:translate-y-[3px]"
-                  >
-                    + {t.postAd}
-                  </button>
-                )}
-              </div>
-            </>
-          )}
-
-          {/* Community buy requests — Requests tab */}
-          {mktTab === 'requests' && (
-            <div className="flex flex-col gap-2 px-5 py-5 flex-1 overflow-y-auto">
-              {posts.length === 0 ? (
-                <div className="flex items-center justify-center py-10">
-                  <span className="font-data text-[11px] text-[var(--ink-4)] uppercase tracking-widest">
-                    No buy requests yet
-                  </span>
-                </div>
-              ) : (
-                posts.map((post, idx) => (
-                  <div key={post.id ?? idx} className="border-[1.5px] border-[var(--ink-4)] p-3 flex items-center justify-between">
-                    <div>
-                      <span className="font-data text-[11px] text-[var(--ink)] uppercase tracking-widest">{post.material} · {post.weight_kg}kg</span>
-                      <span className="font-data text-[10px] text-[var(--ink-3)] block">฿{post.price_per_kg}/kg · {post.shop_name}</span>
-                    </div>
-                    <span className="font-data text-[11px] text-[var(--green-ink)]">฿{((post.weight_kg ?? 0) * (post.price_per_kg ?? 0)).toFixed(0)}</span>
-                  </div>
-                ))
-              )}
-            </div>
-          )}
-        </div>
+        )}
+        {!loading && posts.map((post, idx) => (
+          <ListingCard
+            key={post.id ?? idx}
+            post={post}
+            language={language}
+            t={t}
+          />
+        ))}
       </div>
+
+      {/* Sticky Post Ad button */}
+      <div className={`fixed ${bottomInset} left-0 right-0 flex justify-center px-4 pointer-events-none z-30`}>
+        <button
+          onClick={() => setIsPosting(true)}
+          className="pointer-events-auto w-full max-w-lg py-3 font-data text-[12px] uppercase tracking-widest border-[1.5px] border-[var(--ink)] bg-[var(--paper)] cursor-pointer hover:bg-[var(--ink)] hover:text-[var(--paper)] transition-colors shadow-[3px_3px_0_var(--ink)] active:shadow-none active:translate-x-[3px] active:translate-y-[3px]"
+        >
+          + {t.postAd}
+        </button>
+      </div>
+
+      {/* Post Ad modal */}
+      {isPosting && (
+        <PostAdForm
+          onClose={() => setIsPosting(false)}
+          onAdd={supabaseAddPost}
+          marketPrice={marketPrice}
+        />
+      )}
     </div>
   )
 }

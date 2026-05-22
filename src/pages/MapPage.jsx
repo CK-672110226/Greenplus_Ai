@@ -10,6 +10,7 @@ import { useSelector } from 'react-redux'
 import { haversineKm } from '../utils/haversine'
 import { Button } from '../components/Button'
 import { useChat } from '../hooks/useChat'
+import { supabase } from '../lib/supabase'
 
 import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png'
 import markerIcon   from 'leaflet/dist/images/marker-icon.png'
@@ -30,6 +31,15 @@ const userIcon = new L.Icon({
   popupAnchor:   [1, -34],
   shadowSize:    [41, 41],
   className:     'leaflet-user-icon',
+})
+
+/* ── Booking pin (orange circle) ─────────────────────────────── */
+const bookingIcon = L.divIcon({
+  className: '',
+  iconSize:   [16, 16],
+  iconAnchor: [8, 8],
+  popupAnchor:[0, -10],
+  html: `<span style="display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border:1.5px solid #1A1A1A;background:#F97316;border-radius:50%"></span>`,
 })
 
 /* ── Custom shop pin using L.divIcon ─────────────────────────── */
@@ -98,10 +108,12 @@ export function MapPage() {
   const language   = useSelector(s => s.user.language)
   const darkMode   = useSelector(s => s.user.darkMode)
   const basket     = useSelector(s => s.waste?.basket ?? [])
+  const session    = useSelector(s => s.user.session)
   const [filter, setFilter]         = useState('all')
   const [routeTo, setRouteTo]       = useState(null)
   const [walkingRoute, setWalkingRoute] = useState(null)
   const [routeLoading, setRouteLoading] = useState(false)
+  const [activeBookings, setActiveBookings] = useState([])
   const { shops, loading }          = useShops()
   const gps = useGPS()
   const { request: requestGPS } = gps
@@ -117,6 +129,33 @@ export function MapPage() {
   useEffect(() => {
     requestGPS()
   }, [requestGPS])
+
+  useEffect(() => {
+    if (!session?.user?.id) return
+    async function loadBookings() {
+      const { data } = await supabase
+        .from('bookings')
+        .select('id, shop_id, status, material_type, weight_kg, scheduled_at, pickup_lat, pickup_lng')
+        .eq('seller_id', session.user.id)
+        .in('status', ['pending', 'accepted', 'searching'])
+      setActiveBookings(data ?? [])
+    }
+    loadBookings()
+  }, [session?.user?.id])
+
+  useEffect(() => {
+    if (!gps.lat || activeBookings.length === 0) return
+    activeBookings.forEach(b => {
+      const shopForBooking = shops.find(s => s.id === b.shop_id)
+      if (!shopForBooking?.lat) return
+      const dist = haversineKm(gps.lat, gps.lng, shopForBooking.lat, shopForBooking.lng)
+      if (dist <= 0.3 && Notification.permission === 'granted') {
+        new Notification(t.nearbyShopNotifTitle, {
+          body: `${shopForBooking.name} — ${dist.toFixed(2)} km`,
+        })
+      }
+    })
+  }, [gps.lat, gps.lng, activeBookings, shops, t.nearbyShopNotifTitle])
 
   // Fetch real walking route from OSRM when routeTo or user location changes
   useEffect(() => {
@@ -340,8 +379,13 @@ export function MapPage() {
                             {shop.distanceKm} {t.kmAway}
                           </div>
                         )}
+                        {shop.description && (
+                          <div style={{ fontSize: 12, marginTop: 4, color: 'var(--ink-2)', lineHeight: '1.4' }}>
+                            {shop.description}
+                          </div>
+                        )}
                         {matches && basketMaterials.size > 0 && (
-                          <div style={{ fontSize: 11, marginTop: 4, color: '#0F7A3A', fontWeight: 600 }}>
+                          <div style={{ fontSize: 11, marginTop: 4, color: 'var(--green-ink)', fontWeight: 600 }}>
                             {language === 'th' ? 'รับวัสดุในตะกร้าของคุณ' : 'Accepts your basket items'}
                           </div>
                         )}
@@ -368,6 +412,24 @@ export function MapPage() {
                   </Marker>
                 )
               })}
+
+              {activeBookings.filter(b => b.pickup_lat && b.pickup_lng).map(b => (
+                <Marker key={b.id} position={[b.pickup_lat, b.pickup_lng]} icon={bookingIcon}>
+                  <Popup>
+                    <div style={{ fontFamily: 'monospace', fontSize: '12px' }}>
+                      <div style={{ fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '4px' }}>
+                        {b.status.toUpperCase()}
+                      </div>
+                      <div>{b.material_type} · {(b.weight_kg ?? 0).toFixed(1)} kg</div>
+                      {b.scheduled_at && (
+                        <div style={{ color: '#888', fontSize: '11px', marginTop: '2px' }}>
+                          {new Date(b.scheduled_at).toLocaleDateString()}
+                        </div>
+                      )}
+                    </div>
+                  </Popup>
+                </Marker>
+              ))}
             </MapContainer>
           </div>
 
@@ -408,7 +470,7 @@ export function MapPage() {
                         Directions ↗
                       </button>
                       <Button variant="primary" onClick={() => navigate('/basket')}>
-                        BOOK PICKUP →
+                        {t.bookAppointment} →
                       </Button>
                       <button
                         onClick={() => handleChat(shop.id)}

@@ -22,6 +22,7 @@ export const th = {
   map:           'แผนที่',
   marketplace:   'ตลาด',
   dashboard:     'แดชบอร์ด',
+  shopSetup:     'ตั้งค่าร้าน',
   admin:         'ผู้ดูแล',
   role:          'บทบาท',
   home:          'หน้าหลัก',
@@ -58,21 +59,19 @@ export const th = {
   // Marketplace
   marketplaceTitle: 'ตลาดซื้อขาย',
   filterAll:     'ทั้งหมด',
-  filterA:       'เกรด A',
-  filterB:       'เกรด B',
-  filterC:       'เกรด C',
   noListings:    'ไม่มีรายการที่ตรงกับตัวกรอง',
   postAd:           'ลงประกาศ',
   cancelLabel:      'ยกเลิก',
   postSuccess:      'ลงประกาศสำเร็จ',
   materialTypeLabel:'ประเภทวัสดุ',
-  gradeLabel:       'เกรด',
   weightKg:         'น้ำหนัก (กก.)',
   pricePerKgLabel:  'ราคา (฿/กก.)',
   contactInfo:      'ติดต่อ (โทร/LINE)',
   shopName:         'ชื่อร้าน',
   requiredFields:   'กรุณากรอกข้อมูลที่จำเป็น',
   contactSeller:    'ติดต่อ',
+  openNow:          'เปิด',
+  closed:           'ปิด',
 
   // Map
   mapTitle:      'แผนที่อัจฉริยะ',
@@ -87,7 +86,6 @@ export const th = {
   pendingOrders:     'รอดำเนินการ',
   completedOrders:   'เสร็จวันนี้',
   totalRevenue:      'รายได้วันนี้',
-  avgGrade:          'เกรดเฉลี่ย',
   recentBookings:    'การจองล่าสุด',
   acceptOrder:       'รับ',
   rejectOrder:       'ปฏิเสธ',
@@ -134,8 +132,6 @@ export const th = {
 
   // Dashboard pricing CRUD (B-02)
   myPricing:         'ราคารับซื้อ',
-  gradeClean:        'สะอาด (฿/กก.)',
-  gradeDirty:        'ไม่สะอาด (฿/กก.)',
   savePricing:       'บันทึกราคา',
 
   // Settings
@@ -216,6 +212,31 @@ export const th = {
   reportCancel:        'ยกเลิก',
   adminReports:        'รายงาน',
   pendingReports:      'รอตรวจสอบ',
+
+  // แท็บ System Monitor
+  monitorTab:           'มอนิเตอร์',
+  monitorRefresh:       'รีเฟรช',
+  monitorRefreshedAt:   'อัปเดต',
+  monitorShopsOpen:     'เปิดรับ',
+  monitorShopsClosed:   'ปิดรับ',
+  monitorUsersOnline:   'ผู้ใช้ออนไลน์',
+  monitorDriversOnline: 'คนขับออนไลน์',
+  monitorAnomalies:     'รายการผิดปกติ',
+  monitorNoAnomalies:   'ไม่พบรายการผิดปกติ',
+  monitorSevHigh:       'สูง',
+  monitorSevMedium:     'กลาง',
+  monitorSevLow:        'ต่ำ',
+  monitorTypeRapid:     'จองเร็วผิดปกติ',
+  monitorTypeWeight:    'น้ำหนักเกินกว่าปกติ',
+  monitorTypeCancel:    'ยกเลิกบ่อย',
+  monitorTypeGhost:     'ไม่มี GPS',
+  monitorTypeStale:     'กลุ่มค้าง',
+  monitorShopsSection:  'ร้านค้า',
+  monitorUsersSection:  'ผู้ใช้ที่เคลื่อนไหว',
+  monitorDriversSection:'คนขับ',
+  monitorOnline:        'ออนไลน์',
+  monitorOffline:       'ออฟไลน์',
+  monitorNeverSeen:     'ไม่เคยเข้าใช้',
   approveAsLabel:      'อนุมัติเป็น',
   noReports:           'ไม่มีรายงานที่รอตรวจสอบ',
   vertexConfig:        'Vertex AI Config',
@@ -247,7 +268,7 @@ export const th = {
   // Pricing page
   pricing:           'ราคารับซื้อ',
   pricingTitle:      'ราคารับซื้อของฉัน',
-  pricingHint:       'ตั้งราคารับซื้อต่อกิโลกรัมสำหรับวัสดุและเกรดแต่ละประเภท',
+  pricingHint:       'ตั้งราคารับซื้อและปริมาณจำกัดต่อวันสำหรับแต่ละวัสดุ สามารถเปิด/ปิดรับแต่ละรายการได้',
   marketRate:        'ราคาตลาด',
   resetToMarket:     'รีเซ็ตตามราคาตลาด',
   saveChanges:       'บันทึก',
@@ -276,7 +297,6 @@ export const th = {
   filterBasket:      'กรอง',
   allItems:          'ทั้งหมด',
   selectMaterial:    'เลือกวัสดุ',
-  selectGrade:       'เกรด',
   addItem:           'เพิ่ม',
 
   // Pricing page — new single-price columns (migration 013b)
@@ -295,7 +315,8 @@ export const th = {
   searchingRider:    'กำลังหาไรเดอร์...',
   riderFound:        'พบไรเดอร์แล้ว!',
   riderAccepted:     'ไรเดอร์รับงานของคุณแล้ว',
-  riderArrived:      'ไรเดอร์มาถึงแล้ว',
+  riderArrived:      'ไรเดอร์มาถึงแล้ว! กรุณาออกมาพบ',
+  riderApproaching:  'ไรเดอร์ใกล้มาถึงแล้ว! เตรียมของได้เลย',
   orderCompleted:    'งานเสร็จสมบูรณ์',
   nearbyPickups:     'งานรับซื้อใกล้เคียง',
   acceptPickup:      'รับงาน',
@@ -363,6 +384,148 @@ export const th = {
   editUser:    'แก้ไขผู้ใช้',
   shopUpdated: 'อัปเดตร้านแล้ว',
   userUpdated: 'อัปเดตผู้ใช้แล้ว',
-  shopArea:    'พื้นที่',
-  userRole:    'บทบาท',
+  shopArea:       'พื้นที่',
+  userRole:       'บทบาท',
+  conditionLabel: 'สภาพ',
+  cleanLabel:     'สะอาด',
+  dirtyLabel:     'ไม่สะอาด',
+  locationLabel:  'ที่ตั้ง (สำหรับแผนที่)',
+  tapToLocate:    "กด 'ใช้ตำแหน่งปัจจุบัน'",
+  chatMessages:      'ข้อความ',
+  noConversations:   'ยังไม่มีการสนทนา',
+  selectConversation:'เลือกการสนทนา',
+  chatBack:          '← กลับ',
+  chatSend:          'ส่ง',
+  chatPlaceholder:   'พิมพ์ข้อความ… (Enter เพื่อส่ง)',
+  sendingVoice:      'กำลังส่งเสียง…',
+  micDenied:         'ไมโครโฟนถูกบล็อก — อนุญาตในการตั้งค่าเบราว์เซอร์และระบบ',
+  micHold:           'กดค้างเพื่อบันทึก',
+  micRecording:      'กำลังบันทึก… ปล่อยเพื่อส่ง',
+  micRequestAccess:  'อนุญาตการเข้าถึงไมโครโฟน',
+  micAccessGranted:  'อนุญาตไมโครโฟนแล้ว',
+  micBlocked:        'ไมโครโฟนถูกบล็อก',
+
+  // Shop open/close toggle
+  shopOpen:          'เปิดรับ',
+  shopClosed:        'หยุดรับ',
+  shopPauseIntake:   'หยุดรับขยะ',
+  shopResumeIntake:  'เปิดรับขยะ',
+
+  // Profile edit — all roles
+  profileEdit:           'แก้ไขโปรไฟล์',
+  profileSave:           'บันทึก',
+  profileCancel:         'ยกเลิก',
+  profileBioLabel:       'เกี่ยวกับฉัน',
+  profileBioHelp:        'บอกให้ร้านและไดร์เวอร์รู้จักคุณมากขึ้น',
+  profilePickupNotes:    'คำแนะนำสำหรับการรับขยะ',
+  profilePickupNotesHelp:'เช่น "ถุงเขียวหน้าประตู กดกริ่งชั้น 3"',
+  profileDisplayName:    'ชื่อที่แสดง',
+  profileAvatarUpload:   'เปลี่ยนรูป',
+  uploadingPhoto:        'กำลังอัปโหลด…',
+
+  // Shop profile — buyer role
+  shopDescription:       'คำอธิบายร้าน',
+  shopDescriptionHelp:   'ช่วยให้ผู้ใช้เข้าใจว่าร้านของคุณรับอะไร',
+  shopOpensAt:           'เปิด',
+  shopClosesAt:          'ปิด',
+  shopVerifiedHint:      'อัปโหลดรูปร้านเพื่อเพิ่มความน่าเชื่อถือ',
+
+  // Marketplace image upload
+  mpImageLabel:          'รูปสินค้า (ไม่บังคับ)',
+  mpImageHelp:           'รูปช่วยให้ผู้ซื้อเห็นคุณภาพและสภาพสินค้า',
+
+  // Buyer profile — shop info edit
+  saveShopInfo:      'บันทึกข้อมูลร้าน',
+
+  // Settings page strings
+  settingsAccount:      'บัญชี',
+  priceAlertsLabel:     'แจ้งเตือนราคา',
+  pickupRemindersLabel: 'แจ้งเตือนนัดรับขยะ',
+  marketingLabel:       'โปรโมชันและการตลาด',
+  linkedAccountsLabel:  'บัญชีที่เชื่อมต่อ',
+  exportMyData:         'ส่งออกข้อมูลของฉัน',
+  deleteAccountLabel:   'ลบบัญชี',
+  settingsRole:         'บทบาท',
+
+  // Basket pickup modes
+  modeDropOff:          'ไปส่งเอง',
+  modeOnDemand:         'ขอให้มารับ',
+  onDemandTitle:        'นัดรับถึงที่',
+  onDemandDesc:         'ผู้รับซื้อจะมาถึงตำแหน่งของคุณ วางขยะในจุดที่มองเห็นได้ชัดเจน',
+  callPickupRider:      'เรียกรถรับขยะ →',
+  noGpsWarning:         'กรุณาเปิด GPS ก่อน',
+
+  // Shop profile extra fields
+  shopPhone:            'เบอร์โทร',
+  pickupRadius:         'รัศมีรับขยะ (กม.)',
+  shopLocation:         'ที่ตั้งร้าน',
+  addBranch:            'เพิ่มสาขา',
+
+  // Dashboard pricing table volumes
+  volPending:           'รอดำเนินการ (กก.)',
+  volCompleted:         'เสร็จแล้ว (กก.)',
+
+  // Map proximity notification
+  nearbyShopNotifTitle: 'ร้านรับซื้อใกล้คุณ',
+
+  // On-demand multi-shop scheduling
+  computingRoute:       'กำลังคำนวณเส้นทาง…',
+  minGapBetweenShops:   'ต้องห่างกันอย่างน้อย 30 นาที',
+  sendPickupRequests:   'ส่งคำขอรับขยะ →',
+  waitingForShops:      'รอการตอบรับจากร้าน',
+  statusSearching:      'รอ',
+  statusAccepted:       'รับแล้ว',
+  statusRejected:       'ปฏิเสธ',
+  cancelPickupRequest:  'ยกเลิกทุกคำขอ',
+  noShopAccepted:       'ไม่มีร้านตอบรับ',
+  disposalAlternatives: 'แนะนำวิธีทางเลือก:',
+  altCityDrop:          'จุดทิ้งขยะรีไซเคิลในเมือง',
+  altMunicipal:         'วันจัดเก็บขยะของเทศบาล',
+  altScheduleLater:     'นัดวันอื่น',
+  tryAgain:             'ลองอีกครั้ง',
+  findDropOff:          'หาจุดทิ้ง →',
+  allShopsAccepted:     'ทุกร้านตอบรับแล้ว',
+  trackPickupOnMap:     'รถกำลังมาหาคุณ ติดตามได้ที่แผนที่',
+  viewOnMap:            'ดูบนแผนที่ →',
+
+  // Driver dashboard
+  driverModeBreadcrumb: 'ผู้รับซื้อ / คนขับ',
+  driverModeTitle:      'โหมดคนขับ',
+  driverOnline:         'คุณออนไลน์แล้ว',
+  driverOffline:        'คุณออฟไลน์',
+  driverOnlineLabel:    'ออนไลน์',
+  driverOfflineLabel:   'ออฟไลน์',
+  toggleOnlineToSee:    'เปิดออนไลน์เพื่อดูงานใกล้เคียง',
+  tabCustomerPickups:   'รับขยะจากลูกค้า',
+  tabInterShop:         'งานส่งระหว่างร้าน',
+  noNearbyPickups:      'ไม่มีออเดอร์ในรัศมี 5 กม.',
+  noTransferJobs:       'ไม่มีงานส่งระหว่างร้านในขณะนี้',
+  driverEnRoute:        'กำลังเดินทาง',
+  driverArrived:        'ถึงแล้ว — ยืนยันน้ำหนัก',
+  iArrived:             'ถึงแล้ว',
+
+  // การมอบหมายคนขับ
+  assignDriver:         'มอบหมายคนขับ',
+  assignDriverTitle:    'เลือกคนขับ',
+  driverPickupsToday:   'งานวันนี้',
+  noDriversAvailable:   'ยังไม่มีคนขับลงทะเบียน',
+  conflictWarning:      'คนขับมีงานอยู่ภายใน 30 นาทีของช่วงเวลานี้แล้ว',
+  assignmentInvited:    'รอยืนยัน',
+  assignmentAccepted:   'รับงานแล้ว',
+  assignmentRejected:   'ปฏิเสธ',
+  tabMyAssignments:     'งานที่ได้รับมอบหมาย',
+  noMyAssignments:      'ยังไม่มีงาน',
+  newAssignmentToast:   'มีงานรับซื้อใหม่สำหรับคุณ',
+  todayAssignments:     'งานวันนี้',
+  driverAssigned:       'มอบหมายคนขับแล้ว',
+  acceptAssignment:     'รับงาน',
+  declineAssignment:    'ปฏิเสธ',
+
+  // ข้อผิดพลาดทั่วไป
+  errorGeneric:         'เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง',
+
+  // QR คนขับ
+  driverQrTitle:        'แชร์ให้คนขับ',
+  driverQrDesc:         'ส่งคำเชิญถึง {name} แล้ว ให้เขาสแกน QR นี้เพื่อเปิดดูงานที่ได้รับ',
+  driverQrInviteHint:   'แชร์ QR นี้ให้คนขับสแกนเพื่อลงทะเบียนและดูงาน:',
 }
