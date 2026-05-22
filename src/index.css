@@ -26,7 +26,7 @@
   --green-ink:  #0F7A3A;
   --orange:     #F59E0B;
   --blue:       #5BC0BE;
-  --line:       var(--ink-4);
+  --line:       var(--ink);
   --shadow:     var(--ink);
 }
 

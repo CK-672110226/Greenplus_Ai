@@ -29,4 +29,20 @@ export default defineConfig([
       globals: { ...globals.node, ...globals.browser },
     },
   },
+
+  // Vitest test files — expose test globals
+  {
+    files: ['src/**/*.test.{js,jsx}', 'src/test/**/*.{js,jsx}'],
+    extends: [js.configs.recommended],
+    languageOptions: {
+      globals: {
+        ...globals.browser,
+        describe: 'readonly', it: 'readonly', expect: 'readonly',
+        beforeAll: 'readonly', afterAll: 'readonly',
+        afterEach: 'readonly', beforeEach: 'readonly',
+        vi: 'readonly',
+      },
+      parserOptions: { ecmaFeatures: { jsx: true } },
+    },
+  },
 ])

@@ -164,11 +164,11 @@ export function UserLayout() {
   ]
 
   const mobileNav = [
-    { to: '/home',        icon: <IconHome />,   label: t.home },
-    { to: '/basket',      icon: <IconBasket />, label: t.basket, badge: activeCount },
-    { to: '/scan',        icon: <IconScan />,   label: 'Scan' },
-    { to: '/map',         icon: <IconMap />,    label: t.map },
-    { to: '/marketplace', icon: <IconMarket />, label: t.marketplace },
+    { to: '/home',    icon: <IconHome />,    label: t.home },
+    { to: '/basket',  icon: <IconBasket />,  label: t.basket, badge: activeCount },
+    { to: '/scan',    icon: <IconScan />,    label: 'Scan' },
+    { to: '/map',     icon: <IconMap />,     label: t.map },
+    { to: '/profile', icon: <IconProfile />, label: t.profile },
   ]
 
   // Avatar initial
@@ -178,7 +178,7 @@ export function UserLayout() {
     <div className="flex min-h-screen bg-[var(--paper)]">
 
       {/* ══ Desktop Sidebar ══════════════════════════════════════ */}
-      <aside className="hidden lg:flex flex-col w-60 shrink-0 border-r-[1.5px] border-[var(--ink)] sticky top-0 h-screen overflow-y-auto bg-[var(--paper)]">
+      <aside className="hidden md:flex flex-col w-60 shrink-0 border-r-[1.5px] border-[var(--ink)] sticky top-0 h-screen overflow-y-auto bg-[var(--paper)]">
 
         {/* Logo */}
         <div className="flex items-center px-5 py-5 border-b-[1.5px] border-[var(--ink)]">
@@ -255,7 +255,7 @@ export function UserLayout() {
       <div className="flex flex-col flex-1 min-w-0">
 
         {/* Mobile topbar */}
-        <header className="lg:hidden sticky top-0 z-40 flex items-center justify-between px-4 py-3 bg-[var(--paper)] border-b-[1.5px] border-[var(--ink)]">
+        <header className="md:hidden sticky top-0 z-40 flex items-center justify-between px-4 py-3 bg-[var(--paper)] border-b-[1.5px] border-[var(--ink)]">
           <button
             onClick={() => navigate('/home')}
             className="bg-transparent border-none cursor-pointer p-0 hover:opacity-75 transition-opacity"
@@ -264,6 +264,13 @@ export function UserLayout() {
             <Logo height={30} showWordmark />
           </button>
           <div className="flex items-center gap-1">
+            <button
+              onClick={() => setSearchOpen(true)}
+              className="flex items-center justify-center w-11 h-11 bg-transparent border-none cursor-pointer text-[var(--ink)] hover:text-[var(--green)] transition-colors"
+              aria-label="Search"
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></svg>
+            </button>
             <button
               onClick={() => setDrawerOpen(true)}
               className="relative flex items-center justify-center w-11 h-11 bg-transparent border-none cursor-pointer text-[var(--ink)] hover:text-[var(--green)] transition-colors"
@@ -275,6 +282,13 @@ export function UserLayout() {
                   {unreadCount}
                 </span>
               )}
+            </button>
+            <button
+              onClick={() => navigate('/marketplace')}
+              className="flex items-center justify-center w-11 h-11 bg-transparent border-none cursor-pointer text-[var(--ink)] hover:text-[var(--green)] transition-colors"
+              aria-label={t.marketplace}
+            >
+              <IconMarket />
             </button>
             <button
               onClick={() => navigate('/basket')}
@@ -292,12 +306,12 @@ export function UserLayout() {
         </header>
 
         {/* Page content */}
-        <main className="flex-1 min-h-0 pb-[68px] lg:pb-0 overflow-y-auto">
+        <main className="flex-1 min-h-0 pb-[68px] md:pb-0 overflow-y-auto">
           <Outlet />
         </main>
 
         {/* Mobile bottom tab bar */}
-        <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 flex items-stretch bg-[var(--paper)] border-t-[1.5px] border-[var(--ink)]">
+        <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 flex items-stretch bg-[var(--paper)] border-t-[1.5px] border-[var(--ink)]">
           {mobileNav.map((item, i) => (
             <Tab key={item.to} {...item} isHero={i === 2} />
           ))}
