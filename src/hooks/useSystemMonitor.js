@@ -17,6 +17,7 @@ export function useSystemMonitor() {
   const [anomalies,     setAnomalies]     = useState([])
   const [loading,       setLoading]       = useState(true)
   const [refreshedAt,   setRefreshedAt]   = useState(null)
+  const [error,         setError]         = useState(null)
 
   const refresh = useCallback(async () => {
     setLoading(true)
@@ -26,12 +27,12 @@ export function useSystemMonitor() {
     const dayAgo          = minutesAgo(24 * 60)
 
     const [
-      { data: shopRows },
-      { data: profileRows },
-      { data: recentBookings },
-      { data: cancelledBookings },
-      { data: ghostOnDemand },
-      { data: staleGroups },
+      shopRes,
+      profileRes,
+      recentBookingsRes,
+      cancelledBookingsRes,
+      ghostOnDemandRes,
+      staleGroupsRes,
     ] = await Promise.all([
       // Shop open/closed status
       supabase.from('shops').select('id, name, is_open, owner_id, lat, lng'),
@@ -63,8 +64,42 @@ export function useSystemMonitor() {
         .lt('expires_at', new Date().toISOString()),
     ])
 
+    // ── Coerce supabase responses to safe arrays ─────────────
+    // Supabase calls return `{ data, error }`. If RLS/permissions reject the
+    // request (e.g. /admin loaded by a non-admin), `data` can be null or a
+    // non-array error payload, so `?? []` is not a sufficient guard. Use a
+    // strict Array.isArray check and surface any errors instead of feeding
+    // bogus values into `.filter(...)` / `.forEach(...)`.
+    const toArray = (res) => {
+      if (res && res.error) {
+        // eslint-disable-next-line no-console
+        console.error('[useSystemMonitor] supabase error:', res.error)
+        return { rows: [], error: res.error }
+      }
+      return { rows: Array.isArray(res?.data) ? res.data : [], error: null }
+    }
+
+    const shop       = toArray(shopRes)
+    const profile    = toArray(profileRes)
+    const recent     = toArray(recentBookingsRes)
+    const cancelled  = toArray(cancelledBookingsRes)
+    const ghost      = toArray(ghostOnDemandRes)
+    const stale      = toArray(staleGroupsRes)
+
+    const firstError =
+      shop.error || profile.error || recent.error ||
+      cancelled.error || ghost.error || stale.error
+    setError(firstError ?? null)
+
+    const shopRows         = shop.rows
+    const profileRows      = profile.rows
+    const recentBookings   = recent.rows
+    const cancelledBookings = cancelled.rows
+    const ghostOnDemand    = ghost.rows
+    const staleGroups      = stale.rows
+
     // ── Shop status ──────────────────────────────────────────
-    const shops = shopRows ?? []
+    const shops = shopRows
     setShopStatus({
       open:   shops.filter(s => s.is_open).length,
       closed: shops.filter(s => !s.is_open).length,
@@ -72,7 +107,7 @@ export function useSystemMonitor() {
     })
 
     // ── User / Driver activity ───────────────────────────────
-    const profiles = profileRows ?? []
+    const profiles = profileRows
     const regularUsers = profiles.filter(p => p.role === 'user')
     const drivers      = profiles.filter(p => p.is_driver || p.role === 'buyer')
 
@@ -91,7 +126,7 @@ export function useSystemMonitor() {
     const flags = []
 
     // 1. Rapid bookings (>N from same user in 1 hour)
-    const bookings   = recentBookings ?? []
+    const bookings   = recentBookings
     const byUser     = {}
     bookings.forEach(b => {
       byUser[b.seller_id] = (byUser[b.seller_id] ?? 0) + 1
@@ -125,7 +160,7 @@ export function useSystemMonitor() {
 
     // 3. High cancellation rate
     const cancelByUser = {}
-    ;(cancelledBookings ?? []).forEach(b => {
+    cancelledBookings.forEach(b => {
       cancelByUser[b.seller_id] = (cancelByUser[b.seller_id] ?? 0) + 1
     })
     Object.entries(cancelByUser).forEach(([uid, count]) => {
@@ -142,7 +177,7 @@ export function useSystemMonitor() {
     })
 
     // 4. Ghost on-demand (no GPS coordinates)
-    ;(ghostOnDemand ?? []).forEach(b => {
+    ghostOnDemand.forEach(b => {
       const p = profiles.find(x => x.id === b.seller_id)
       flags.push({
         id:       `ghost-${b.id}`,
@@ -154,7 +189,7 @@ export function useSystemMonitor() {
     })
 
     // 5. Stale booking groups (timeout not resolved)
-    ;(staleGroups ?? []).forEach(g => {
+    staleGroups.forEach(g => {
       flags.push({
         id:       `stale-${g.id}`,
         type:     'stale_group',
@@ -176,5 +211,5 @@ export function useSystemMonitor() {
     return () => clearInterval(id)
   }, [refresh])
 
-  return { shopStatus, userActivity, driverStatus, anomalies, loading, refreshedAt, refresh, onlineThresholdMs: ONLINE_WINDOW_MIN * 60_000 }
+  return { shopStatus, userActivity, driverStatus, anomalies, loading, refreshedAt, refresh, error, onlineThresholdMs: ONLINE_WINDOW_MIN * 60_000 }
 }
