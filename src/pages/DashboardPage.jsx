@@ -457,6 +457,17 @@ export function DashboardPage() {
         )}
       </div>
 
+      {/* Pending approval notice */}
+      {shop?.status === 'pending' && (
+        <div className="flex items-start gap-3 p-4 border-[1.5px] border-[var(--orange)] bg-[var(--paper-2)]">
+          <span className="font-data text-[18px] leading-none mt-0.5">⏳</span>
+          <div className="flex flex-col gap-0.5">
+            <span className="font-data text-[12px] uppercase tracking-widest text-[var(--orange)]">{t.shopPendingTitle}</span>
+            <span className="font-body text-[13px] text-[var(--ink-3)]">{t.shopPendingDesc}</span>
+          </div>
+        </div>
+      )}
+
       {/* KPI row — 4 cards, full-width, exact spec pattern */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <div className="flex flex-col gap-1 p-4 border-[1.5px] border-[var(--ink)] hover:shadow-[3px_3px_0_var(--ink)] hover:-translate-x-px hover:-translate-y-px transition-all duration-150">
